@@ -1,0 +1,152 @@
+/* Book Shelf unified UI overrides — load after style.css */
+:root {
+    --bg: #14181C;
+    --bg-elevated: #1B2129;
+    --paper: #EDE6D6;
+    --paper-light: #F6F1E4;
+    --ink: #2A241E;
+    --ink-soft: #55493C;
+    --muted: #8A8378;
+    --accent: #8B3A3A;
+    --gold: #A8823C;
+    --finished: #4C6B4F;
+    --radius: 3px;
+    --shadow: rgba(0, 0, 0, .4);
+    --font-display: Georgia, 'Palatino Linotype', serif;
+    --font-body: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif
+}
+
+.cover-preview,
+.status-page,
+#bookDetails {
+    background: var(--bg) !important;
+    color: var(--paper-light) !important;
+    font-family: var(--font-body) !important
+}
+
+.cover-preview-close,
+#coverPreviewClose,
+.status-page-header button,
+.bd-close {
+    background: var(--bg-elevated) !important;
+    border: 1px solid rgba(168, 130, 60, .55) !important;
+    border-radius: var(--radius) !important;
+    color: var(--paper-light) !important;
+    box-shadow: 0 2px 6px var(--shadow) !important
+}
+
+#bookDetails .bd-top {
+    background: var(--bg) !important;
+    border-bottom: 1px solid rgba(168, 130, 60, .2) !important
+}
+
+#bookDetails .bd-edit,
+#bookDetails #bookPreviewEdit {
+    background: var(--accent) !important;
+    border: 1px solid var(--gold) !important;
+    border-radius: var(--radius) !important;
+    color: var(--paper-light) !important;
+    font-family: var(--font-body) !important
+}
+
+#bookDetails .bd-title,
+#bookDetails h1,
+#bookDetails h2,
+.status-page h2 {
+    font-family: var(--font-display) !important;
+    color: var(--paper-light) !important
+}
+
+#bookDetails .bd-author {
+    color: var(--ink-soft) !important
+}
+
+#bookDetails .bd-panel,
+#bookDetails .bd-chip,
+.status-page-item {
+    background: var(--bg-elevated) !important;
+    border: 1px solid rgba(168, 130, 60, .25) !important;
+    border-radius: var(--radius) !important;
+    color: var(--paper-light) !important;
+    box-shadow: none !important
+}
+
+#bookDetails .bd-heading {
+    color: var(--gold) !important;
+    font-family: var(--font-body) !important
+}
+
+#bookDetails .bd-status {
+    color: var(--gold) !important;
+    border-color: var(--gold) !important;
+    border-radius: var(--radius) !important
+}
+
+#bookDetails .bd-rating {
+    color: var(--gold) !important
+}
+
+#bookDetails .bd-series-item {
+    border-color: rgba(168, 130, 60, .2) !important
+}
+
+.status-page-header {
+    background: var(--bg) !important;
+    border-bottom: 1px solid rgba(168, 130, 60, .2) !important
+}
+
+.status-page-list {
+    background: var(--bg) !important
+}
+
+.status-page-item {
+    border-radius: 0 !important;
+    border-width: 0 0 1px !important
+}
+
+.status-page-item strong {
+    font-family: var(--font-display) !important;
+    color: var(--paper-light) !important
+}
+
+.status-page-item span,
+.status-page-empty {
+    color: var(--muted) !important
+}
+
+.status-pages,
+.view-mode-options {
+    gap: 8px !important
+}
+
+.status-pages button,
+.view-mode-options button {
+    background: transparent !important;
+    border: 1px solid rgba(168, 130, 60, .6) !important;
+    border-radius: var(--radius) !important;
+    color: var(--ink-soft) !important;
+    font-family: var(--font-body) !important
+}
+
+.view-mode-options button.selected {
+    background: var(--gold) !important;
+    color: var(--paper-light) !important;
+    border-color: var(--gold) !important
+}
+
+.isbn-lookup button,
+#isbnLookupBtn {
+    background: var(--bg-elevated) !important;
+    border: 1px solid var(--gold) !important;
+    border-radius: var(--radius) !important;
+    color: var(--paper-light) !important;
+    font-family: var(--font-body) !important
+}
+
+#isbnLookupStatus {
+    color: var(--ink-soft) !important
+}
+
+.isbn-extra input {
+    font-family: var(--font-body) !important
+}

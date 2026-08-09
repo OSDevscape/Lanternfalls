@@ -1,0 +1,370 @@
+:root {
+  --bg: #14181c;
+  --bg-elevated: #1b2129;
+  --paper: #ede6d6;
+  --paper-light: #f6f1e4;
+  --ink: #2a241e;
+  --ink-soft: #55493c;
+  --muted: #8a8378;
+  --accent: #8b3a3a;
+  --gold: #a8823c;
+  --finished: #4c6b4f;
+  --shadow: rgba(0, 0, 0, .4);
+  --radius: 3px;
+  font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif
+}
+
+* {
+  box-sizing: border-box
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink)
+}
+
+#app {
+  min-height: 100vh;
+  padding-bottom: 96px
+}
+
+.hidden {
+  display: none !important
+}
+
+.app-header,
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px
+}
+
+.app-title {
+  margin: 0;
+  color: var(--paper-light);
+  font-family: Georgia, serif;
+  font-size: 26px
+}
+
+.title-accent,
+.text-btn-accent {
+  color: var(--gold)
+}
+
+button {
+  font: inherit;
+  cursor: pointer
+}
+
+.icon-btn,
+.text-btn {
+  border: 0;
+  background: none;
+  color: var(--paper-light);
+  padding: 7px
+}
+
+.search-slip {
+  margin: 4px 20px 8px
+}
+
+.search-slip input {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--bg-elevated);
+  color: var(--paper-light);
+  border: 1px solid #3a3a35;
+  border-radius: var(--radius);
+  font-size: 15px
+}
+
+.shelf-count {
+  margin: 0 20px 10px;
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase
+}
+
+.book-list {
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px
+}
+
+.book-card {
+  background: var(--paper);
+  padding: 14px 16px 14px 18px;
+  border-left: 6px solid var(--gold);
+  border-radius: var(--radius);
+  box-shadow: 0 2px 6px var(--shadow)
+}
+
+.book-card[data-status=reading] {
+  border-color: var(--accent)
+}
+
+.book-card[data-status=finished] {
+  border-color: var(--finished)
+}
+
+.book-card[data-status=wishlist] {
+  border-color: #76539a
+}
+
+.book-card[data-status=loaned] {
+  border-color: #39768b
+}
+
+.book-card-top,
+.book-card-content {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px
+}
+
+.book-card-content {
+  min-width: 0
+}
+
+.book-card-text {
+  min-width: 0
+}
+
+.book-cover {
+  width: 44px;
+  height: 66px;
+  flex: none;
+  object-fit: cover;
+  border-radius: 2px;
+  background: var(--bg-elevated)
+}
+
+.book-title {
+  margin: 0 0 2px;
+  font: bold 17px Georgia, serif
+}
+
+.book-author {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-soft);
+  text-transform: uppercase
+}
+
+.book-meta {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font: 12px monospace
+}
+
+.card-stamp {
+  align-self: start;
+  padding: 3px 7px;
+  border: 1px solid currentColor;
+  font-size: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: var(--gold)
+}
+
+.status-reading {
+  color: var(--accent)
+}
+
+.status-finished {
+  color: var(--finished)
+}
+
+.status-wishlist {
+  color: #76539a
+}
+
+.status-loaned {
+  color: #39768b
+}
+
+.card-stars {
+  margin-top: 6px;
+  color: var(--gold)
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--muted);
+  margin-top: 20vh
+}
+
+.empty-title {
+  color: var(--paper-light);
+  font: 18px Georgia, serif
+}
+
+.fab {
+  position: fixed;
+  right: 22px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  background: var(--accent);
+  color: white;
+  font-size: 28px
+}
+
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  overflow: auto;
+  background: var(--bg)
+}
+
+.sheet-header {
+  border-bottom: 1px solid #453d30
+}
+
+.sheet-header h2 {
+  margin: 0;
+  color: var(--paper-light);
+  font: 17px Georgia, serif
+}
+
+.index-card {
+  margin: 16px;
+  padding: 6px 18px 20px;
+  background: var(--paper-light);
+  border-radius: var(--radius)
+}
+
+.field {
+  display: block;
+  padding-top: 16px
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  color: var(--ink-soft);
+  text-transform: uppercase
+}
+
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  padding: 5px 2px;
+  border: 0;
+  border-bottom: 1px solid #aaa;
+  background: transparent;
+  color: var(--ink);
+  font: 16px inherit
+}
+
+.status-stamps,
+.rating-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap
+}
+
+.stamp {
+  padding: 7px 10px;
+  background: transparent;
+  border: 2px dashed currentColor;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase
+}
+
+.stamp-toread {
+  color: var(--gold)
+}
+
+.stamp-reading {
+  color: var(--accent)
+}
+
+.stamp-finished {
+  color: var(--finished)
+}
+
+.stamp-wishlist {
+  color: #76539a
+}
+
+.stamp-loaned {
+  color: #39768b
+}
+
+.stamp.selected {
+  color: var(--paper-light);
+  border-style: solid;
+  background: currentColor;
+  filter: contrast(.8)
+}
+
+.star {
+  border: 0;
+  background: none;
+  padding: 2px;
+  color: #aaa;
+  font-size: 26px
+}
+
+.star.filled {
+  color: var(--gold)
+}
+
+.delete-btn,
+.menu-action {
+  width: 100%;
+  margin-top: 24px;
+  padding: 12px;
+  border: 1px solid var(--accent);
+  background: none;
+  color: var(--accent)
+}
+
+.menu-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px
+}
+
+.menu-action {
+  margin: 0;
+  background: var(--bg-elevated);
+  color: var(--paper-light);
+  border-color: #6f5d34;
+  text-align: left
+}
+
+.menu-hint {
+  color: var(--ink-soft);
+  font-size: 13px
+}
+
+.toast {
+  position: fixed;
+  z-index: 30;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 18px;
+  background: var(--paper-light);
+  border-radius: 3px;
+  box-shadow: 0 4px 14px var(--shadow)
+}
+
+/* Main shelf cards: show only cover, title, author, and status */
+.book-card .book-meta,
+.book-card .card-stars {
+  display: none;
+}

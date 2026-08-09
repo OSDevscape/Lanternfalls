@@ -1,0 +1,10 @@
+{
+  "appId": "com.osmays.bookorganizer",
+  "appName": "Book Organizer",
+  "webDir": "www",
+  "backgroundColor": "#14181C",
+  "android": {
+    "backgroundColor": "#14181C",
+    "allowMixedContent": false
+  }
+}

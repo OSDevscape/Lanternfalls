@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#14181C">
+  <title>Book Shelf</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/unified-ui.css">
+  <link rel="stylesheet" href="css/accent-enhancements.css">
+</head>
+
+<body>
+  <div id="app">
+    <header class="app-header">
+      <h1 class="app-title">Book <span class="title-accent">Shelf</span></h1><button id="menuBtn" class="icon-btn"
+        aria-label="Open menu">☰</button>
+    </header>
+    <div class="search-slip"><input type="search" id="searchInput" placeholder="Search title or author"
+        autocomplete="off"></div>
+    <p class="shelf-count" id="shelfCount"></p>
+    <main id="bookList" class="book-list" aria-live="polite"></main>
+    <div id="emptyState" class="empty-state hidden">
+      <p class="empty-title">Your shelf is empty</p>
+      <p class="empty-sub">Tap + to catalog your first book</p>
+    </div>
+    <button id="addBtn" class="fab" aria-label="Add a book">+</button>
+
+    <section id="formView" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="formTitle">
+      <div class="sheet-header"><button id="formCancel" class="text-btn">Cancel</button>
+        <h2 id="formTitle">New Book</h2><button id="formSave" class="text-btn text-btn-accent">Save</button>
+      </div>
+      <div class="index-card">
+        <label class="field"><span class="field-label">Title</span><input id="fieldTitle" type="text"
+            placeholder="Required"></label>
+        <label class="field"><span class="field-label">Author</span><input id="fieldAuthor" type="text"></label>
+        <label class="field"><span class="field-label">ISBN</span><input id="fieldIsbn" type="text"
+            inputmode="numeric"></label>
+        <label class="field"><span class="field-label">Genre</span><input id="fieldGenre" type="text"></label>
+        <label class="field"><span class="field-label">Price</span><input id="fieldPrice" type="number" min="0"
+            step="0.01" inputmode="decimal" placeholder="0.00"></label>
+        <label class="field"><span class="field-label">Format</span><select id="fieldFormat">
+            <option value="">Not specified</option>
+            <option value="paperback">Paperback</option>
+            <option value="hardback-special">Hardback (Special)</option>
+            <option value="ebook">Ebook</option>
+            <option value="kindle">Kindle</option>
+            <option value="audiobook">Audiobook</option>
+          </select></label>
+        <div class="field"><span class="field-label">Status</span>
+          <div class="status-stamps" id="statusGroup"><button type="button" class="stamp stamp-toread"
+              data-status="to-read">To Read</button><button type="button" class="stamp stamp-reading"
+              data-status="reading">Reading</button><button type="button" class="stamp stamp-finished"
+              data-status="finished">Finished</button><button type="button" class="stamp stamp-wishlist"
+              data-status="wishlist">Wishlist</button><button type="button" class="stamp stamp-loaned"
+              data-status="loaned">Loaned</button></div>
+        </div>
+        <div class="field"><span class="field-label">Rating</span>
+          <div class="rating-row" id="ratingGroup"><button type="button" class="star" data-star="1"
+              aria-label="1 star">★</button><button type="button" class="star" data-star="2"
+              aria-label="2 stars">★</button><button type="button" class="star" data-star="3"
+              aria-label="3 stars">★</button><button type="button" class="star" data-star="4"
+              aria-label="4 stars">★</button><button type="button" class="star" data-star="5"
+              aria-label="5 stars">★</button></div>
+        </div>
+        <label class="field"><span class="field-label">Notes</span><textarea id="fieldNotes"
+            rows="3"></textarea></label>
+        <button id="formDelete" class="delete-btn hidden" type="button">Remove from shelf</button>
+      </div>
+    </section>
+    <section id="menuSheet" class="sheet hidden" role="dialog" aria-modal="true">
+      <div class="sheet-header"><button id="menuCancel" class="text-btn">Close</button>
+        <h2>Library</h2><span></span>
+      </div>
+      <div class="index-card menu-card"><button id="exportBtn" class="menu-action" type="button">Export library as
+          JSON</button><button id="importBtn" class="menu-action" type="button">Import library from JSON</button><input
+          type="file" id="importFile" accept="application/json,.json" class="hidden">
+        <p class="menu-hint">Export saves every book as one JSON file. Import merges matching IDs and adds new books.
+        </p>
+      </div>
+    </section>
+    <div id="toast" class="toast hidden"></div>
+  </div>
+  <script src="js/storage.js"></script>
+  <script src="js/isbn-lookup.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/bottom-navigation.js"></script>
+  <script src="js/library-counts.js"></script>
+  <script src="js/status-pages.js"></script>
+  <script src="js/status-pages-view-mode.js"></script>
+  <script src="js/status-filters.js"></script>
+  <script src="js/book-details.js"></script>
+  <script src="js/series-related-books.js"></script>
+  <script src="js/book-metadata.js"></script>
+  <script src="js/view-modes.js"></script>
+  <script src="js/search-toggle.js"></script>
+  <script src="js/appearance-mode.js"></script>
+  
+</body>
+
+</html>
