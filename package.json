@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "sync": "npx cap sync android",
-    "open": "npx cap open android"
+    "open": "npx cap open android",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
   "dependencies": {
     "@capacitor/android": "^6.1.0",
@@ -15,6 +17,7 @@
     "@capgo/capacitor-social-login": "^6.0.1"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.1.0"
+    "@capacitor/cli": "^6.1.0",
+    "wrangler": "^4.120.0"
   }
 }
