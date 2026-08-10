@@ -488,3 +488,22 @@ button {
   border-radius: 12px;
   background: rgb(0 0 0 / 20%);
 }
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.brand-logo {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.brand-lockup .app-title {
+  margin: 0;
+}
