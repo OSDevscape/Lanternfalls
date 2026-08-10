@@ -1,8 +1,11 @@
 const STORAGE_FILE = 'books.json';
 const LOCAL_KEY = 'bookshelf-data';
+const DATA_DIRECTORY = 'DATA';
+const CACHE_DIRECTORY = 'CACHE';
+const UTF8 = 'utf8';
 
 function getPlugins() {
-  return window.Capacitor && window.Capacitor.Plugins ? window.Capacitor.Plugins : null;
+  return window.Capacitor && window.Capacitor.Plugins ? window.Capacitor.Plugins : {};
 }
 
 function isNative() {
@@ -14,19 +17,19 @@ function generateId() {
 }
 
 function normalizeBook(raw) {
-  const b = raw || {};
+  const book = raw || {};
   return {
-    id: b.id || b.Id || generateId(),
-    title: b.title || b.Title || '',
-    author: b.author || b.Author || '',
-    isbn: b.isbn || b.ISBN || b.Isbn || '',
-    genre: b.genre || b.Genre || '',
-    price: Math.max(0, Number(b.price !== undefined ? b.price : b.Price) || 0),
-    format: b.format || b.Format || '',
-    status: b.status || b.Status || 'to-read',
-    rating: Number(b.rating !== undefined ? b.rating : b.Rating) || 0,
-    notes: b.notes || b.Notes || '',
-    dateAdded: b.dateAdded || b.DateAdded || new Date().toISOString()
+    id: book.id || book.Id || generateId(),
+    title: book.title || book.Title || '',
+    author: book.author || book.Author || '',
+    isbn: book.isbn || book.ISBN || book.Isbn || '',
+    genre: book.genre || book.Genre || '',
+    price: Math.max(0, Number(book.price !== undefined ? book.price : book.Price) || 0),
+    format: book.format || book.Format || '',
+    status: book.status || book.Status || 'to-read',
+    rating: Number(book.rating !== undefined ? book.rating : book.Rating) || 0,
+    notes: book.notes || book.Notes || '',
+    dateAdded: book.dateAdded || book.DateAdded || new Date().toISOString()
   };
 }
 
@@ -34,62 +37,85 @@ function payload(books) {
   return JSON.stringify({ version: 1.1, books: books }, null, 2);
 }
 
+function localBooks() {
+  return (JSON.parse(localStorage.getItem(LOCAL_KEY) || '{"books":[]}').books || []).map(normalizeBook);
+}
+
 async function loadBooks() {
-  try {
-    if (isNative()) {
-      const plugins = getPlugins();
+  const plugins = getPlugins();
+
+  if (isNative() && plugins.Filesystem) {
+    try {
       const result = await plugins.Filesystem.readFile({
         path: STORAGE_FILE,
-        directory: plugins.Directory.Data,
-        encoding: plugins.Encoding.UTF8
+        directory: DATA_DIRECTORY,
+        encoding: UTF8
       });
-      return (JSON.parse(result.data).books || []).map(normalizeBook);
+      const saved = JSON.parse(result.data);
+      const books = (saved.books || []).map(normalizeBook);
+      localStorage.setItem(LOCAL_KEY, payload(books));
+      return books;
+    } catch (_) {
+      return localBooks();
     }
+  }
 
-    return (JSON.parse(localStorage.getItem(LOCAL_KEY) || '{"books":[]}').books || []).map(normalizeBook);
-  } catch (error) {
+  try {
+    return localBooks();
+  } catch (_) {
     return [];
   }
 }
 
 async function saveBooks(books) {
   const data = payload(books);
+  const plugins = getPlugins();
 
-  if (isNative()) {
-    const plugins = getPlugins();
-    await plugins.Filesystem.writeFile({
-      path: STORAGE_FILE,
-      directory: plugins.Directory.Data,
-      data: data,
-      encoding: plugins.Encoding.UTF8
-    });
-  } else {
-    localStorage.setItem(LOCAL_KEY, data);
+  localStorage.setItem(LOCAL_KEY, data);
+
+  if (isNative() && plugins.Filesystem) {
+    try {
+      await plugins.Filesystem.writeFile({
+        path: STORAGE_FILE,
+        directory: DATA_DIRECTORY,
+        data: data,
+        encoding: UTF8
+      });
+    } catch (error) {
+      console.warn('Native file save failed; the local app backup was saved instead.', error);
+    }
   }
 }
 
 async function exportBooks(books) {
   const data = payload(books);
+  const plugins = getPlugins();
 
-  if (isNative()) {
-    const plugins = getPlugins();
-    const fileName = 'bookshelf-export-' + Date.now() + '.json';
-    await plugins.Filesystem.writeFile({
-      path: fileName,
-      directory: plugins.Directory.Cache,
-      data: data,
-      encoding: plugins.Encoding.UTF8
-    });
+  if (isNative() && plugins.Filesystem) {
+    try {
+      const fileName = 'bookshelf-export-' + Date.now() + '.json';
+      await plugins.Filesystem.writeFile({
+        path: fileName,
+        directory: CACHE_DIRECTORY,
+        data: data,
+        encoding: UTF8
+      });
 
-    const uri = await plugins.Filesystem.getUri({
-      path: fileName,
-      directory: plugins.Directory.Cache
-    });
+      const uri = await plugins.Filesystem.getUri({
+        path: fileName,
+        directory: CACHE_DIRECTORY
+      });
 
-    if (plugins.Share) {
-      await plugins.Share.share({ title: 'Book Shelf export', url: uri.uri });
+      if (plugins.Share) {
+        await plugins.Share.share({
+          title: 'Book Shelf export',
+          url: uri.uri
+        });
+        return;
+      }
+    } catch (error) {
+      console.warn('Native export failed; falling back to a browser download.', error);
     }
-    return;
   }
 
   const url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));

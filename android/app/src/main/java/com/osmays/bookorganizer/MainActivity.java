@@ -11,9 +11,17 @@ import ee.forgr.capacitor.social.login.GoogleProvider;
 import ee.forgr.capacitor.social.login.ModifiedMainActivityForSocialLoginPlugin;
 import ee.forgr.capacitor.social.login.SocialLoginPlugin;
 
-public class MainActivity extends BridgeActivity implements ModifiedMainActivityForSocialLoginPlugin {
+public class MainActivity extends BridgeActivity
+    implements ModifiedMainActivityForSocialLoginPlugin {
+
   @Override
   public void IHaveModifiedTheMainActivityForTheUseWithSocialLoginPlugin() {
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    ReadingWidgetProvider.refresh(this);
   }
 
   @Override
@@ -22,6 +30,7 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
 
     if (requestCode >= GoogleProvider.REQUEST_AUTHORIZE_GOOGLE_MIN
         && requestCode < GoogleProvider.REQUEST_AUTHORIZE_GOOGLE_MAX) {
+
       PluginHandle pluginHandle = getBridge().getPlugin("SocialLogin");
 
       if (pluginHandle == null) {
@@ -30,6 +39,7 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
       }
 
       Plugin plugin = pluginHandle.getInstance();
+
       if (!(plugin instanceof SocialLoginPlugin)) {
         Log.i("Google Activity Result", "SocialLogin plugin is not available");
         return;
