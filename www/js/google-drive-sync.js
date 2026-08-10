@@ -177,8 +177,18 @@
     if (!menu || document.getElementById('googleDriveSync')) return;
 
     var style = document.createElement('style');
-    style.textContent = '#googleDriveSync{margin-top:18px;padding-top:16px;border-top:1px solid rgba(168,130,60,.28)}#googleDriveSync h3{margin:0 0 8px;color:#A8823C;font:16px Georgia,serif}#googleDriveSync .google-drive-actions{display:grid;gap:8px}#googleDriveSync button{width:100%;padding:11px;border:1px solid #A8823C;border-radius:3px;background:#1B2129;color:#F6F1E4;text-align:left;cursor:pointer}#googleDriveStatus{margin:10px 0 0;color:#8A8378;font-size:12px;line-height:1.35}.google-drive-error{color:#e59a9a!important}';
-    document.head.appendChild(style);
+
+style.textContent =
+  '#menuSheet{box-sizing:border-box;padding-bottom:130px!important}' +
+  '#menuSheet .menu-card{margin-bottom:110px!important}' +
+  '#googleDriveSync{margin-top:18px;padding-top:16px;border-top:1px solid rgba(168,130,60,.28)}' +
+  '#googleDriveSync h3{margin:0 0 8px;color:#A8823C;font:16px Georgia,serif}' +
+  '#googleDriveSync .google-drive-actions{display:grid;gap:8px}' +
+  '#googleDriveSync button{width:100%;padding:11px;border:1px solid #A8823C;border-radius:3px;background:#1B2129;color:#F6F1E4;text-align:left;cursor:pointer}' +
+  '#googleDriveStatus{margin:10px 0 0;color:#8A8378;font-size:12px;line-height:1.35}' +
+  '.google-drive-error{color:#e59a9a!important}';
+
+document.head.appendChild(style);
 
     var box = document.createElement('section');
     box.id = 'googleDriveSync';
