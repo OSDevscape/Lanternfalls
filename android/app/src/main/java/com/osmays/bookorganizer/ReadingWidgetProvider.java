@@ -56,22 +56,37 @@ public class ReadingWidgetProvider extends AppWidgetProvider {
     private static void start(Context context) {
         Book book = currentReadingBook(context);
         if (book == null) return;
-        prefs(context).edit().putBoolean("running", true).putBoolean("paused", false)
-            .putLong("startedElapsed", SystemClock.elapsedRealtime()).putLong("accumulatedMs", 0L)
-            .putString("bookId", book.id).putString("bookTitle", book.title).putString("bookIsbn", book.isbn).apply();
+        prefs(context).edit()
+            .putBoolean("running", true)
+            .putBoolean("paused", false)
+            .putLong("startedElapsed", SystemClock.elapsedRealtime())
+            .putLong("accumulatedMs", 0L)
+            .putString("bookId", book.id)
+            .putString("bookTitle", book.title)
+            .putString("bookIsbn", book.isbn)
+            .apply();
     }
 
     private static void pause(Context context) {
         SharedPreferences state = prefs(context);
         if (!state.getBoolean("running", false)) return;
-        long active = state.getLong("accumulatedMs", 0L) + SystemClock.elapsedRealtime() - state.getLong("startedElapsed", 0L);
-        state.edit().putBoolean("running", false).putBoolean("paused", true).putLong("accumulatedMs", active).apply();
+        long active = state.getLong("accumulatedMs", 0L)
+            + SystemClock.elapsedRealtime() - state.getLong("startedElapsed", 0L);
+        state.edit()
+            .putBoolean("running", false)
+            .putBoolean("paused", true)
+            .putLong("accumulatedMs", active)
+            .apply();
     }
 
     private static void resume(Context context) {
         SharedPreferences state = prefs(context);
         if (!state.getBoolean("paused", false)) return;
-        state.edit().putBoolean("running", true).putBoolean("paused", false).putLong("startedElapsed", SystemClock.elapsedRealtime()).apply();
+        state.edit()
+            .putBoolean("running", true)
+            .putBoolean("paused", false)
+            .putLong("startedElapsed", SystemClock.elapsedRealtime())
+            .apply();
     }
 
     private static void stop(Context context) {
@@ -80,7 +95,10 @@ public class ReadingWidgetProvider extends AppWidgetProvider {
         String bookId = state.getString("bookId", "");
         String bookTitle = state.getString("bookTitle", "Reading session");
         int minutes = (int) (elapsed / 60000L);
-        if (minutes > 0 && !bookId.isEmpty()) appendSession(context, bookId, bookTitle, minutes);
+
+        if (minutes > 0 && !bookId.isEmpty()) {
+            appendSession(context, bookId, bookTitle, minutes);
+        }
         state.edit().clear().apply();
     }
 
@@ -89,12 +107,25 @@ public class ReadingWidgetProvider extends AppWidgetProvider {
         boolean running = state.getBoolean("running", false);
         boolean paused = state.getBoolean("paused", false);
         boolean active = running || paused;
-        Book book = active ? new Book(state.getString("bookId", ""), state.getString("bookTitle", "Your current book"), state.getString("bookIsbn", "")) : currentReadingBook(context);
+        Book book = active
+            ? new Book(
+                state.getString("bookId", ""),
+                state.getString("bookTitle", "Your current book"),
+                state.getString("bookIsbn", "")
+            )
+            : currentReadingBook(context);
+
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.reading_widget);
 
         if (book == null || book.id.isEmpty()) {
             views.setTextViewText(R.id.widget_book_title, "Choose a book marked Reading");
             views.setImageViewResource(R.id.widget_cover, android.R.drawable.ic_menu_report_image);
+            views.setChronometer(
+                R.id.widget_timer,
+                SystemClock.elapsedRealtime(),
+                "%s",
+                false
+            );
             views.setTextViewText(R.id.widget_timer, "START");
             views.setInt(R.id.widget_timer, "setBackgroundResource", R.drawable.widget_timer_idle);
             views.setViewVisibility(R.id.widget_pause, View.GONE);
@@ -103,25 +134,53 @@ public class ReadingWidgetProvider extends AppWidgetProvider {
             views.setTextViewText(R.id.widget_book_title, book.title);
             setCover(context, views, book.isbn);
             long elapsed = elapsedMs(state);
+
             if (running) {
                 views.setInt(R.id.widget_timer, "setBackgroundResource", R.drawable.widget_timer_running);
-                views.setChronometer(R.id.widget_timer, SystemClock.elapsedRealtime() - elapsed, "%s", true);
+                views.setChronometer(
+                    R.id.widget_timer,
+                    SystemClock.elapsedRealtime() - elapsed,
+                    "%s",
+                    true
+                );
                 views.setTextViewText(R.id.widget_pause, "Pause");
             } else if (paused) {
                 views.setInt(R.id.widget_timer, "setBackgroundResource", R.drawable.widget_timer_paused);
+                views.setChronometer(
+                    R.id.widget_timer,
+                    SystemClock.elapsedRealtime(),
+                    "%s",
+                    false
+                );
                 views.setTextViewText(R.id.widget_timer, "PAUSED\n" + formatTime(elapsed));
                 views.setTextViewText(R.id.widget_pause, "Resume");
             } else {
                 views.setInt(R.id.widget_timer, "setBackgroundResource", R.drawable.widget_timer_idle);
+                views.setChronometer(
+                    R.id.widget_timer,
+                    SystemClock.elapsedRealtime(),
+                    "%s",
+                    false
+                );
                 views.setTextViewText(R.id.widget_timer, "START");
             }
+
             views.setViewVisibility(R.id.widget_pause, active ? View.VISIBLE : View.GONE);
             views.setViewVisibility(R.id.widget_stop, active ? View.VISIBLE : View.GONE);
         }
 
-        views.setOnClickPendingIntent(R.id.widget_timer, actionIntent(context, running ? ACTION_PAUSE : (paused ? ACTION_RESUME : ACTION_START), widgetId));
-        views.setOnClickPendingIntent(R.id.widget_pause, actionIntent(context, paused ? ACTION_RESUME : ACTION_PAUSE, widgetId));
-        views.setOnClickPendingIntent(R.id.widget_stop, actionIntent(context, ACTION_STOP, widgetId));
+        views.setOnClickPendingIntent(
+            R.id.widget_timer,
+            actionIntent(context, running ? ACTION_PAUSE : (paused ? ACTION_RESUME : ACTION_START), widgetId)
+        );
+        views.setOnClickPendingIntent(
+            R.id.widget_pause,
+            actionIntent(context, paused ? ACTION_RESUME : ACTION_PAUSE, widgetId)
+        );
+        views.setOnClickPendingIntent(
+            R.id.widget_stop,
+            actionIntent(context, ACTION_STOP, widgetId)
+        );
         views.setOnClickPendingIntent(R.id.widget_cover, openAppIntent(context, widgetId));
         manager.updateAppWidget(widgetId, views);
     }
@@ -130,12 +189,22 @@ public class ReadingWidgetProvider extends AppWidgetProvider {
         Intent intent = new Intent(context, ReadingWidgetProvider.class);
         intent.setAction(action);
         intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId);
-        return PendingIntent.getBroadcast(context, action.hashCode() + widgetId, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        return PendingIntent.getBroadcast(
+            context,
+            action.hashCode() + widgetId,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
     }
 
     private static PendingIntent openAppIntent(Context context, int widgetId) {
         Intent intent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
-        return PendingIntent.getActivity(context, widgetId, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        return PendingIntent.getActivity(
+            context,
+            widgetId,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
     }
 
     private static SharedPreferences prefs(Context context) {
@@ -144,7 +213,9 @@ public class ReadingWidgetProvider extends AppWidgetProvider {
 
     private static long elapsedMs(SharedPreferences state) {
         long elapsed = state.getLong("accumulatedMs", 0L);
-        if (state.getBoolean("running", false)) elapsed += SystemClock.elapsedRealtime() - state.getLong("startedElapsed", 0L);
+        if (state.getBoolean("running", false)) {
+            elapsed += SystemClock.elapsedRealtime() - state.getLong("startedElapsed", 0L);
+        }
         return Math.max(0L, elapsed);
     }
 
@@ -159,27 +230,39 @@ public class ReadingWidgetProvider extends AppWidgetProvider {
             views.setImageViewResource(R.id.widget_cover, android.R.drawable.ic_menu_report_image);
             return;
         }
+
         File cover = new File(new File(context.getFilesDir(), "covers"), cleanIsbn + ".jpg");
         Bitmap bitmap = BitmapFactory.decodeFile(cover.getAbsolutePath());
-        if (bitmap != null) views.setImageViewBitmap(R.id.widget_cover, bitmap);
-        else views.setImageViewResource(R.id.widget_cover, android.R.drawable.ic_menu_report_image);
+        if (bitmap != null) {
+            views.setImageViewBitmap(R.id.widget_cover, bitmap);
+        } else {
+            views.setImageViewResource(R.id.widget_cover, android.R.drawable.ic_menu_report_image);
+        }
     }
 
     private static Book currentReadingBook(Context context) {
         try {
             File file = new File(context.getFilesDir(), BOOKS_FILE);
             if (!file.exists()) return null;
+
             JSONArray books = new JSONObject(readFile(file)).optJSONArray("books");
             if (books == null) return null;
+
             for (int i = 0; i < books.length(); i++) {
                 JSONObject item = books.optJSONObject(i);
                 if (item == null) continue;
+
                 String status = item.optString("status", item.optString("Status", ""));
                 if ("reading".equals(status)) {
-                    return new Book(item.optString("id", item.optString("Id", "")), item.optString("title", item.optString("Title", "Your current book")), item.optString("isbn", item.optString("ISBN", item.optString("Isbn", ""))));
+                    return new Book(
+                        item.optString("id", item.optString("Id", "")),
+                        item.optString("title", item.optString("Title", "Your current book")),
+                        item.optString("isbn", item.optString("ISBN", item.optString("Isbn", "")))
+                    );
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         return null;
     }
 
@@ -195,7 +278,8 @@ public class ReadingWidgetProvider extends AppWidgetProvider {
             session.put("endedAt", System.currentTimeMillis());
             sessions.put(session);
             writeFile(file, sessions.toString());
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     private static String readFile(File file) throws Exception {
@@ -221,6 +305,11 @@ public class ReadingWidgetProvider extends AppWidgetProvider {
         final String id;
         final String title;
         final String isbn;
-        Book(String id, String title, String isbn) { this.id = id; this.title = title; this.isbn = isbn; }
+
+        Book(String id, String title, String isbn) {
+            this.id = id;
+            this.title = title;
+            this.isbn = isbn;
+        }
     }
 }
