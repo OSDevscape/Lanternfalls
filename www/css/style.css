@@ -497,11 +497,13 @@ button {
 }
 
 .brand-logo {
+  display: block;
   width: 42px;
   height: 42px;
   flex: 0 0 42px;
   object-fit: contain;
   border-radius: 10px;
+  background: #000;
 }
 
 .brand-lockup .app-title {
