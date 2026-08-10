@@ -12,6 +12,7 @@ import android.graphics.BitmapFactory;
 import android.os.SystemClock;
 import android.view.View;
 import android.widget.RemoteViews;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -97,8 +98,14 @@ public class ReadingWidgetProvider extends AppWidgetProvider {
         int minutes = (int) (elapsed / 60000L);
 
         if (minutes > 0 && !bookId.isEmpty()) {
-            appendSession(context, bookId, bookTitle, minutes);
-        }
+    appendSession(context, bookId, bookTitle, minutes);
+
+    Toast.makeText(
+        context,
+        "Reading session saved: " + minutes + " minute" + (minutes == 1 ? "" : "s"),
+        Toast.LENGTH_SHORT
+    ).show();
+}
         state.edit().clear().apply();
     }
 
