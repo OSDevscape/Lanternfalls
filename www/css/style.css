@@ -377,3 +377,114 @@ button {
 #formView .index-card {
   margin-bottom: 110px;
 }
+
+.boss-area {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  padding: 24px;
+}
+
+#newBossButton {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 20px;
+  font: inherit;
+  font-weight: 800;
+  color: #1b1423;
+  background: #ffd369;
+  cursor: pointer;
+  box-shadow: 0 5px 0 #b8791d;
+}
+
+#newBossButton:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #b8791d;
+}
+
+.boss-card {
+  --accent: #ff7a18;
+  --accent-dark: #7a1700;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: min(330px, 90vw);
+  min-height: 390px;
+  padding: 28px 24px;
+  border: 3px solid color-mix(in srgb, var(--accent) 80%, white);
+  border-radius: 24px;
+  color: white;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 25%, color-mix(in srgb, var(--accent) 55%, transparent), transparent 38%),
+    linear-gradient(145deg, #2a1b3e, var(--accent-dark));
+  box-shadow:
+    0 18px 40px rgb(0 0 0 / 35%),
+    inset 0 0 30px rgb(255 255 255 / 10%);
+}
+
+.boss-card::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  opacity: 0.22;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent 0 12px,
+    white 12px 14px
+  );
+}
+
+.boss-glow {
+  position: absolute;
+  z-index: -1;
+  top: 55px;
+  left: 50%;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  filter: blur(45px);
+  opacity: 0.55;
+}
+
+.boss-icon {
+  margin: 8px 0 14px;
+  font-size: 104px;
+  line-height: 1;
+  filter: drop-shadow(0 8px 7px rgb(0 0 0 / 40%));
+}
+
+.boss-label {
+  margin: 0;
+  color: #ffe39b;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+}
+
+.boss-card h2 {
+  margin: 10px 0;
+  font-size: 1.8rem;
+  line-height: 1.05;
+}
+
+.boss-card p {
+  line-height: 1.45;
+}
+
+.boss-stats {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.boss-stats span {
+  padding: 9px 11px;
+  border: 1px solid rgb(255 255 255 / 25%);
+  border-radius: 12px;
+  background: rgb(0 0 0 / 20%);
+}
