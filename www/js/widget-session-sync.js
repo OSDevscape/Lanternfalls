@@ -31,6 +31,11 @@
     }
   }
 
+  function localDate(value) {
+    var date = new Date(Number(value) || Date.now());
+    return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+  }
+
   function authorForBook(bookId) {
     var match = readBooks().find(function (book) {
       return String(book.id || book.Id || '') === String(bookId || '');
@@ -53,15 +58,22 @@
     return value && value.id && Math.floor(Number(value.minutes) || 0) > 0;
   }
 
-  function repairWidgetSessionAuthors(log) {
+  function repairWidgetSessions(log) {
     var changed = false;
     log.forEach(function (session) {
       if (!session || session.source !== 'home-widget') return;
-      if (session.author && session.bookAuthor) return;
-      var author = authorForBook(session.bookId);
-      session.author = author;
-      session.bookAuthor = author;
-      changed = true;
+
+      if (!session.date) {
+        session.date = localDate(session.endedAt);
+        changed = true;
+      }
+
+      if (!session.author || !session.bookAuthor) {
+        var author = authorForBook(session.bookId);
+        session.author = author;
+        session.bookAuthor = author;
+        changed = true;
+      }
     });
     return changed;
   }
@@ -73,7 +85,7 @@
 
     try {
       var log = readLog();
-      var repaired = repairWidgetSessionAuthors(log);
+      var repaired = repairWidgetSessions(log);
       var result;
 
       try {
@@ -95,6 +107,7 @@
         if (repaired) localStorage.setItem(LOG_KEY, JSON.stringify(log));
         return 0;
       }
+
       if (!Array.isArray(incoming) || !incoming.length) {
         if (repaired) localStorage.setItem(LOG_KEY, JSON.stringify(log));
         return 0;
@@ -116,6 +129,7 @@
           bookTitle: String(session.bookTitle || 'Reading session'),
           author: author,
           bookAuthor: author,
+          date: localDate(session.endedAt),
           endedAt: Number(session.endedAt) || Date.now(),
           source: 'home-widget'
         };
