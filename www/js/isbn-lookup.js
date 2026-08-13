@@ -25,16 +25,20 @@
 
   window.BookStorage.saveBooks = async function (books) {
     var store = readStore();
+
     if (pendingMetadata) {
       var found = books.filter(function (book) {
         return book.title === pendingMetadata.title && book.isbn === pendingMetadata.isbn;
       }).pop();
+
       if (found) {
         store[found.id] = pendingMetadata.data;
         Object.assign(found, pendingMetadata.data);
       }
+
       pendingMetadata = null;
     }
+
     books.forEach(function (book) { merge(book, store); });
     writeStore(store);
     return originalSave(books);
@@ -84,6 +88,66 @@
     };
   }
 
+  function metadataFields() {
+    return {
+      publisher: document.getElementById('fieldPublisher'),
+      publicationYear: document.getElementById('fieldPublicationYear'),
+      language: document.getElementById('fieldLanguage'),
+      pageCount: document.getElementById('fieldPageCount'),
+      description: document.getElementById('fieldDescription')
+    };
+  }
+
+  function clearMetadataFields() {
+    var values = metadataFields();
+    Object.keys(values).forEach(function (key) {
+      values[key].value = '';
+    });
+  }
+
+  function currentBookId() {
+    var isbn = document.getElementById('fieldIsbn').value.trim();
+    var title = document.getElementById('fieldTitle').value.trim();
+    var author = document.getElementById('fieldAuthor').value.trim();
+    var stored;
+
+    try { stored = JSON.parse(localStorage.getItem('bookshelf-data') || '{"books":[]}').books || []; }
+    catch (_) { stored = []; }
+
+    var match = stored.filter(function (book) {
+      if (isbn && book.isbn === isbn) return true;
+      return !isbn && book.title === title && book.author === author;
+    }).pop();
+
+    return match ? match.id : '';
+  }
+
+  function populateMetadataFields() {
+    var form = document.getElementById('formView');
+    if (!form || form.classList.contains('hidden')) return;
+
+    var id = currentBookId();
+    var data = id ? readStore()[id] : null;
+    var values = metadataFields();
+
+    values.publisher.value = data && data.publisher ? data.publisher : '';
+    values.publicationYear.value = data && data.publicationYear ? data.publicationYear : '';
+    values.language.value = data && data.language ? data.language : '';
+    values.pageCount.value = data && data.pageCount ? data.pageCount : '';
+    values.description.value = data && data.description ? data.description : '';
+  }
+
+  async function lookupEditionPageCount(isbn) {
+    try {
+      var response = await fetch('https://openlibrary.org/isbn/' + encodeURIComponent(isbn) + '.json');
+      if (!response.ok) return '';
+      var edition = await response.json();
+      return edition.number_of_pages || '';
+    } catch (_) {
+      return '';
+    }
+  }
+
   function addLookupUI() {
     var isbn = document.getElementById('fieldIsbn');
     if (!isbn || document.getElementById('isbnLookupBtn')) return;
@@ -119,12 +183,12 @@
         var book = result['ISBN:' + value];
         if (!book) throw new Error('No matching book found');
 
+        var values = metadataFields();
         if (book.title) document.getElementById('fieldTitle').value = book.title;
         if (book.authors && book.authors.length) document.getElementById('fieldAuthor').value = book.authors.map(function (author) { return author.name; }).join(', ');
-        if (book.publishers && book.publishers.length) document.getElementById('fieldPublisher').value = book.publishers.map(function (publisher) { return publisher.name; }).join(', ');
-        if (book.publish_date) document.getElementById('fieldPublicationYear').value = (book.publish_date.match(/\b(1[0-9]{3}|20[0-9]{2})\b/) || [''])[0];
-        if (book.number_of_pages) document.getElementById('fieldPageCount').value = book.number_of_pages;
-        if (book.languages && book.languages.length) document.getElementById('fieldLanguage').value = book.languages.map(function (language) { return language.key.replace('/languages/', ''); }).join(', ');
+        if (book.publishers && book.publishers.length) values.publisher.value = book.publishers.map(function (publisher) { return publisher.name; }).join(', ');
+        if (book.publish_date) values.publicationYear.value = (book.publish_date.match(/\b(1[0-9]{3}|20[0-9]{2})\b/) || [''])[0];
+        if (book.languages && book.languages.length) values.language.value = book.languages.map(function (language) { return language.key.replace('/languages/', ''); }).join(', ');
 
         if (book.subjects && book.subjects.length) {
           var subjects = parseSubjects(book.subjects);
@@ -137,8 +201,11 @@
           if (series && subjects.series) series.value = subjects.series;
         }
 
-        if (book.notes) document.getElementById('fieldDescription').value = typeof book.notes === 'string' ? book.notes : (book.notes.value || '');
-        message.textContent = 'Book information found.';
+        if (book.notes) values.description.value = typeof book.notes === 'string' ? book.notes : (book.notes.value || '');
+
+        var pageCount = book.number_of_pages || await lookupEditionPageCount(value);
+        values.pageCount.value = pageCount || '';
+        message.textContent = pageCount ? 'Book information found.' : 'Book information found; page count was not available.';
       } catch (error) {
         message.textContent = error.message || 'Could not find that ISBN.';
       }
@@ -148,18 +215,27 @@
 
     document.addEventListener('click', function (event) {
       if (!event.target.closest('#formSave')) return;
+
+      var values = metadataFields();
       pendingMetadata = {
         title: document.getElementById('fieldTitle').value.trim(),
         isbn: document.getElementById('fieldIsbn').value.trim(),
         data: {
-          publisher: document.getElementById('fieldPublisher').value.trim(),
-          publicationYear: document.getElementById('fieldPublicationYear').value.trim(),
-          language: document.getElementById('fieldLanguage').value.trim(),
-          pageCount: document.getElementById('fieldPageCount').value.trim(),
-          description: document.getElementById('fieldDescription').value.trim()
+          publisher: values.publisher.value.trim(),
+          publicationYear: values.publicationYear.value.trim(),
+          language: values.language.value.trim(),
+          pageCount: values.pageCount.value.trim(),
+          description: values.description.value.trim()
         }
       };
     }, true);
+
+    var form = document.getElementById('formView');
+    if (form) {
+      new MutationObserver(function () {
+        requestAnimationFrame(populateMetadataFields);
+      }).observe(form, { attributes: true, attributeFilter: ['class'] });
+    }
   }
 
   document.addEventListener('DOMContentLoaded', addLookupUI);

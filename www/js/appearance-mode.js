@@ -51,6 +51,10 @@
       '.field-label,.menu-hint,.book-meta,.dash-muted,.status-page-item span,#bookDetails .bd-author{color:var(--muted)!important}' +
       '.field input,.field textarea,.field select{color:var(--paper-light)!important;border-bottom-color:var(--surface-border)!important}' +
       '.field input::placeholder,.field textarea::placeholder{color:var(--muted)!important;opacity:1}' +
+      'html[data-theme="dark"] .field select{background:var(--bg-elevated)!important;color:var(--paper-light)!important;color-scheme:dark}' +
+      'html[data-theme="dark"] .field select option{background:var(--bg-elevated)!important;color:var(--paper-light)!important}' +
+      'html[data-theme="light"] .field select{background:var(--paper)!important;color:var(--ink)!important;color-scheme:light}' +
+      'html[data-theme="light"] .field select option{background:var(--paper)!important;color:var(--ink)!important}' +
       'html[data-theme="dark"] .book-card{background:var(--bg-elevated)!important;color:var(--paper-light)!important}' +
       'html[data-theme="dark"] .book-card .book-title{color:var(--paper-light)!important}' +
       'html[data-theme="dark"] .book-card .book-author{color:var(--paper-light)!important}' +
