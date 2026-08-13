@@ -16,11 +16,11 @@
     var root = document.documentElement;
     root.style.setProperty('--accent', accent);
     root.style.setProperty('--gold', accent);
-    root.dataset.theme = settings.mode;
+    root.dataset.theme = settings.mode === 'light' ? 'light' : 'dark';
     localStorage.setItem(KEY, JSON.stringify(settings));
 
     document.querySelectorAll('[data-appearance-mode]').forEach(function (button) {
-      button.classList.toggle('selected', button.dataset.appearanceMode === settings.mode);
+      button.classList.toggle('selected', button.dataset.appearanceMode === root.dataset.theme);
     });
     document.querySelectorAll('[data-accent]').forEach(function (button) {
       button.classList.toggle('selected', button.dataset.accent === settings.accent);
@@ -33,18 +33,35 @@
     var settings = loadSettings();
 
     var style = document.createElement('style');
+    style.id = 'appearanceModeStyles';
     style.textContent =
-      '#appearanceSettings{margin:0 0 14px;padding:14px 0;border-bottom:1px solid rgba(42,36,30,.18)}' +
-      '#appearanceSettings h3{margin:0 0 10px;color:#55493C;font-size:11px;letter-spacing:.08em;text-transform:uppercase}' +
+      ':root{color-scheme:dark;--bg:#14181C;--bg-elevated:#1B2129;--paper:#EDE6D6;--paper-light:#F6F1E4;--ink:#2A241E;--ink-soft:#55493C;--muted:#8A8378;--line:rgba(246,241,228,.15);--surface-border:rgba(168,130,60,.28);--shadow:rgba(0,0,0,.40)}' +
+      'html[data-theme="light"]{color-scheme:light;--bg:#F2EDE3;--bg-elevated:#FFFDF8;--paper:#FFFDF8;--paper-light:#2A241E;--ink:#2A241E;--ink-soft:#695D50;--muted:#756D63;--line:rgba(42,36,30,.16);--surface-border:rgba(87,68,42,.22);--shadow:rgba(42,36,30,.12)}' +
+      '#appearanceSettings{margin:0 0 14px;padding:14px 0;border-bottom:1px solid var(--line)}' +
+      '#appearanceSettings h3{margin:0 0 10px;color:var(--ink-soft);font-size:11px;letter-spacing:.08em;text-transform:uppercase}' +
       '.appearance-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}' +
-      '.appearance-row button{padding:8px 11px;border:1px solid #A8823C;border-radius:3px;background:transparent;color:#55493C;font:600 12px -apple-system,Segoe UI,sans-serif;cursor:pointer}' +
-      '.appearance-row button.selected{background:var(--gold);border-color:var(--gold);color:#F6F1E4}' +
+      '.appearance-row button{padding:8px 11px;border:1px solid var(--gold);border-radius:3px;background:transparent;color:var(--ink-soft);font:600 12px -apple-system,Segoe UI,sans-serif;cursor:pointer}' +
+      '.appearance-row button.selected{background:var(--gold);border-color:var(--gold);color:#fff}' +
       '.accent-dot{display:inline-block;width:12px;height:12px;margin-right:5px;border-radius:50%;vertical-align:-1px;background:var(--dot)}' +
-      'html[data-theme="light"] body,html[data-theme="light"] #app,html[data-theme="light"] .sheet,html[data-theme="light"] .status-page,html[data-theme="light"] #bookDetails{background:#F2EDE3!important;color:#2A241E!important}' +
-      'html[data-theme="light"] .app-header,html[data-theme="light"] .sheet-header,html[data-theme="light"] #bookDetails .bd-top,html[data-theme="light"] .status-page-header{background:#F2EDE3!important}' +
-      'html[data-theme="light"] .app-title,html[data-theme="light"] .sheet-header h2,html[data-theme="light"] #bookDetails .bd-title,html[data-theme="light"] .status-page h2{color:#2A241E!important}' +
-      'html[data-theme="light"] .search-slip input,html[data-theme="light"] .menu-action,html[data-theme="light"] #bookDetails .bd-panel,html[data-theme="light"] .status-page-item{background:#FFFDF8!important;color:#2A241E!important}' +
-      'html[data-theme="light"] .icon-btn,html[data-theme="light"] .text-btn{color:#2A241E!important}';
+      'body,#app,.sheet,.status-page,#bookDetails,#dashboard,.cover-preview{background:var(--bg);color:var(--paper-light)}' +
+      '.app-header,.sheet-header,.status-page-header,.dash-head,#bookDetails .bd-top{background:var(--bg);border-color:var(--surface-border)!important}' +
+      '.app-title,.sheet-header h2,.status-page h2,.dash-head h1,#bookDetails .bd-title{color:var(--paper-light)!important}' +
+      '.icon-btn,.text-btn,.dashboard-btn,.dash-close{color:var(--paper-light)!important}' +
+      '.search-slip input,.menu-action,.index-card,#bookDetails .bd-panel,#bookDetails .bd-chip,.status-page-item,.dash-card,.cover-preview-card{background:var(--bg-elevated)!important;color:var(--paper-light)!important;border-color:var(--surface-border)!important;box-shadow:0 2px 6px var(--shadow)}' +
+      '.field-label,.menu-hint,.book-meta,.dash-muted,.status-page-item span,#bookDetails .bd-author{color:var(--muted)!important}' +
+      '.field input,.field textarea,.field select{color:var(--paper-light)!important;border-bottom-color:var(--surface-border)!important}' +
+      '.field input::placeholder,.field textarea::placeholder{color:var(--muted)!important;opacity:1}' +
+      'html[data-theme="dark"] .book-card{background:var(--bg-elevated)!important;color:var(--paper-light)!important}' +
+      'html[data-theme="dark"] .book-card .book-title{color:var(--paper-light)!important}' +
+      'html[data-theme="dark"] .book-card .book-author{color:var(--paper-light)!important}' +
+      'html[data-theme="light"] .book-card{background:var(--paper)!important;color:var(--ink)!important;box-shadow:0 2px 7px var(--shadow)}' +
+      'html[data-theme="light"] .book-title,html[data-theme="light"] .status-page-item strong,html[data-theme="light"] #bookDetails .bd-title{color:var(--ink)!important}' +
+      'html[data-theme="light"] .book-author,html[data-theme="light"] .status-page-item span,html[data-theme="light"] .dash-muted{color:var(--ink-soft)!important}' +
+      'html[data-theme="light"] .bottom-nav,html[data-theme="light"] #bottomNav,html[data-theme="light"] .nav-bar{background:var(--bg-elevated)!important;border-color:var(--surface-border)!important;color:var(--ink)!important}' +
+      'html[data-theme="light"] .bottom-nav button,html[data-theme="light"] #bottomNav button,html[data-theme="light"] .nav-bar button{color:var(--ink-soft)!important}' +
+      'html[data-theme="light"] .dash-action{color:#fff!important}' +
+      'html[data-theme="light"] .dash-add{color:var(--ink)!important}' +
+      'html[data-theme="light"] .toast{background:var(--ink)!important;color:#fff!important}';
     document.head.appendChild(style);
 
     var colorButtons = Object.keys(colors).map(function (name) {
@@ -67,8 +84,14 @@
     section.addEventListener('click', function (event) {
       var modeButton = event.target.closest('[data-appearance-mode]');
       var colorButton = event.target.closest('[data-accent]');
-      if (modeButton) { settings.mode = modeButton.dataset.appearanceMode; apply(settings); }
-      if (colorButton) { settings.accent = colorButton.dataset.accent; apply(settings); }
+      if (modeButton) {
+        settings.mode = modeButton.dataset.appearanceMode;
+        apply(settings);
+      }
+      if (colorButton) {
+        settings.accent = colorButton.dataset.accent;
+        apply(settings);
+      }
     });
 
     apply(settings);

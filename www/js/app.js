@@ -11,9 +11,38 @@
     ratings: $('ratingGroup'), menuSheet: $('menuSheet'), menuCancel: $('menuCancel'), export: $('exportBtn'),
     import: $('importBtn'), file: $('importFile'), toast: $('toast')
   };
-  const status = { 'to-read':'To Read', reading:'Reading', paused:'Paused', finished:'Finished', abandoned:'Abandoned', wishlist:'Wishlist', loaned:'Loaned' };
+  const status = {
+    'to-read': 'To Read',
+    reading: 'Reading',
+    paused: 'Paused',
+    finished: 'Finished',
+    abandoned: 'Abandoned',
+    wishlist: 'Wishlist',
+    loaned: 'Loaned Out'
+  };
   const formats = { paperback:'Paperback', 'hardback-special':'Hardback (Special)', ebook:'Ebook', kindle:'Kindle', audiobook:'Audiobook' };
-  const cover = isbn => { const value = String(isbn || '').replace(/[^0-9Xx]/g, ''); return value ? `https://covers.openlibrary.org/b/isbn/${encodeURIComponent(value)}-M.jpg?default=false` : ''; };
+  const cover = isbn => {
+    const value = String(isbn || '').replace(/[^0-9Xx]/g, '');
+    return value ? `https://covers.openlibrary.org/b/isbn/${encodeURIComponent(value)}-M.jpg?default=false` : '';
+  };
+
+  function normalizeStatus(value) {
+    const key = String(value || '').trim().toLowerCase().replace(/[ _]+/g, '-');
+    const aliases = {
+      'to-read': 'to-read',
+      toread: 'to-read',
+      reading: 'reading',
+      paused: 'paused',
+      finished: 'finished',
+      abandoned: 'abandoned',
+      'gave-up': 'abandoned',
+      wishlist: 'wishlist',
+      'wish-list': 'wishlist',
+      loaned: 'loaned',
+      'loaned-out': 'loaned'
+    };
+    return aliases[key] || 'to-read';
+  }
 
   function toast(message) {
     el.toast.textContent = message;
@@ -23,8 +52,10 @@
   }
 
   function setStatus(value) {
-    selectedStatus = value;
-    el.statuses.querySelectorAll('.stamp').forEach(button => button.classList.toggle('selected', button.dataset.status === value));
+    selectedStatus = normalizeStatus(value);
+    el.statuses.querySelectorAll('.stamp').forEach(button => {
+      button.classList.toggle('selected', normalizeStatus(button.dataset.status) === selectedStatus);
+    });
   }
 
   function setRating(value) {
@@ -33,9 +64,10 @@
   }
 
   function card(book) {
+    const bookStatus = normalizeStatus(book.status);
     const article = document.createElement('article');
     article.className = 'book-card';
-    article.dataset.status = book.status;
+    article.dataset.status = bookStatus;
     article.onclick = () => open(book);
 
     const top = document.createElement('div');
@@ -63,8 +95,8 @@
     content.append(text);
 
     const stamp = document.createElement('span');
-    stamp.className = `card-stamp status-${book.status}`;
-    stamp.textContent = status[book.status] || book.status;
+    stamp.className = `card-stamp status-${bookStatus}`;
+    stamp.textContent = status[bookStatus];
     top.append(content, stamp);
     article.append(top);
 
@@ -88,7 +120,9 @@
 
   function render() {
     const query = el.search.value.trim().toLowerCase();
-    const filtered = books.filter(book => !query || book.title.toLowerCase().includes(query) || book.author.toLowerCase().includes(query)).sort((a, b) => a.title.localeCompare(b.title));
+    const filtered = books
+      .filter(book => !query || String(book.title || '').toLowerCase().includes(query) || String(book.author || '').toLowerCase().includes(query))
+      .sort((a, b) => String(a.title || '').localeCompare(String(b.title || '')));
     el.count.textContent = `${books.length} book${books.length === 1 ? '' : 's'} on the shelf`;
     el.list.replaceChildren();
     el.empty.classList.toggle('hidden', books.length !== 0);
@@ -132,7 +166,7 @@
       difficulty: el.difficulty.value,
       price: Math.max(0, +el.price.value || 0),
       format: el.format.value,
-      status: selectedStatus,
+      status: normalizeStatus(selectedStatus),
       rating: selectedRating,
       notes: el.notes.value.trim(),
       dateAdded: prior?.dateAdded || new Date().toISOString()
@@ -160,7 +194,10 @@
     el.cancel.onclick = close;
     el.save.onclick = save;
     el.del.onclick = remove;
-    el.statuses.onclick = event => event.target.dataset.status && setStatus(event.target.dataset.status);
+    el.statuses.onclick = event => {
+      const button = event.target.closest('[data-status]');
+      if (button) setStatus(button.dataset.status);
+    };
     el.ratings.onclick = event => {
       const value = +event.target.dataset.star;
       if (value) setRating(value === selectedRating ? 0 : value);
@@ -191,7 +228,7 @@
 
   document.addEventListener('DOMContentLoaded', async () => {
     wire();
-    books = await S.loadBooks();
+    books = (await S.loadBooks()).map(book => ({ ...book, status: normalizeStatus(book.status) }));
     render();
   });
 })();

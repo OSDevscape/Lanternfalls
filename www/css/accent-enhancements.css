@@ -1,6 +1,13 @@
-/* Apply the selected Appearance accent consistently across Book Shelf. */
+/* Accent, status, and component enhancements for ReadQuest. */
 :root {
-    --accent-rgb: 168, 130, 60
+  --accent-rgb: 168, 130, 60;
+  --status-to-read: #E77A35;
+  --status-reading: #4A90E2;
+  --status-paused: #C28A31;
+  --status-finished: #4C9A5A;
+  --status-abandoned: #A85A5A;
+  --status-wishlist: #D6A719;
+  --status-loaned: #9B6BD4;
 }
 
 .title-accent,
@@ -10,18 +17,17 @@
 #bookDetails .bd-heading,
 #bookDetails .bd-rating,
 #bookDetails .bd-status,
-#bookDetails .bd-edit,
 #bookDetails .bd-chip strong {
-    color: var(--gold) !important
+  color: var(--gold) !important;
 }
 
 .search-slip input:focus,
 .field input:focus,
 .field textarea:focus,
 .field select:focus {
-    outline: none !important;
-    border-bottom-color: var(--gold) !important;
-    box-shadow: 0 2px 0 rgba(0, 0, 0, 0), 0 0 0 2px color-mix(in srgb, var(--gold) 24%, transparent) !important;
+  outline: none !important;
+  border-bottom-color: var(--gold) !important;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0), 0 0 0 2px color-mix(in srgb, var(--gold) 24%, transparent) !important;
 }
 
 .fab,
@@ -29,14 +35,14 @@
 .view-mode-options button.selected,
 .appearance-row button.selected,
 #statusFilters button.selected {
-    background: var(--gold) !important;
-    border-color: var(--gold) !important;
-    color: var(--paper-light) !important;
+  background: var(--gold) !important;
+  border-color: var(--gold) !important;
+  color: #fff !important;
 }
 
 .fab {
-    border-color: var(--gold) !important;
-    box-shadow: 0 4px 16px color-mix(in srgb, var(--gold) 35%, transparent) !important
+  border-color: var(--gold) !important;
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--gold) 35%, transparent) !important;
 }
 
 .menu-action:hover,
@@ -49,126 +55,70 @@
 .appearance-row button:focus-visible,
 #statusFilters button:hover,
 #statusFilters button:focus-visible {
-    border-color: var(--gold) !important;
-    color: var(--gold) !important;
+  border-color: var(--gold) !important;
+  color: var(--gold) !important;
 }
 
 .book-card {
-    border-left-color: var(--gold) !important
+  border-left-color: var(--gold) !important;
 }
 
-.book-card[data-status="reading"] {
-    border-left-color: var(--accent) !important
-}
+.book-card[data-status="to-read"] { border-left-color: var(--status-to-read) !important; }
+.book-card[data-status="reading"] { border-left-color: var(--status-reading) !important; }
+.book-card[data-status="paused"] { border-left-color: var(--status-paused) !important; }
+.book-card[data-status="finished"] { border-left-color: var(--status-finished) !important; }
+.book-card[data-status="abandoned"] { border-left-color: var(--status-abandoned) !important; }
+.book-card[data-status="wishlist"] { border-left-color: var(--status-wishlist) !important; }
+.book-card[data-status="loaned"] { border-left-color: var(--status-loaned) !important; }
 
-.book-card[data-status="finished"] {
-    border-left-color: var(--finished) !important
-}
+.card-stamp.status-to-read { color: var(--status-to-read) !important; }
+.card-stamp.status-reading { color: var(--status-reading) !important; }
+.card-stamp.status-paused { color: var(--status-paused) !important; }
+.card-stamp.status-finished { color: var(--status-finished) !important; }
+.card-stamp.status-abandoned { color: var(--status-abandoned) !important; }
+.card-stamp.status-wishlist { color: var(--status-wishlist) !important; }
+.card-stamp.status-loaned { color: var(--status-loaned) !important; }
 
-.book-card[data-status="wishlist"] {
-    border-left-color: var(--gold) !important
-}
+.stamp-toread { color: var(--status-to-read) !important; border-color: var(--status-to-read) !important; }
+.stamp-reading { color: var(--status-reading) !important; border-color: var(--status-reading) !important; }
+.stamp-paused { color: var(--status-paused) !important; border-color: var(--status-paused) !important; }
+.stamp-finished { color: var(--status-finished) !important; border-color: var(--status-finished) !important; }
+.stamp-abandoned { color: var(--status-abandoned) !important; border-color: var(--status-abandoned) !important; }
+.stamp-wishlist { color: var(--status-wishlist) !important; border-color: var(--status-wishlist) !important; }
+.stamp-loaned { color: var(--status-loaned) !important; border-color: var(--status-loaned) !important; }
 
-.book-card[data-status="loaned"] {
-    border-left-color: var(--gold) !important
-}
-
-.card-stamp.status-to-read,
-.card-stamp.status-wishlist,
-.card-stamp.status-loaned,
-.stamp-toread,
-.stamp-wishlist,
-.stamp-loaned {
-    color: var(--gold) !important
-}
+.stamp.selected.stamp-toread { background: var(--status-to-read) !important; border-color: var(--status-to-read) !important; color: #fff !important; }
+.stamp.selected.stamp-reading { background: var(--status-reading) !important; border-color: var(--status-reading) !important; color: #fff !important; }
+.stamp.selected.stamp-paused { background: var(--status-paused) !important; border-color: var(--status-paused) !important; color: #fff !important; }
+.stamp.selected.stamp-finished { background: var(--status-finished) !important; border-color: var(--status-finished) !important; color: #fff !important; }
+.stamp.selected.stamp-abandoned { background: var(--status-abandoned) !important; border-color: var(--status-abandoned) !important; color: #fff !important; }
+.stamp.selected.stamp-wishlist { background: var(--status-wishlist) !important; border-color: var(--status-wishlist) !important; color: #fff !important; }
+.stamp.selected.stamp-loaned { background: var(--status-loaned) !important; border-color: var(--status-loaned) !important; color: #fff !important; }
 
 .book-cover,
 #bookDetails .bd-cover,
 #coverPreviewImage {
-    border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent) !important
+  border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent) !important;
 }
 
 .sheet-header,
 .app-header,
 .status-page-header,
 #bookDetails .bd-top {
-    border-color: color-mix(in srgb, var(--gold) 22%, transparent) !important
+  border-color: color-mix(in srgb, var(--gold) 22%, transparent) !important;
 }
 
 ::selection {
-    background: var(--gold) !important;
-    color: var(--paper-light) !important
+  background: var(--gold) !important;
+  color: #fff !important;
 }
 
-/* Keep the Edit entry label readable on its accent background */
 #bookDetails .bd-edit {
   background: var(--gold) !important;
   border-color: var(--gold) !important;
-  color: var(--paper-light) !important;
+  color: #fff !important;
 }
 
-/* Fixed status colors — independent of the selected site accent */
-:root {
-  --status-to-read: #E77A35;
-  --status-reading: #4A90E2;
-  --status-finished: #4C9A5A;
-  --status-wishlist: #D6A719;
-  --status-loaned: #9B6BD4;
-}
-
-/* Card left borders */
-.book-card[data-status="to-read"]  { border-left-color: var(--status-to-read) !important; }
-.book-card[data-status="reading"]  { border-left-color: var(--status-reading) !important; }
-.book-card[data-status="finished"] { border-left-color: var(--status-finished) !important; }
-.book-card[data-status="wishlist"] { border-left-color: var(--status-wishlist) !important; }
-.book-card[data-status="loaned"]   { border-left-color: var(--status-loaned) !important; }
-
-/* Status stamps on book cards */
-.card-stamp.status-to-read  { color: var(--status-to-read) !important; }
-.card-stamp.status-reading  { color: var(--status-reading) !important; }
-.card-stamp.status-finished { color: var(--status-finished) !important; }
-.card-stamp.status-wishlist { color: var(--status-wishlist) !important; }
-.card-stamp.status-loaned   { color: var(--status-loaned) !important; }
-
-/* Status buttons in the Add/Edit Book form */
-.stamp-toread  { color: var(--status-to-read) !important; border-color: var(--status-to-read) !important; }
-.stamp-reading { color: var(--status-reading) !important; border-color: var(--status-reading) !important; }
-.stamp-finished { color: var(--status-finished) !important; border-color: var(--status-finished) !important; }
-.stamp-wishlist { color: var(--status-wishlist) !important; border-color: var(--status-wishlist) !important; }
-.stamp-loaned   { color: var(--status-loaned) !important; border-color: var(--status-loaned) !important; }
-
-/* Selected status buttons */
-.stamp.selected.stamp-toread {
-  background: var(--status-to-read) !important;
-  border-color: var(--status-to-read) !important;
-  color: var(--paper-light) !important;
-}
-
-.stamp.selected.stamp-reading {
-  background: var(--status-reading) !important;
-  border-color: var(--status-reading) !important;
-  color: var(--paper-light) !important;
-}
-
-.stamp.selected.stamp-finished {
-  background: var(--status-finished) !important;
-  border-color: var(--status-finished) !important;
-  color: var(--paper-light) !important;
-}
-
-.stamp.selected.stamp-wishlist {
-  background: var(--status-wishlist) !important;
-  border-color: var(--status-wishlist) !important;
-  color: var(--paper-light) !important;
-}
-
-.stamp.selected.stamp-loaned {
-  background: var(--status-loaned) !important;
-  border-color: var(--status-loaned) !important;
-  color: var(--paper-light) !important;
-}
-
-/* Settings menu: fixed colors for status pages */
 .status-pages button[data-status-page="wishlist"] {
   border-color: var(--status-wishlist) !important;
   color: var(--status-wishlist) !important;
@@ -190,31 +140,23 @@
 .status-pages button[data-status-page="loaned"]:focus-visible {
   background: var(--status-loaned) !important;
   border-color: var(--status-loaned) !important;
-  color: var(--paper-light) !important;
+  color: #fff !important;
 }
 
-/* Keep Wishlist and Loaned Out books off the main shelf */
-#bookList .book-card[data-status="wishlist"],
-#bookList .book-card[data-status="loaned"] {
-  display: none !important;
-}
-
-/* Wishlist and Loaned Out cards match the main shelf */
 .status-page-item,
 .status-page-list.status-view-grid .status-page-item {
-  background: var(--paper) !important;
-  color: var(--ink) !important;
-  border-color: rgba(42, 36, 30, 0.18) !important;
+  background: var(--bg-elevated, var(--paper)) !important;
+  color: var(--paper-light) !important;
+  border-color: var(--surface-border, rgba(42, 36, 30, 0.18)) !important;
 }
 
 .status-page-item strong {
-  color: var(--ink) !important;
+  color: var(--paper-light) !important;
 }
 
 .status-page-item span {
-  color: var(--ink-soft) !important;
+  color: var(--muted) !important;
 }
-
 
 .difficulty-definition {
   margin: 7px 0 0;
