@@ -489,23 +489,4 @@ button {
   background: rgb(0 0 0 / 20%);
 }
 
-.brand-lockup {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
 
-.brand-logo {
-  display: block;
-  width: 42px;
-  height: 42px;
-  flex: 0 0 42px;
-  object-fit: contain;
-  border-radius: 10px;
-  background: #000;
-}
-
-.brand-lockup .app-title {
-  margin: 0;
-}

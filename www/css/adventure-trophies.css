@@ -1,0 +1,26 @@
+/* Boss Trophies: individual defeated-boss cards */
+.adventure-trophy-list{display:block}
+.adventure-trophy-detail{margin:0;border-bottom:1px solid rgba(168,130,60,.18)}
+.adventure-trophy-detail:last-child{border-bottom:0}
+.adventure-trophy-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border:0;background:transparent;color:inherit;cursor:pointer;text-align:left;touch-action:manipulation}
+.adventure-trophy-toggle>span b,.adventure-trophy-toggle>span em{display:block}
+.adventure-trophy-toggle>span b{font:15px Georgia,serif;color:var(--gold,#A8823C)}
+.adventure-trophy-toggle>span em{margin-top:3px;color:var(--muted,#8A8378);font-size:11px;font-style:normal}
+.adventure-trophy-toggle>strong{color:var(--gold,#A8823C);font-size:12px;line-height:1.45;text-align:right;white-space:nowrap}
+.adventure-trophy-toggle>strong i{color:var(--muted,#8A8378);font-style:normal}
+.adventure-trophy-toggle::after{content:'+';color:var(--gold,#A8823C);font-size:19px;line-height:1}
+.adventure-trophy-detail.is-open .adventure-trophy-toggle::after{content:'−'}
+.adventure-trophy-detail-body{display:none}
+.adventure-trophy-detail.is-open .adventure-trophy-detail-body{display:block}
+.adventure-trophy-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:4px 0 12px}
+.adventure-trophy-stats>div{padding:8px 4px;background:rgba(0,0,0,.14);text-align:center}
+.adventure-trophy-stats b,.adventure-trophy-stats span{display:block}
+.adventure-trophy-stats b{color:var(--paper-light,#F6F1E4);font-size:16px}
+.adventure-trophy-stats span{margin-top:3px;color:var(--muted,#8A8378);font-size:9px}
+.adventure-trophy-recap{padding:9px 0;border-top:1px solid rgba(168,130,60,.14);color:var(--muted,#8A8378);font-size:11px;line-height:1.35}
+.adventure-trophy-recap p{margin:3px 0}
+.adventure-trophy-recap b,.adventure-session-history>b{color:var(--gold,#A8823C)}
+.adventure-session-history{padding:9px 0;font-size:11px}
+.adventure-session-history ul{margin:7px 0 0;padding:0 18px 0 0;box-sizing:border-box;max-height:130px;overflow-x:hidden;overflow-y:auto;list-style:none;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-gutter:stable;touch-action:pan-y}
+.adventure-session-history li{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-top:1px solid rgba(168,130,60,.12)}
+.adventure-session-history li span{flex:0 0 auto;color:var(--muted,#8A8378);padding-right:2px}

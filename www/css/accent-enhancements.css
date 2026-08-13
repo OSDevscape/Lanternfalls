@@ -214,3 +214,11 @@
 .status-page-item span {
   color: var(--ink-soft) !important;
 }
+
+
+.difficulty-definition {
+  margin: 7px 0 0;
+  color: var(--muted, #8A8378);
+  font-size: 11px;
+  line-height: 1.4;
+}

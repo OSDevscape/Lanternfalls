@@ -2,23 +2,77 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:gravity="center_horizontal"
     android:orientation="vertical"
-    android:padding="12dp"
-    android:background="@drawable/widget_background">
+    android:padding="10dp">
+
+    <TextView
+        android:id="@+id/widget_accent_strip"
+        android:layout_width="match_parent"
+        android:layout_height="5dp"
+        android:layout_marginBottom="8dp"
+        android:background="#A8823C"
+        android:text="" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/widget_logo"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="#8B3A3A"
+            android:gravity="center"
+            android:text="RQ"
+            android:textColor="#F6F1E4"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_brand"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="READQUEST"
+                android:textColor="#F6F1E4"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Loading reading quest…"
+                android:textColor="#B8B0A3"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginTop="8dp"
         android:layout_weight="1"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <ImageView
             android:id="@+id/widget_cover"
-            android:layout_width="76dp"
-            android:layout_height="112dp"
-            android:layout_marginEnd="12dp"
-            android:adjustViewBounds="true"
+            android:layout_width="64dp"
+            android:layout_height="92dp"
             android:background="#2B3037"
             android:contentDescription="Current book cover"
             android:scaleType="centerCrop" />
@@ -26,6 +80,7 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:layout_marginStart="10dp"
             android:layout_weight="1"
             android:gravity="center"
             android:orientation="vertical">
@@ -37,15 +92,16 @@
                 android:ellipsize="end"
                 android:gravity="center"
                 android:maxLines="2"
+                android:text="No current book"
                 android:textColor="#F6F1E4"
                 android:textSize="15sp"
                 android:textStyle="bold" />
 
             <Chronometer
                 android:id="@+id/widget_timer"
-                android:layout_width="104dp"
-                android:layout_height="104dp"
-                android:layout_marginTop="8dp"
+                android:layout_width="86dp"
+                android:layout_height="58dp"
+                android:layout_marginTop="7dp"
                 android:background="@drawable/widget_timer_idle"
                 android:gravity="center"
                 android:textColor="#F6F1E4"
@@ -57,17 +113,28 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:gravity="end"
+        android:layout_marginTop="7dp"
+        android:gravity="center"
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/widget_pause"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:layout_marginEnd="8dp"
+            android:id="@+id/widget_start"
+            android:layout_width="0dp"
+            android:layout_height="38dp"
+            android:layout_weight="1"
             android:background="@drawable/widget_action_button"
-            android:paddingHorizontal="14dp"
+            android:text="Start"
+            android:textAllCaps="false"
+            android:textColor="#F6F1E4"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/widget_pause"
+            android:layout_width="0dp"
+            android:layout_height="38dp"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:background="@drawable/widget_action_button"
             android:text="Pause"
             android:textAllCaps="false"
             android:textColor="#F6F1E4"
@@ -75,10 +142,11 @@
 
         <Button
             android:id="@+id/widget_stop"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
+            android:layout_width="0dp"
+            android:layout_height="38dp"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
             android:background="@drawable/widget_stop_button"
-            android:paddingHorizontal="14dp"
             android:text="Stop"
             android:textAllCaps="false"
             android:textColor="#F6F1E4"

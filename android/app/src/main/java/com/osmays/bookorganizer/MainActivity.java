@@ -1,6 +1,7 @@
 package com.osmays.bookorganizer;
 
 import android.content.Intent;
+import android.os.Bundle;
 import android.util.Log;
 
 import com.getcapacitor.BridgeActivity;
@@ -13,6 +14,12 @@ import ee.forgr.capacitor.social.login.SocialLoginPlugin;
 
 public class MainActivity extends BridgeActivity
     implements ModifiedMainActivityForSocialLoginPlugin {
+
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    registerPlugin(WidgetRefreshPlugin.class);
+  }
 
   @Override
   public void IHaveModifiedTheMainActivityForTheUseWithSocialLoginPlugin() {

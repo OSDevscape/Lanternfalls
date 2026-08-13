@@ -7,9 +7,7 @@
     catch (_) { return JSON.parse(fallback); }
   }
 
-  function minutes(entry) {
-    return Math.max(0, Number(entry && entry.minutes) || 0);
-  }
+  function minutes(entry) { return Math.max(0, Math.floor(Number(entry && entry.minutes) || 0)); }
 
   function hash(value) {
     var number = 0;
@@ -34,13 +32,18 @@
       { word: 'thriller', region: 'The Dead City', boss: 'The Nightwire Hunter' },
       { word: 'adventure', region: 'The Wilds', boss: 'The Stormtrail Behemoth' }
     ];
-    var match = map.filter(function (item) { return genre.indexOf(item.word) !== -1; })[0];
-    return match || { region: 'The Reading Realm', boss: 'The Inkbound Guardian' };
+    return map.filter(function (item) { return genre.indexOf(item.word) !== -1; })[0] || { region: 'The Reading Realm', boss: 'The Inkbound Guardian' };
   }
 
   function getBooks() {
     try { return window.BookStorage.loadBooks(); }
     catch (_) { return Promise.resolve([]); }
+  }
+
+  function latestSession(sessions) {
+    return sessions.slice().sort(function (a, b) {
+      return String(b.createdAt || b.endedAt || b.date || '').localeCompare(String(a.createdAt || a.endedAt || a.date || ''));
+    })[0];
   }
 
   async function render() {
@@ -65,9 +68,9 @@
       return;
     }
 
-    var sessions = read(LOG_KEY, '[]').filter(function (entry) { return entry.bookId === active.id; });
+    var sessions = read(LOG_KEY, '[]').filter(function (entry) { return entry && entry.bookId === active.id; });
     var totalMinutes = sessions.reduce(function (total, entry) { return total + minutes(entry); }, 0);
-    var latest = sessions.slice().sort(function (a, b) { return String(b.createdAt || b.date).localeCompare(String(a.createdAt || a.date)); })[0];
+    var latest = latestSession(sessions);
     var game = read(GAME_KEY, '{}');
     var strength = Math.max(10, Number((game.stats || {}).str) || 10);
     var luck = Math.max(10, Number((game.stats || {}).lck) || 10);
@@ -75,13 +78,13 @@
     var combat = '';
 
     if (latest) {
+      var reward = window.BookShelfRewards ? window.BookShelfRewards.calculateSession(latest) : { xp: minutes(latest) * 10, gold: Math.max(1, Math.floor(minutes(latest) / 2)), bonus: '' };
       var baseDamage = Math.floor(minutes(latest) * (1 + strength / 500));
       var critChance = Math.min(25, 5 + luck / 20);
       var critical = (hash(latest.id) % 10000) < Math.round(critChance * 100);
       var damage = critical ? Math.floor(baseDamage * 1.5) : baseDamage;
-      var xp = minutes(latest) * 10;
-      var gold = Math.max(1, Math.floor(minutes(latest) / 2));
-      combat = '<div class="adventure-combat-result"><span>' + (critical ? '✦ Critical Hit' : '⚔ Combat Result') + '</span><strong>' + damage + ' damage</strong><p>' + minutes(latest) + ' minutes · +' + xp + ' XP · +' + gold + ' gold</p></div>';
+      var rewardNote = reward.bonus ? ' · ' + reward.bonus : '';
+      combat = '<div class="adventure-combat-result"><span>' + (critical ? '✦ Critical Hit' : '⚔ Combat Result') + '</span><strong>' + damage + ' damage</strong><p>' + minutes(latest) + ' minutes · +' + reward.xp + ' XP · +' + reward.gold + ' gold' + rewardNote + '</p></div>';
     } else {
       combat = '<p class="adventure-muted">Log time for this book to create your first combat result.</p>';
     }
