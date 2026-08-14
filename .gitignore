@@ -4,3 +4,7 @@
 !.dev.vars.example
 .env*
 !.env.example
+
+# Java / JVM crash reports
+hs_err_pid*.log
+replay_pid*.log

@@ -17,8 +17,9 @@ public class MainActivity extends BridgeActivity
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
     registerPlugin(WidgetRefreshPlugin.class);
+    registerPlugin(IsbnScannerPlugin.class);
+    super.onCreate(savedInstanceState);
   }
 
   @Override
