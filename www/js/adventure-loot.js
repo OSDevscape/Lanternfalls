@@ -10,6 +10,10 @@
     localStorage.setItem(key, JSON.stringify(value));
   }
 
+  function tooltipButton(message, label) {
+    return '<button type="button" class="adventure-loot-tooltip" data-tooltip="' + message + '" aria-label="' + label + '" aria-expanded="false">ⓘ</button>';
+  }
+
   function hash(value) {
     var number = 0;
     String(value || '').split('').forEach(function (character) {
@@ -104,7 +108,7 @@
     var value = data();
     var trophies = document.createElement('section');
     trophies.className = 'adventure-card adventure-trophies-card';
-    trophies.innerHTML = '<span class="adventure-label">Boss Trophies</span><h2>Defeated Bosses</h2>';
+    trophies.innerHTML = '<span class="adventure-label">Boss Trophies ' + tooltipButton('Boss Trophies are permanent records of completed books whose completion rewards you claimed. Each trophy preserves that book’s boss-defeat reward history.', 'About Boss Trophies') + '</span><h2>Defeated Bosses</h2>';
 
     if (!value.events.length) {
       trophies.innerHTML += '<p class="adventure-muted">Claim a completed book’s reward to earn your first boss trophy.</p>';
@@ -122,7 +126,7 @@
 
     var inventory = document.createElement('section');
     inventory.className = 'adventure-card adventure-inventory-card';
-    inventory.innerHTML = '<span class="adventure-label">Loot Inventory</span><h2>Collected Items</h2>';
+    inventory.innerHTML = '<span class="adventure-label">Loot Inventory ' + tooltipButton('Loot Inventory contains collectible cosmetic items earned by claiming completed-book rewards. Each completed book can contribute one deterministic item, with a rarity from Common through Mythic.', 'About Loot Inventory') + '</span><h2>Collected Items</h2>';
 
     if (!value.items.length) {
       inventory.innerHTML += '<p class="adventure-muted">Claim completed-book rewards to earn cosmetic trophies and collectible items.</p>';
@@ -148,7 +152,7 @@
     page.dataset.adventureLootReady = 'true';
 
     var style = document.createElement('style');
-    style.textContent = '.adventure-trophies-card,.adventure-inventory-card{border-color:rgba(168,130,60,.52)}.adventure-trophy-list,.adventure-loot-list{margin-top:12px;border-top:1px solid rgba(168,130,60,.18)}.adventure-trophy-item{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid rgba(168,130,60,.15)}.adventure-trophy-item b,.adventure-trophy-item span{display:block}.adventure-trophy-item b{font:15px Georgia,serif;color:var(--gold,#A8823C)}.adventure-trophy-item span{margin-top:3px;color:var(--muted,#8A8378);font-size:11px}.adventure-trophy-item em{align-self:center;color:var(--gold,#A8823C);font-size:12px;font-style:normal;white-space:nowrap}.adventure-loot-item{padding:10px 0;border-bottom:1px solid rgba(168,130,60,.15)}.adventure-loot-item b,.adventure-loot-item span{display:block}.adventure-loot-item b{font:15px Georgia,serif}.adventure-loot-item span{margin-top:3px;color:var(--muted,#8A8378);font-size:11px}.rarity-uncommon b{color:#79bd8d}.rarity-rare b{color:#74a8e7}.rarity-epic b{color:#c28ad9}.rarity-legendary b,.rarity-mythic b{color:var(--gold,#A8823C)}';
+    style.textContent = '.adventure-trophies-card,.adventure-inventory-card{border-color:rgba(168,130,60,.52)}.adventure-loot-tooltip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:4px;padding:0;border:1px solid currentColor;border-radius:50%;background:transparent;color:inherit;font:700 10px/1 sans-serif;vertical-align:middle;cursor:pointer}.adventure-loot-tooltip:focus-visible{outline:2px solid currentColor;outline-offset:2px}.adventure-trophy-list,.adventure-loot-list{margin-top:12px;border-top:1px solid rgba(168,130,60,.18)}.adventure-trophy-item{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid rgba(168,130,60,.15)}.adventure-trophy-item b,.adventure-trophy-item span{display:block}.adventure-trophy-item b{font:15px Georgia,serif;color:var(--gold,#A8823C)}.adventure-trophy-item span{margin-top:3px;color:var(--muted,#8A8378);font-size:11px}.adventure-trophy-item em{align-self:center;color:var(--gold,#A8823C);font-size:12px;font-style:normal;white-space:nowrap}.adventure-loot-item{padding:10px 0;border-bottom:1px solid rgba(168,130,60,.15)}.adventure-loot-item b,.adventure-loot-item span{display:block}.adventure-loot-item b{font:15px Georgia,serif}.adventure-loot-item span{margin-top:3px;color:var(--muted,#8A8378);font-size:11px}.rarity-uncommon b{color:#79bd8d}.rarity-rare b{color:#74a8e7}.rarity-epic b{color:#c28ad9}.rarity-legendary b,.rarity-mythic b{color:var(--gold,#A8823C)}';
     document.head.appendChild(style);
 
     new MutationObserver(function () { setTimeout(render, 0); }).observe(page, { childList:true });
