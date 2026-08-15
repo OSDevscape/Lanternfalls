@@ -17,12 +17,6 @@
     style.textContent = '#dashboard{position:fixed;inset:0;z-index:80;overflow:auto;background:var(--bg,#14181C);color:var(--paper-light,#F6F1E4);font-family:var(--font-body,-apple-system)}#dashboard.hidden{display:none!important}.dash-head{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:18px 20px;background:var(--bg,#14181C)}.dash-head h1{margin:0;font:26px Georgia,serif}.dash-body{padding:0 20px 130px}.dash-card{margin:14px 0;padding:16px;background:var(--bg-elevated,#1B2129);border:1px solid rgba(168,130,60,.25);border-radius:3px}.dash-card h2{margin:0 0 6px;color:var(--gold,#A8823C);font-size:15px;text-transform:uppercase}.dash-muted{color:var(--muted,#8A8378);font-size:13px}.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.dash-number{font:30px Georgia,serif}.dash-books{display:flex;gap:8px;overflow:auto}.dash-books img{width:48px;height:70px;object-fit:cover;border-radius:2px}.dash-action{width:100%;margin-top:8px;padding:11px;border:1px solid var(--gold,#A8823C);border-radius:3px;background:var(--accent,#8B3A3A);color:var(--paper-light,#F6F1E4)}.dash-bar{height:74px;display:flex;align-items:end;gap:7px;border-bottom:1px solid var(--muted,#8A8378)}.dash-bar i{flex:1;background:var(--gold,#A8823C);opacity:.75;border-radius:2px 2px 0 0}.dashboard-btn{border:0;background:none;color:var(--paper-light);font-size:22px;padding:8px}';
     document.head.appendChild(style);
 
-    var button = document.createElement('button');
-    button.className = 'dashboard-btn';
-    button.textContent = '⌂';
-    button.setAttribute('aria-label', 'Open dashboard');
-    head.insertBefore(button, head.lastElementChild);
-
     var view = document.createElement('section');
     view.id = 'dashboard';
     view.className = 'hidden';
@@ -53,11 +47,6 @@
         alert('Try reading: ' + book.title + ' by ' + book.author);
       };
     }
-
-    button.onclick = function () {
-      render();
-      view.classList.remove('hidden');
-    };
 
     render();
     view.classList.remove('hidden');
