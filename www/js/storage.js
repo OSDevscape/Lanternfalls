@@ -48,14 +48,61 @@ function payload(books) {
   return JSON.stringify({ version: 1.1, books: books }, null, 2);
 }
 
+function parseBooks(data) {
+  try {
+    const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+    const rawBooks = Array.isArray(parsed) ? parsed : ((parsed && parsed.books) || []);
+    return Array.isArray(rawBooks) ? rawBooks.map(normalizeBook) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
 function localBooks() {
-  return (
-    JSON.parse(localStorage.getItem(LOCAL_KEY) || '{"books":[]}').books || []
-  ).map(normalizeBook);
+  return parseBooks(localStorage.getItem(LOCAL_KEY) || '{"books":[]}');
+}
+
+function newestDate(books) {
+  return books.reduce(function (latest, book) {
+    const value = Date.parse(book && book.dateAdded);
+    return Number.isFinite(value) ? Math.max(latest, value) : latest;
+  }, 0);
+}
+
+function preferBooks(local, native) {
+  if (!native.length && local.length) return local;
+  if (!local.length && native.length) return native;
+  if (!local.length && !native.length) return [];
+
+  if (local.length !== native.length) {
+    return local.length > native.length ? local : native;
+  }
+
+  return newestDate(local) >= newestDate(native) ? local : native;
+}
+
+async function writeNative(data) {
+  const plugins = getPlugins();
+  if (!isNative() || !plugins.Filesystem) return false;
+
+  try {
+    await plugins.Filesystem.writeFile({
+      path: STORAGE_FILE,
+      directory: DATA_DIRECTORY,
+      data: data,
+      encoding: UTF8
+    });
+    return true;
+  } catch (error) {
+    console.warn('Native book save failed. The local backup remains saved.', error);
+    return false;
+  }
 }
 
 async function loadBooks() {
+  const local = localBooks();
   const plugins = getPlugins();
+  let native = [];
 
   if (isNative() && plugins.Filesystem) {
     try {
@@ -64,45 +111,34 @@ async function loadBooks() {
         directory: DATA_DIRECTORY,
         encoding: UTF8
       });
-
-      const saved = JSON.parse(result.data);
-      const books = (saved.books || []).map(normalizeBook);
-
-      localStorage.setItem(LOCAL_KEY, payload(books));
-      return books;
+      native = parseBooks(result.data);
     } catch (_) {
-      return localBooks();
+      native = [];
     }
   }
 
-  try {
-    return localBooks();
-  } catch (_) {
-    return [];
+  const books = preferBooks(local, native);
+  localStorage.setItem(LOCAL_KEY, payload(books));
+
+  if (isNative() && plugins.Filesystem && books !== native) {
+    await writeNative(payload(books));
   }
+
+  return books;
 }
 
 async function saveBooks(books) {
-  const data = payload(books);
-  const plugins = getPlugins();
+  const normalized = (Array.isArray(books) ? books : []).map(normalizeBook);
+  const data = payload(normalized);
 
-  localStorage.setItem(LOCAL_KEY, data);
-
-  if (isNative() && plugins.Filesystem) {
-    try {
-      await plugins.Filesystem.writeFile({
-        path: STORAGE_FILE,
-        directory: DATA_DIRECTORY,
-        data: data,
-        encoding: UTF8
-      });
-    } catch (error) {
-      console.warn(
-        'Native file save failed; the local app backup was saved instead.',
-        error
-      );
-    }
+  try {
+    localStorage.setItem(LOCAL_KEY, data);
+  } catch (error) {
+    console.error('Local book save failed.', error);
+    throw error;
   }
+
+  await writeNative(data);
 }
 
 async function exportBooks(books) {

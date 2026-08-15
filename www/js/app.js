@@ -20,7 +20,7 @@
     wishlist: 'Wishlist',
     loaned: 'Loaned Out'
   };
-  const formats = { paperback:'Paperback', 'hardback-special':'Hardback (Special)', ebook:'Ebook', kindle:'Kindle', audiobook:'Audiobook' };
+  const formats = { paperback: 'Paperback', 'hardback-special': 'Hardback (Special)', ebook: 'Ebook', kindle: 'Kindle', audiobook: 'Audiobook' };
   const cover = isbn => {
     const value = String(isbn || '').replace(/[^0-9Xx]/g, '');
     return value ? `https://covers.openlibrary.org/b/isbn/${encodeURIComponent(value)}-M.jpg?default=false` : '';
@@ -67,6 +67,7 @@
     const bookStatus = normalizeStatus(book.status);
     const article = document.createElement('article');
     article.className = 'book-card';
+    article.dataset.bookId = book.id || '';
     article.dataset.status = bookStatus;
     article.onclick = () => open(book);
 
@@ -100,7 +101,7 @@
     top.append(content, stamp);
     article.append(top);
 
-    const price = +book.price > 0 ? new Intl.NumberFormat(undefined, { style:'currency', currency:'USD' }).format(+book.price) : '';
+    const price = +book.price > 0 ? new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(+book.price) : '';
     const meta = [book.genre, formats[book.format] || book.format, price, book.isbn].filter(Boolean);
     if (meta.length) {
       const line = document.createElement('p');
@@ -139,17 +140,19 @@
     editingId = book?.id || null;
     el.formTitle.textContent = book ? 'Edit Book' : 'New Book';
     el.del.classList.toggle('hidden', !book);
-    for (const [key, node] of Object.entries({ title:el.title, author:el.author, isbn:el.isbn, genre:el.genre, difficulty:el.difficulty, price:el.price, format:el.format, notes:el.notes })) {
+    for (const [key, node] of Object.entries({ title: el.title, author: el.author, isbn: el.isbn, genre: el.genre, difficulty: el.difficulty, price: el.price, format: el.format, notes: el.notes })) {
       node.value = book ? (key === 'price' ? (+book.price || '') : (book[key] || '')) : '';
     }
     setStatus(book?.status || 'to-read');
     setRating(book?.rating || 0);
     el.form.classList.remove('hidden');
-    el.title.focus();
+    el.add.classList.add('hidden');
+    el.title.focus();;
   }
 
   function close() {
     el.form.classList.add('hidden');
+    el.add.classList.remove('hidden');
     editingId = null;
   }
 

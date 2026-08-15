@@ -76,6 +76,10 @@
         open(trigger);
         return;
       }
+      close();
+    }, true);
+
+    document.addEventListener('pointerdown', function (event) {
       if (!event.target.closest('.rq-tooltip')) close();
     }, true);
 

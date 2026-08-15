@@ -76,15 +76,19 @@
     var totalMinutes = sessions.reduce(function (total, entry) { return total + minutes(entry); }, 0);
     var latest = latestSession(sessions);
     var game = read(GAME_KEY, '{}');
-    var strength = Math.max(10, Number((game.stats || {}).str) || 10);
-    var luck = Math.max(10, Number((game.stats || {}).lck) || 10);
+    var rawStrength = Number((game.stats || {}).str);
+    var rawLuck = Number((game.stats || {}).lck);
+    var strength = Number.isFinite(rawStrength) ? Math.max(10, rawStrength) : 10;
+    var luck = Number.isFinite(rawLuck) ? Math.max(10, rawLuck) : 10;
+    var rawCritChance = 5 + luck / 20;
+    var critChance = Number.isFinite(rawCritChance) ? Math.min(25, rawCritChance) : 5;
+    var critDisplay = critChance.toFixed(1).replace(/\.0$/, '');
     var boss = bossFor(active);
     var combat = '';
 
     if (latest) {
       var reward = window.BookShelfRewards ? window.BookShelfRewards.calculateSession(latest) : { xp: minutes(latest) * 10, gold: Math.max(1, Math.floor(minutes(latest) / 2)), bonus: '' };
       var baseDamage = Math.floor(minutes(latest) * (1 + strength / 500));
-      var critChance = Math.min(25, 5 + luck / 20);
       var critical = (hash(latest.id) % 10000) < Math.round(critChance * 100);
       var damage = critical ? Math.floor(baseDamage * 1.5) : baseDamage;
       var rewardNote = reward.bonus ? ' · ' + reward.bonus : '';
@@ -96,7 +100,7 @@
     card.innerHTML =
       '<div class="adventure-boss-top"><div><span class="adventure-label">Book Boss ' + tooltipButton('A themed reading-quest opponent based on the active book’s genre. It represents your progress, not a separate task you can fail.', 'About Book Boss') + '</span><h2>' + boss.boss + '</h2><p class="adventure-muted">' + active.title + '</p></div><b>⚔</b></div>' +
       '<div class="adventure-boss-meta"><span data-tooltip="The boss region is chosen from the active book’s genre." tabindex="0">' + boss.region + '</span><span data-tooltip="Momentum is the total reading or listening time logged while this book is linked to a session." tabindex="0">' + totalMinutes + ' minutes of momentum</span></div>' +
-      '<div class="adventure-combat-stats"><span data-tooltip="Strength slightly increases display damage from your latest session." tabindex="0">STR ' + strength + '</span><span data-tooltip="Luck increases critical-hit chance. Critical chance starts at 5% and is capped at 25%." tabindex="0">LCK ' + luck + ' · ' + critChance.toFixed(1).replace(/\.0$/, '') + '% crit</span></div>' +
+      '<div class="adventure-combat-stats"><span data-tooltip="Strength slightly increases display damage from your latest session." tabindex="0">STR ' + strength + '</span><span data-tooltip="Luck increases critical-hit chance. Critical chance starts at 5% and is capped at 25%." tabindex="0">LCK ' + luck + ' · ' + critDisplay + '% crit</span></div>' +
       combat +
       '<button type="button" class="adventure-combat-log" data-tooltip="Opens your Profile so you can add a reading or listening session. Link the session to this book to build its momentum and create a combat result." aria-label="About logging time against this boss" aria-expanded="false">Log Time Against Boss</button>';
 
