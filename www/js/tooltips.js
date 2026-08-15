@@ -69,13 +69,15 @@
     installStyles();
 
     document.addEventListener('click', function (event) {
-      var trigger = isTooltipTrigger(event.target);
+      var trigger = event.target.closest('.tooltip-trigger');
+
       if (trigger) {
         event.preventDefault();
         event.stopPropagation();
         open(trigger);
         return;
       }
+
       close();
     }, true);
 

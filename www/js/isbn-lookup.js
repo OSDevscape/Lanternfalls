@@ -340,18 +340,18 @@
     panel.innerHTML =
       '<div class="edition-detail-cover">' + coverMarkup(edition) + '</div>' +
       '<div class="edition-detail-copy">' +
-        '<p class="edition-source">' + escapeHtml(edition.source) + '</p>' +
-        '<h3>' + escapeHtml(edition.title) + '</h3>' +
-        (edition.subtitle
-          ? '<p class="edition-subtitle">' + escapeHtml(edition.subtitle) + '</p>'
-          : '') +
-        '<p class="edition-author">' + escapeHtml(authorText) + '</p>' +
-        '<p class="edition-meta">' + escapeHtml(detailBits.join(' • ')) + '</p>' +
-        (edition.description
-          ? '<p class="edition-description">' +
-            escapeHtml(edition.description) + '</p>'
-          : '') +
-        '<button id="useEditionBtn" type="button">Use This Edition</button>' +
+      '<p class="edition-source">' + escapeHtml(edition.source) + '</p>' +
+      '<h3>' + escapeHtml(edition.title) + '</h3>' +
+      (edition.subtitle
+        ? '<p class="edition-subtitle">' + escapeHtml(edition.subtitle) + '</p>'
+        : '') +
+      '<p class="edition-author">' + escapeHtml(authorText) + '</p>' +
+      '<p class="edition-meta">' + escapeHtml(detailBits.join(' • ')) + '</p>' +
+      (edition.description
+        ? '<p class="edition-description">' +
+        escapeHtml(edition.description) + '</p>'
+        : '') +
+      '<button id="useEditionBtn" type="button">Use This Edition</button>' +
       '</div>';
 
     document.getElementById('useEditionBtn').onclick = function () {
@@ -414,17 +414,10 @@
 
     var message = document.getElementById('isbnLookupStatus');
 
+        clearEditionSearchUI();
+
     if (message) {
-      message.textContent = 'Edition selected. Review details, then save.';
-    }
-
-    var panel = document.getElementById('editionDetailsPanel');
-
-    if (panel) {
-      panel.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest'
-      });
+      message.textContent = 'Edition loaded. Review the details, then save.';
     }
   }
 
@@ -440,30 +433,30 @@
   }
 
   function clearEditionSearchUI() {
-  selectedEdition = null;
+    selectedEdition = null;
 
-  var resultsPanel = document.getElementById('editionResults');
-  var coverStrip = document.getElementById('editionCoverStrip');
-  var detailsPanel = document.getElementById('editionDetailsPanel');
-  var status = document.getElementById('isbnLookupStatus');
+    var resultsPanel = document.getElementById('editionResults');
+    var coverStrip = document.getElementById('editionCoverStrip');
+    var detailsPanel = document.getElementById('editionDetailsPanel');
+    var status = document.getElementById('isbnLookupStatus');
 
-  if (resultsPanel) {
-    resultsPanel.classList.add('hidden');
+    if (resultsPanel) {
+      resultsPanel.classList.add('hidden');
+    }
+
+    if (coverStrip) {
+      coverStrip.innerHTML = '';
+    }
+
+    if (detailsPanel) {
+      detailsPanel.innerHTML = '';
+      detailsPanel.classList.add('hidden');
+    }
+
+    if (status) {
+      status.textContent = '';
+    }
   }
-
-  if (coverStrip) {
-    coverStrip.innerHTML = '';
-  }
-
-  if (detailsPanel) {
-    detailsPanel.innerHTML = '';
-    detailsPanel.classList.add('hidden');
-  }
-
-  if (status) {
-    status.textContent = '';
-  }
-}
 
   function addLookupUI() {
     var isbn = document.getElementById('fieldIsbn');
@@ -477,14 +470,14 @@
     isbn.closest('.field').insertAdjacentHTML(
       'afterend',
       '<div class="field isbn-lookup">' +
-        '<button id="isbnScanBtn" type="button">Scan ISBN</button>' +
-        '<button id="bookSearchBtn" type="button">Search</button>' +
-        '<span id="isbnLookupStatus" role="status"></span>' +
+      '<button id="isbnScanBtn" type="button">Scan ISBN</button>' +
+      '<button id="bookSearchBtn" type="button">Search</button>' +
+      '<span id="isbnLookupStatus" role="status"></span>' +
       '</div>' +
       '<section id="editionResults" class="edition-results hidden">' +
-        '<p class="edition-results-title">Choose an edition</p>' +
-        '<div id="editionCoverStrip" class="edition-cover-strip"></div>' +
-        '<div id="editionDetailsPanel" class="edition-details hidden"></div>' +
+      '<p class="edition-results-title">Choose an edition</p>' +
+      '<div id="editionCoverStrip" class="edition-cover-strip"></div>' +
+      '<div id="editionDetailsPanel" class="edition-details hidden"></div>' +
       '</section>' +
       field('fieldPublisher', 'Publisher') +
       field('fieldPublicationYear', 'Publication Year', 'number') +
@@ -602,7 +595,7 @@
       }
     };
 
-        var form = document.getElementById('formView');
+    var form = document.getElementById('formView');
     var wasOpen = false;
 
     if (form) {
