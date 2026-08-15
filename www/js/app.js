@@ -63,6 +63,27 @@
     el.ratings.querySelectorAll('.star').forEach(button => button.classList.toggle('filled', +button.dataset.star <= value));
   }
 
+  function fieldValue(id) {
+    var field = document.getElementById(id);
+    return field ? field.value.trim() : '';
+  }
+
+  function tagValues() {
+    return fieldValue('fieldTags')
+      .split(',')
+      .map(function (tag) {
+        return tag.trim();
+      })
+      .filter(Boolean);
+  }
+
+  function setFieldValue(id, value) {
+    var field = document.getElementById(id);
+    if (field) {
+      field.value = value == null ? '' : value;
+    }
+  }
+
   function card(book) {
     const bookStatus = normalizeStatus(book.status);
     const article = document.createElement('article');
@@ -138,11 +159,21 @@
 
   function open(book) {
     editingId = book?.id || null;
+    el.form.dataset.bookId = editingId || '';
     el.formTitle.textContent = book ? 'Edit Book' : 'New Book';
     el.del.classList.toggle('hidden', !book);
     for (const [key, node] of Object.entries({ title: el.title, author: el.author, isbn: el.isbn, genre: el.genre, difficulty: el.difficulty, price: el.price, format: el.format, notes: el.notes })) {
       node.value = book ? (key === 'price' ? (+book.price || '') : (book[key] || '')) : '';
     }
+
+    setFieldValue(
+      'fieldTags',
+      book && Array.isArray(book.tags) ? book.tags.join(', ') : ''
+    );
+    setFieldValue('fieldSeries', book && book.series);
+    setFieldValue('fieldSeriesNumber', book && book.seriesNumber);
+    setFieldValue('fieldCollection', book && book.collection);
+
     setStatus(book?.status || 'to-read');
     setRating(book?.rating || 0);
     el.form.classList.remove('hidden');
@@ -152,6 +183,7 @@
 
   function close() {
     el.form.classList.add('hidden');
+    el.form.dataset.bookId = '';
     el.add.classList.remove('hidden');
     editingId = null;
   }
@@ -172,6 +204,12 @@
       status: normalizeStatus(selectedStatus),
       rating: selectedRating,
       notes: el.notes.value.trim(),
+
+      tags: tagValues(),
+      series: fieldValue('fieldSeries'),
+      seriesNumber: fieldValue('fieldSeriesNumber'),
+      collection: fieldValue('fieldCollection'),
+
       dateAdded: prior?.dateAdded || new Date().toISOString()
     };
     books = editingId ? books.map(item => item.id === editingId ? book : item) : [...books, book];
