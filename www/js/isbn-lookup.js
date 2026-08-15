@@ -1,59 +1,5 @@
 (function () {
-  var META_KEY = 'bookshelf-isbn-metadata';
-  var pendingMetadata = null;
-  var originalLoad = window.BookStorage.loadBooks;
-  var originalSave = window.BookStorage.saveBooks;
   var selectedEdition = null;
-
-  function readStore() {
-    try {
-      return JSON.parse(localStorage.getItem(META_KEY) || '{}');
-    } catch (_) {
-      return {};
-    }
-  }
-
-  function writeStore(data) {
-    localStorage.setItem(META_KEY, JSON.stringify(data));
-  }
-
-  function merge(book, store) {
-    return Object.assign(book, store[book.id] || {});
-  }
-
-  window.BookStorage.loadBooks = async function () {
-    var store = readStore();
-    var books = await originalLoad();
-
-    return books.map(function (book) {
-      return merge(book, store);
-    });
-  };
-
-  window.BookStorage.saveBooks = async function (books) {
-    var store = readStore();
-
-    if (pendingMetadata) {
-      var found = books.filter(function (book) {
-        return book.title === pendingMetadata.title &&
-          book.isbn === pendingMetadata.isbn;
-      }).pop();
-
-      if (found) {
-        store[found.id] = pendingMetadata.data;
-        Object.assign(found, pendingMetadata.data);
-      }
-
-      pendingMetadata = null;
-    }
-
-    books.forEach(function (book) {
-      merge(book, store);
-    });
-
-    writeStore(store);
-    return originalSave(books);
-  };
 
   function field(id, label, type) {
     return '<label class="field isbn-extra">' +
@@ -128,53 +74,6 @@
       pageCount: document.getElementById('fieldPageCount'),
       description: document.getElementById('fieldDescription')
     };
-  }
-
-  function currentBookId() {
-    var isbn = document.getElementById('fieldIsbn').value.trim();
-    var title = document.getElementById('fieldTitle').value.trim();
-    var author = document.getElementById('fieldAuthor').value.trim();
-    var stored;
-
-    try {
-      stored = JSON.parse(
-        localStorage.getItem('bookshelf-data') || '{"books":[]}'
-      ).books || [];
-    } catch (_) {
-      stored = [];
-    }
-
-    var match = stored.filter(function (book) {
-      if (isbn && book.isbn === isbn) {
-        return true;
-      }
-
-      return !isbn &&
-        book.title === title &&
-        book.author === author;
-    }).pop();
-
-    return match ? match.id : '';
-  }
-
-  function populateMetadataFields() {
-    var form = document.getElementById('formView');
-
-    if (!form || form.classList.contains('hidden')) {
-      return;
-    }
-
-    var id = currentBookId();
-    var data = id ? readStore()[id] : null;
-    var values = metadataFields();
-
-    values.publisher.value = data && data.publisher ? data.publisher : '';
-    values.publicationYear.value =
-      data && data.publicationYear ? data.publicationYear : '';
-    values.language.value = data && data.language ? data.language : '';
-    values.pageCount.value = data && data.pageCount ? data.pageCount : '';
-    values.description.value =
-      data && data.description ? data.description : '';
   }
 
   function googleCover(info) {
@@ -703,47 +602,23 @@
       }
     };
 
-    document.addEventListener('click', function (event) {
-      if (!event.target.closest('#formSave')) {
-        return;
-      }
+        var form = document.getElementById('formView');
+    var wasOpen = false;
 
-      var values = metadataFields();
+    if (form) {
+      new MutationObserver(function () {
+        var isOpen = !form.classList.contains('hidden');
 
-      pendingMetadata = {
-        title: document.getElementById('fieldTitle').value.trim(),
-        isbn: document.getElementById('fieldIsbn').value.trim(),
-        data: {
-          publisher: values.publisher.value.trim(),
-          publicationYear: values.publicationYear.value.trim(),
-          language: values.language.value.trim(),
-          pageCount: values.pageCount.value.trim(),
-          description: values.description.value.trim()
+        if (wasOpen && !isOpen) {
+          clearEditionSearchUI();
         }
-      };
-    }, true);
 
-    var form = document.getElementById('formView');
-var wasOpen = false;
-
-if (form) {
-  new MutationObserver(function () {
-    var isOpen = !form.classList.contains('hidden');
-
-    if (isOpen) {
-      requestAnimationFrame(populateMetadataFields);
+        wasOpen = isOpen;
+      }).observe(form, {
+        attributes: true,
+        attributeFilter: ['class']
+      });
     }
-
-    if (wasOpen && !isOpen) {
-      clearEditionSearchUI();
-    }
-
-    wasOpen = isOpen;
-  }).observe(form, {
-    attributes: true,
-    attributeFilter: ['class']
-  });
-}
   }
 
   document.addEventListener('DOMContentLoaded', addLookupUI);
