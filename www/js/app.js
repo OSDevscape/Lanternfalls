@@ -173,6 +173,11 @@
     setFieldValue('fieldSeries', book && book.series);
     setFieldValue('fieldSeriesNumber', book && book.seriesNumber);
     setFieldValue('fieldCollection', book && book.collection);
+    setFieldValue('fieldPublisher', book && book.publisher);
+    setFieldValue('fieldPublicationYear', book && book.publicationYear);
+    setFieldValue('fieldLanguage', book && book.language);
+    setFieldValue('fieldPageCount', book && book.pageCount);
+    setFieldValue('fieldDescription', book && book.description);
 
     setStatus(book?.status || 'to-read');
     setRating(book?.rating || 0);
@@ -192,7 +197,8 @@
     const title = el.title.value.trim();
     if (!title) return el.title.focus();
     const prior = books.find(book => book.id === editingId);
-    const book = {
+        const book = {
+      ...prior,
       id: editingId || S.generateId(),
       title,
       author: el.author.value.trim(),
@@ -209,6 +215,11 @@
       series: fieldValue('fieldSeries'),
       seriesNumber: fieldValue('fieldSeriesNumber'),
       collection: fieldValue('fieldCollection'),
+      publisher: fieldValue('fieldPublisher'),
+      publicationYear: fieldValue('fieldPublicationYear'),
+      language: fieldValue('fieldLanguage'),
+      pageCount: fieldValue('fieldPageCount'),
+      description: fieldValue('fieldDescription'),
 
       dateAdded: prior?.dateAdded || new Date().toISOString()
     };
