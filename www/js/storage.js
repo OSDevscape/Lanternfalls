@@ -24,6 +24,8 @@ function normalizeBook(raw) {
   const book = raw || {};
 
   return {
+    ...book,
+
     id: book.id || book.Id || generateId(),
     title: book.title || book.Title || '',
     author: book.author || book.Author || '',
