@@ -3,7 +3,7 @@
 
   function escape(value) {
     return String(value == null ? '' : value).replace(/[&<>'"]/g, function (c) {
-      return {'&':'&amp;','<':'&gt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];
+      return { '&': '&amp;', '<': '&gt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c];
     });
   }
 
@@ -41,7 +41,9 @@
 
     var xp = items.reduce(function (total, item) { return total + (Number(item.xp) || 0); }, 0);
     var gold = items.reduce(function (total, item) { return total + (Number(item.gold) || 0); }, 0);
-    var bonuses = items.filter(function (item) { return item.perkState === 'triggered'; });
+    var bonuses = items.filter(function (item) {
+      return item.perkState === 'triggered' || item.bazaarApplied;
+    });
     var bosses = items.filter(function (item) { return item.type === 'bookCompletion'; });
     var sessions = items.filter(function (item) { return item.type === 'session'; });
     var isBossOnly = bosses.length && !sessions.length;
@@ -50,7 +52,22 @@
     var summary = isBossOnly
       ? (bosses.length === 1 ? (bosses[0].bookTitle || 'Completed book') : bosses.length + ' boss rewards claimed')
       : (sessions.length === 1 && !bosses.length ? (sessions[0].bookTitle || 'Reading session') + ' · ' + sessions[0].minutes + ' minutes' : sessions.length + ' reading session' + (sessions.length === 1 ? '' : 's') + (bosses.length ? ' · ' + bosses.length + ' boss defeat' + (bosses.length === 1 ? '' : 's') : ''));
-    var bossLoot = bosses.length ? '<div class="session-reward-loot"><b>' + (bosses.length === 1 ? 'Trophy and loot added' : bosses.length + ' trophies and loot drops added') + '</b><span>Completion rewards are now in your Adventure inventory.</span></div>' : '';
+    var bossLoot = bosses.length
+  ? '<div class="session-reward-loot">' +
+      '<b>' +
+        (bosses.length === 1
+          ? 'Trophy and loot added'
+          : bosses.length + ' trophies and loot drops added') +
+      '</b>' +
+      bosses.map(function (boss) {
+        return '<span>' +
+          escape(boss.lootRarity || 'Loot') +
+          ' · ' +
+          escape(boss.lootName || 'Reward added to Adventure inventory') +
+        '</span>';
+      }).join('') +
+    '</div>'
+  : '';
 
     var overlay = document.createElement('section');
     overlay.id = 'sessionRewardOverlay';
@@ -60,13 +77,52 @@
 
     var bonusBox = overlay.querySelector('.session-reward-bonuses');
     if (bonuses.length) {
-      bonusBox.innerHTML = bonuses.map(function (item) {
-        var reward = (Number(item.xpBonus) || 0 ? '+' + (Number(item.xpBonus) || 0) + ' XP' : '') + ((Number(item.goldBonus) || 0) ? ((Number(item.xpBonus) || 0) ? ' · ' : '') + '+' + (Number(item.goldBonus) || 0) + ' gold' : '');
-        return '<p><b>' + escape(item.classBonusReason || 'Class skill triggered') + '</b><span>' + reward + '</span></p>';
-      }).join('');
-    } else {
-      bonusBox.innerHTML = '<p><span>No class bonus triggered this time.</span></p>';
+  bonusBox.innerHTML = bonuses.map(function (item) {
+    var lines = [];
+
+    if (item.perkState === 'triggered') {
+      var classReward =
+        (Number(item.xpBonus) || 0
+          ? '+' + (Number(item.xpBonus) || 0) + ' XP'
+          : '') +
+        ((Number(item.goldBonus) || 0)
+          ? ((Number(item.xpBonus) || 0) ? ' · ' : '') +
+            '+' + (Number(item.goldBonus) || 0) + ' gold'
+          : '');
+
+      lines.push(
+        '<p><b>' +
+          escape(item.classBonusReason || 'Class skill triggered') +
+          '</b><span>' +
+          classReward +
+          '</span></p>'
+      );
     }
+
+    if (item.bazaarApplied) {
+      var bazaarReward =
+        (Number(item.bazaarXPBonus) || 0
+          ? '+' + (Number(item.bazaarXPBonus) || 0) + ' XP'
+          : '') +
+        ((Number(item.bazaarGoldBonus) || 0)
+          ? ((Number(item.bazaarXPBonus) || 0) ? ' · ' : '') +
+            '+' + (Number(item.bazaarGoldBonus) || 0) + ' gold'
+          : '');
+
+      lines.push(
+        '<p><b>' +
+          escape(item.bazaarItemName || 'Bazaar enchantment') +
+          '</b><span>' +
+          bazaarReward +
+          '</span></p>'
+      );
+    }
+
+    return lines.join('');
+  }).join('');
+} else {
+  bonusBox.innerHTML = '<p><span>No class or Bazaar bonus triggered this time.</span></p>';
+}
 
     overlay.querySelector('button').onclick = function () { overlay.remove(); };
     document.body.appendChild(overlay);

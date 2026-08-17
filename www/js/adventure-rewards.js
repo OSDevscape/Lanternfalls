@@ -158,6 +158,29 @@
     var reward = calculateSession(session);
     if (!reward.minutes) return { ok: false };
 
+    var enchantment = window.BookShelfEconomy &&
+      typeof window.BookShelfEconomy.applyToReward === 'function'
+      ? window.BookShelfEconomy.applyToReward('session', reward)
+      : {
+        applied: false,
+        item: null,
+        xpBonus: 0,
+        goldBonus: 0,
+        lootLuck: 0,
+        reason: ''
+      };
+
+    reward.bazaarApplied = !!enchantment.applied;
+    reward.bazaarItemId = enchantment.item ? enchantment.item.id : '';
+    reward.bazaarItemName = enchantment.item ? enchantment.item.name : '';
+    reward.bazaarXPBonus = Math.max(0, Number(enchantment.xpBonus) || 0);
+    reward.bazaarGoldBonus = Math.max(0, Number(enchantment.goldBonus) || 0);
+    reward.bazaarLootLuck = Math.max(0, Number(enchantment.lootLuck) || 0);
+    reward.bazaarBonusReason = enchantment.reason || '';
+
+    reward.xp += reward.bazaarXPBonus;
+    reward.gold += reward.bazaarGoldBonus;
+
     var state = game();
     var data = ledger();
     state.xp += reward.xp;
@@ -180,27 +203,67 @@
     });
   }
 
-  function claimCompletion(book) {
-    var key = 'bookCompletion:' + (book || {}).id;
-    if (!book || !book.id || has(key)) return { ok: false };
+function claimCompletion(book) {
+  var key = 'bookCompletion:' + (book || {}).id;
 
-    var reward = calculateCompletion(book);
-    var state = game();
-    var data = ledger();
-    state.xp += reward.xp;
-    state.gold += reward.gold;
-    data.transactions[key] = Object.assign({
-      id: key, type: 'bookCompletion', sourceId: book.id,
-      status: 'claimed', createdAt: new Date().toISOString()
-    }, reward);
-
-    write(GAME_KEY, state);
-    write(LEDGER_KEY, data);
-    window.dispatchEvent(new CustomEvent('bookshelf-adventure-completion-claimed', {
-      detail: { book: book, transaction: data.transactions[key] }
-    }));
-    return { ok: true, transaction: data.transactions[key] };
+  if (!book || !book.id || has(key)) {
+    return { ok: false };
   }
+
+  var reward = calculateCompletion(book);
+
+  var enchantment = window.BookShelfEconomy &&
+    typeof window.BookShelfEconomy.applyToReward === 'function'
+    ? window.BookShelfEconomy.applyToReward('completion', reward)
+    : {
+        applied: false,
+        item: null,
+        xpBonus: 0,
+        goldBonus: 0,
+        lootLuck: 0,
+        reason: ''
+      };
+
+  reward.bazaarApplied = !!enchantment.applied;
+  reward.bazaarItemId = enchantment.item ? enchantment.item.id : '';
+  reward.bazaarItemName = enchantment.item ? enchantment.item.name : '';
+  reward.bazaarXPBonus = Math.max(0, Number(enchantment.xpBonus) || 0);
+  reward.bazaarGoldBonus = Math.max(0, Number(enchantment.goldBonus) || 0);
+  reward.bazaarLootLuck = Math.max(0, Number(enchantment.lootLuck) || 0);
+  reward.bazaarBonusReason = enchantment.reason || '';
+
+  reward.xp += reward.bazaarXPBonus;
+  reward.gold += reward.bazaarGoldBonus;
+
+  var state = game();
+  var data = ledger();
+
+  state.xp += reward.xp;
+  state.gold += reward.gold;
+
+  data.transactions[key] = Object.assign({
+    id: key,
+    type: 'bookCompletion',
+    sourceId: book.id,
+    status: 'claimed',
+    createdAt: new Date().toISOString()
+  }, reward);
+
+  write(GAME_KEY, state);
+  write(LEDGER_KEY, data);
+
+  window.dispatchEvent(new CustomEvent('bookshelf-adventure-completion-claimed', {
+    detail: {
+      book: book,
+      transaction: data.transactions[key]
+    }
+  }));
+
+  return {
+    ok: true,
+    transaction: data.transactions[key]
+  };
+}
 
   function detachSession(id) {
     var data = ledger();

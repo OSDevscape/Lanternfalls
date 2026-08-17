@@ -5,9 +5,10 @@
     var style = document.createElement('style');
     style.textContent =
       '#bottomNavigation{position:fixed;z-index:200;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));display:flex;justify-content:space-around;padding:7px 5px;background:var(--bg-elevated,#1B2129);border:1px solid var(--surface-border,rgba(42,36,30,.16));border-radius:22px;box-shadow:0 3px 14px var(--shadow,rgba(0,0,0,.28))}' +
-      '#bottomNavigation button{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:62px;padding:7px 8px;border:0;border-radius:16px;background:transparent;color:var(--paper-light,#F6F1E4);font:11px var(--font-body,-apple-system);cursor:pointer}' +
-      '#bottomNavigation button i{font-style:normal;font-size:22px}' +
+      '#bottomNavigation button{display:flex;flex:1;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:7px 3px;border:0;border-radius:16px;background:transparent;color:var(--paper-light,#F6F1E4);font:10px var(--font-body,-apple-system);cursor:pointer}' +
+      '#bottomNavigation button i{font-style:normal;font-size:20px}' +
       '#bottomNavigation button.active{background:var(--gold,#A8823C);color:#fff}' +
+      '#bottomNavigation .hidden{display:none!important}' +
       '#navPlaceholder{position:fixed;inset:0;z-index:85;padding:80px 24px 110px;background:var(--bg,#14181C);color:var(--paper-light,#F6F1E4)}' +
       '#navPlaceholder.hidden{display:none!important}' +
       '#navPlaceholder h1{font:28px Georgia,serif;margin:0 0 10px}' +
@@ -22,8 +23,10 @@
     nav.innerHTML =
       '<button type="button" data-page="dashboard"><i>⌂</i>Dashboard</button>' +
       '<button type="button" data-page="library"><i>▥</i>Library</button>' +
-      '<button type="button" data-page="achievements"><i>♜</i>Adventure</button>' +
-      '<button type="button" data-page="profile"><i>♙</i>Profile</button>';
+      '<button type="button" data-page="achievements"><i>⚔</i>Adventure</button>' +
+      '<button type="button" data-page="realm"><i>✦</i>Realm</button>' +
+      '<button type="button" class="hidden" data-page="profile">Profile</button>' +
+      '<button type="button" class="hidden" data-page="character">Character</button>';
     document.body.appendChild(nav);
 
     var placeholder = document.createElement('section');
@@ -42,9 +45,16 @@
       });
     }
 
-    function showPlaceholder(title, text) {
+    function showPlaceholder(title, text, pageClass) {
+      placeholder.className = pageClass || '';
       placeholder.innerHTML = '<h1>' + title + '</h1><p>' + text + '</p>';
       placeholder.classList.remove('hidden');
+    }
+
+    function announce(page) {
+      window.dispatchEvent(new CustomEvent('bookshelf-navigation-changed', {
+        detail: { page: page }
+      }));
     }
 
     function show(page, addToHistory) {
@@ -61,60 +71,58 @@
 
       currentPage = page;
       active(page);
+
       placeholder.classList.add('hidden');
+      placeholder.className = 'hidden';
 
       if (addButton) addButton.classList.toggle('hidden', !isLibrary);
       if (filterBar) filterBar.classList.toggle('hidden', !isLibrary);
 
       if (!isLibrary && filterPanel) {
         filterPanel.classList.add('hidden');
-
-        if (filterToggle) {
-          filterToggle.setAttribute('aria-expanded', 'false');
-        }
+        if (filterToggle) filterToggle.setAttribute('aria-expanded', 'false');
       }
 
       if (page === 'dashboard') {
         if (dashboard) dashboard.classList.remove('hidden');
+        announce(page);
         return;
       }
 
       if (page === 'library') {
         if (dashboard) dashboard.classList.add('hidden');
+        announce(page);
         return;
       }
 
       if (dashboard) dashboard.classList.add('hidden');
 
-      /*
-       * This is only a short-lived shell.
-       * adventure.js and reading-profile.js replace it immediately after
-       * the original navigation click handler finishes.
-       */
-      showPlaceholder(
-        page === 'achievements' ? 'Adventure' : 'Profile',
-        page === 'achievements'
-          ? 'Loading your adventure...'
-          : 'Loading your profile...'
-      );
+      var labels = {
+        achievements: 'Adventure',
+        realm: 'Realm',
+        profile: 'Profile',
+        character: 'Character'
+      };
 
-      /*
-       * Android Back calls show() directly rather than a physical tab click.
-       * Dispatch a click so the existing Adventure/Profile scripts render
-       * their real content exactly as they do when the user taps a tab.
-       */
+      var loading = {
+        achievements: 'Loading your adventure...',
+        realm: 'Loading your realm...',
+        profile: 'Loading your profile...',
+        character: 'Loading your character...'
+      };
+
+      showPlaceholder(labels[page] || 'ReadQuest', loading[page] || 'Loading...', page + '-page');
+      announce(page);
+
       if (addToHistory === false) {
         var tab = nav.querySelector('[data-page="' + page + '"]');
-
         if (tab) {
           setTimeout(function () {
-            tab.dispatchEvent(
-              new MouseEvent('click', {
-                bubbles: true,
-                cancelable: true,
-                view: window
-              })
-            );
+            tab.dispatchEvent(new MouseEvent('click', {
+              bubbles: true,
+              cancelable: true,
+              view: window
+            }));
           }, 0);
         }
       }
@@ -126,77 +134,73 @@
 
     function closeFormView() {
       var formView = document.getElementById('formView');
-
       if (!isOpen(formView)) return false;
-
       var cancelButton = document.getElementById('formCancel');
-
-      if (cancelButton) {
-        cancelButton.click();
-      } else {
-        formView.classList.add('hidden');
-      }
-
+      if (cancelButton) cancelButton.click();
+      else formView.classList.add('hidden');
       return true;
     }
 
     function closeMenuSheet() {
       var menuSheet = document.getElementById('menuSheet');
-
       if (!isOpen(menuSheet)) return false;
-
       var closeButton = document.getElementById('menuCancel');
-
-      if (closeButton) {
-        closeButton.click();
-      } else {
-        menuSheet.classList.add('hidden');
-      }
-
+      if (closeButton) closeButton.click();
+      else menuSheet.classList.add('hidden');
       return true;
     }
 
     function closeStatusPage() {
       var statusPage = document.getElementById('statusPage');
-
       if (!isOpen(statusPage)) return false;
-
       var backButton = statusPage.querySelector('button[aria-label="Back"]');
-
-      if (backButton) {
-        backButton.click();
-      } else {
-        statusPage.classList.add('hidden');
-      }
-
+      if (backButton) backButton.click();
+      else statusPage.classList.add('hidden');
       return true;
     }
 
     function closeFilterPanel() {
       var filterPanel = document.getElementById('statusFilters');
       var filterToggle = document.getElementById('statusFilterToggle');
-
       if (!isOpen(filterPanel)) return false;
-
       filterPanel.classList.add('hidden');
-
-      if (filterToggle) {
-        filterToggle.setAttribute('aria-expanded', 'false');
-      }
-
+      if (filterToggle) filterToggle.setAttribute('aria-expanded', 'false');
       return true;
     }
 
     function closeBossVictory() {
       var overlay = document.getElementById('bossVictoryOverlay');
-
       if (!overlay) return false;
-
       overlay.remove();
       return true;
     }
 
+    function closeBookwyrmBazaar() {
+      var bazaar = document.getElementById('bookwyrmBazaar');
+
+      if (
+        !bazaar ||
+        bazaar.classList.contains('hidden') ||
+        !bazaar.classList.contains('is-open')
+      ) {
+        return false;
+      }
+
+      if (window.BookwyrmBazaar && typeof window.BookwyrmBazaar.close === 'function') {
+        window.BookwyrmBazaar.close();
+      } else {
+        bazaar.classList.remove('is-open');
+
+        setTimeout(function () {
+          bazaar.classList.add('hidden');
+        }, 260);
+      }
+
+      return true;
+    }
+
     function handleBackButton() {
+      if (closeBookwyrmBazaar()) return;
       if (closeBossVictory()) return;
       if (closeFormView()) return;
       if (closeStatusPage()) return;
@@ -214,24 +218,15 @@
       }
 
       var now = Date.now();
-
       if (now - lastDashboardBackAt < 2000) {
-        if (
-          window.Capacitor &&
-          window.Capacitor.Plugins &&
-          window.Capacitor.Plugins.App
-        ) {
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
           window.Capacitor.Plugins.App.exitApp();
         }
-
         return;
       }
 
       lastDashboardBackAt = now;
-
-      if (dashboardBackTimer) {
-        clearTimeout(dashboardBackTimer);
-      }
+      if (dashboardBackTimer) clearTimeout(dashboardBackTimer);
 
       dashboardBackTimer = setTimeout(function () {
         lastDashboardBackAt = 0;
@@ -239,52 +234,30 @@
       }, 2000);
 
       var toast = document.getElementById('toast');
-
       if (toast) {
         toast.textContent = 'Press Back again to exit';
         toast.classList.remove('hidden');
-
-        setTimeout(function () {
-          toast.classList.add('hidden');
-        }, 2000);
+        setTimeout(function () { toast.classList.add('hidden'); }, 2000);
       }
     }
 
     nav.onclick = function (event) {
       var button = event.target.closest('[data-page]');
-
-      if (button) {
-        show(button.dataset.page, true);
-      }
+      if (button) show(button.dataset.page, true);
     };
 
     var dashboard = document.getElementById('dashboard');
-    var startsOnDashboard =
-      dashboard && !dashboard.classList.contains('hidden');
+    show(dashboard && !dashboard.classList.contains('hidden') ? 'dashboard' : 'library', false);
 
-    show(startsOnDashboard ? 'dashboard' : 'library', false);
-
-    if (
-      window.Capacitor &&
-      window.Capacitor.Plugins &&
-      window.Capacitor.Plugins.App
-    ) {
-      window.Capacitor.Plugins.App.addListener(
-        'backButton',
-        handleBackButton
-      );
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+      window.Capacitor.Plugins.App.addListener('backButton', handleBackButton);
     } else {
       document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape') {
-          handleBackButton();
-        }
+        if (event.key === 'Escape') handleBackButton();
       });
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', install);
-  } else {
-    install();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install);
+  else install();
 })();

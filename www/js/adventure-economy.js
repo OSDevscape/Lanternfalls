@@ -304,18 +304,9 @@
     value.market = value.market || {};
     value.market.lastViewedAt = value.market.lastViewedAt || '';
     value.market.lastPurchaseAt = value.market.lastPurchaseAt || '';
-    value.market.totalGoldSpent = Math.max(
-      0,
-      Number(value.market.totalGoldSpent) || 0
-    );
-    value.market.totalItemsPurchased = Math.max(
-      0,
-      Number(value.market.totalItemsPurchased) || 0
-    );
-    value.market.totalItemsConsumed = Math.max(
-      0,
-      Number(value.market.totalItemsConsumed) || 0
-    );
+    value.market.totalGoldSpent = Math.max(0, Number(value.market.totalGoldSpent) || 0);
+    value.market.totalItemsPurchased = Math.max(0, Number(value.market.totalItemsPurchased) || 0);
+    value.market.totalItemsConsumed = Math.max(0, Number(value.market.totalItemsConsumed) || 0);
     value.unlocks = value.unlocks || {};
 
     return value;
@@ -333,10 +324,7 @@
   }
 
   function levelFor(xp) {
-    return Math.max(
-      1,
-      Math.floor(Math.sqrt((Math.max(0, Number(xp) || 0) + 100) / 100))
-    );
+    return Math.max(1, Math.floor(Math.sqrt((Math.max(0, Number(xp) || 0) + 100) / 100)));
   }
 
   function catalogItem(itemId) {
@@ -364,27 +352,18 @@
 
   function createInstance(item) {
     return Object.assign(cloneItem(item), {
-      instanceId:
-        'economy-item-' +
-        Date.now().toString(36) +
-        Math.random().toString(36).slice(2, 8),
+      instanceId: 'economy-item-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
       purchasedAt: now(),
       status: 'inventory'
     });
   }
 
   function historyEntry(type, detail) {
-    return Object.assign(
-      {
-        id:
-          'economy-history-' +
-          Date.now().toString(36) +
-          Math.random().toString(36).slice(2, 8),
-        type: type,
-        createdAt: now()
-      },
-      detail || {}
-    );
+    return Object.assign({
+      id: 'economy-history-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+      type: type,
+      createdAt: now()
+    }, detail || {});
   }
 
   function updateUnlocks(value, level) {
@@ -415,6 +394,7 @@
 
   function markViewed() {
     var value = economy();
+
     value.market.lastViewedAt = now();
     updateUnlocks(value, levelFor(game().xp));
     saveState(value);
@@ -431,39 +411,32 @@
     }
 
     if (!isUnlocked(item, level)) {
-      return {
-        ok: false,
-        reason: 'Unlocks at Level ' + unlockLevel(item) + '.'
-      };
+      return { ok: false, reason: 'Unlocks at Level ' + unlockLevel(item) + '.' };
     }
 
     if (progress.gold < item.price) {
-      return {
-        ok: false,
-        reason: 'You need ' + item.price + ' gold to buy this item.'
-      };
+      return { ok: false, reason: 'You need ' + item.price + ' gold to buy this item.' };
     }
 
     var instance = createInstance(item);
 
     progress.gold -= item.price;
     value.ownedItems.unshift(instance);
-    value.history.unshift(
-      historyEntry('purchase', {
-        itemId: item.id,
-        instanceId: instance.instanceId,
-        itemName: item.name,
-        family: item.family,
-        tier: item.tier,
-        price: item.price,
-        goldDelta: -item.price,
-        note: 'Purchased from the Bookwyrm Bazaar.'
-      })
-    );
+    value.history.unshift(historyEntry('purchase', {
+      itemId: item.id,
+      instanceId: instance.instanceId,
+      itemName: item.name,
+      family: item.family,
+      tier: item.tier,
+      price: item.price,
+      goldDelta: -item.price,
+      note: 'Purchased from the Bookwyrm Bazaar.'
+    }));
 
     value.market.lastPurchaseAt = now();
     value.market.totalGoldSpent += item.price;
     value.market.totalItemsPurchased += 1;
+
     updateUnlocks(value, level);
 
     write(GAME_KEY, progress);
@@ -500,16 +473,14 @@
     item.armedAt = now();
 
     value.activeItem = item;
-    value.history.unshift(
-      historyEntry('activation', {
-        itemId: item.id,
-        instanceId: item.instanceId,
-        itemName: item.name,
-        family: item.family,
-        tier: item.tier,
-        note: 'Marked as the active consumable.'
-      })
-    );
+    value.history.unshift(historyEntry('activation', {
+      itemId: item.id,
+      instanceId: item.instanceId,
+      itemName: item.name,
+      family: item.family,
+      tier: item.tier,
+      note: 'Marked as the active consumable.'
+    }));
 
     saveState(value);
 
@@ -522,6 +493,105 @@
 
   function inventory() {
     return economy().ownedItems.slice();
+  }
+
+  function appliesToClaim(item, claimType, minutes) {
+    if (!item) return false;
+
+    if (
+      item.appliesTo === 'session-only' &&
+      claimType !== 'session'
+    ) return false;
+
+    if (
+      item.appliesTo === 'completion-only' &&
+      claimType !== 'completion'
+    ) return false;
+
+    if (
+      item.valueType === 'flat-xp-long-session' &&
+      minutes < Number(item.minimumMinutes || 0)
+    ) return false;
+
+    if (
+      item.valueType === 'flat-gold-short-session' &&
+      (
+        minutes < Number(item.minimumMinutes || 0) ||
+        minutes > Number(item.maximumMinutes || Infinity)
+      )
+    ) return false;
+
+    return true;
+  }
+
+  function applyToReward(claimType, reward) {
+    var value = economy();
+    var item = value.activeItem;
+    var minutes = Math.max(0, Number((reward || {}).minutes) || 0);
+
+    var result = {
+      applied: false,
+      item: item ? cloneItem(item) : null,
+      xpBonus: 0,
+      goldBonus: 0,
+      lootLuck: 0,
+      reason: ''
+    };
+
+    if (!item || !appliesToClaim(item, claimType, minutes)) {
+      return result;
+    }
+
+    if (item.valueType === 'percent-xp') {
+      result.xpBonus = Math.max(1, Math.round((Number(reward.baseXP) + Number(reward.xpBonus || 0)) * Number(item.value) / 100));
+    }
+
+    if (item.valueType === 'percent-gold') {
+      result.goldBonus = Math.max(1, Math.round((Number(reward.baseGold) + Number(reward.goldBonus || 0)) * Number(item.value) / 100));
+    }
+
+    if (item.valueType === 'flat-xp-long-session') {
+      result.xpBonus = Math.max(0, Number(item.value) || 0);
+    }
+
+    if (item.valueType === 'flat-gold-short-session') {
+      result.goldBonus = Math.max(0, Number(item.value) || 0);
+    }
+
+    if (item.valueType === 'percent-completion-gold') {
+      result.goldBonus = Math.max(1, Math.round((Number(reward.baseGold) + Number(reward.goldBonus || 0)) * Number(item.value) / 100));
+    }
+
+    if (item.valueType === 'loot-luck') {
+      result.lootLuck = Math.max(0, Number(item.value) || 0);
+    }
+
+    result.applied = true;
+    result.reason = item.name + ' applied';
+
+    item.status = 'consumed';
+    item.consumedAt = now();
+    item.consumedBy = claimType;
+
+    value.history.unshift(historyEntry('consumption', {
+      itemId: item.id,
+      instanceId: item.instanceId,
+      itemName: item.name,
+      family: item.family,
+      tier: item.tier,
+      claimType: claimType,
+      xpBonus: result.xpBonus,
+      goldBonus: result.goldBonus,
+      lootLuck: result.lootLuck,
+      note: item.name + ' was consumed by a matching reward claim.'
+    }));
+
+    value.activeItem = null;
+    value.market.totalItemsConsumed += 1;
+
+    saveState(value);
+
+    return result;
   }
 
   window.BookShelfEconomy = {
@@ -538,6 +608,7 @@
     purchase: purchase,
     activate: activate,
     activeItem: activeItem,
-    inventory: inventory
+    inventory: inventory,
+    applyToReward: applyToReward
   };
 })();

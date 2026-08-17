@@ -1,6 +1,17 @@
 (function () {
   var selectedEdition = null;
 
+  // Leave blank until you create a restricted Google Books API key.
+  // Restrict the key to Google Books API and set sensible quota limits.
+  var GOOGLE_BOOKS_API_KEY = '';
+
+  var CACHE_PREFIX = 'readquest-book-lookup-v1:';
+  var CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+  var OPEN_LIBRARY_MIN_INTERVAL_MS = 1000;
+  var inFlightLookups = {};
+  var lastOpenLibraryRequestAt = 0;
+  var openLibraryQueue = Promise.resolve();
+
   function field(id, label, type) {
     return '<label class="field isbn-extra">' +
       '<span class="field-label">' + label + '</span>' +
@@ -23,9 +34,95 @@
   }
 
   function normalizeTitle(value) {
-    return cleanText(value).toLowerCase()
+    return cleanText(value)
+      .toLowerCase()
       .replace(/[^a-z0-9]+/g, ' ')
       .trim();
+  }
+
+  function normalizedAuthor(value) {
+    return cleanText(value)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+  }
+
+  function lookupCacheKey(title, author, isbn) {
+    if (isbn) {
+      return 'isbn:' + cleanIsbn(isbn);
+    }
+
+    return 'search:' +
+      normalizeTitle(title) +
+      '|' +
+      normalizedAuthor(author);
+  }
+
+  function readCachedEditions(cacheKey) {
+    try {
+      var raw = localStorage.getItem(CACHE_PREFIX + cacheKey);
+
+      if (!raw) {
+        return null;
+      }
+
+      var cached = JSON.parse(raw);
+
+      if (!cached || !cached.createdAt || !Array.isArray(cached.editions)) {
+        localStorage.removeItem(CACHE_PREFIX + cacheKey);
+        return null;
+      }
+
+      if (Date.now() - cached.createdAt > CACHE_TTL_MS) {
+        localStorage.removeItem(CACHE_PREFIX + cacheKey);
+        return null;
+      }
+
+      return cached.editions;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function cacheEditions(cacheKey, editions) {
+    if (!editions || !editions.length) {
+      return;
+    }
+
+    try {
+      localStorage.setItem(
+        CACHE_PREFIX + cacheKey,
+        JSON.stringify({
+          createdAt: Date.now(),
+          editions: editions
+        })
+      );
+    } catch (_) {
+      // A full or unavailable localStorage should never block lookup.
+    }
+  }
+
+  function wait(ms) {
+    return new Promise(function (resolve) {
+      setTimeout(resolve, ms);
+    });
+  }
+
+  function queueOpenLibraryRequest(request) {
+    openLibraryQueue = openLibraryQueue.then(async function () {
+      var now = Date.now();
+      var elapsed = now - lastOpenLibraryRequestAt;
+      var delay = Math.max(0, OPEN_LIBRARY_MIN_INTERVAL_MS - elapsed);
+
+      if (delay) {
+        await wait(delay);
+      }
+
+      lastOpenLibraryRequestAt = Date.now();
+      return request();
+    });
+
+    return openLibraryQueue;
   }
 
   function subjectName(subject) {
@@ -78,14 +175,12 @@
 
   function googleCover(info) {
     var links = info.imageLinks || {};
-
-    return links.thumbnail ||
-      links.smallThumbnail ||
-      '';
+    return links.thumbnail || links.smallThumbnail || '';
   }
 
   function googleIsbn(info) {
     var identifiers = info.industryIdentifiers || [];
+
     var isbn13 = identifiers.filter(function (item) {
       return item.type === 'ISBN_13';
     })[0];
@@ -103,6 +198,8 @@
 
   function mapGoogleEdition(item) {
     var info = item.volumeInfo || {};
+    var published = cleanText(info.publishedDate);
+    var yearMatch = published.match(/\b(1[0-9]{3}|20[0-9]{2})\b/);
 
     return {
       source: 'Google Books',
@@ -111,10 +208,7 @@
       subtitle: cleanText(info.subtitle),
       authors: (info.authors || []).filter(Boolean),
       publisher: cleanText(info.publisher),
-      year: cleanText(info.publishedDate)
-        .match(/\b(1[0-9]{3}|20[0-9]{2})\b/) ?
-        cleanText(info.publishedDate)
-          .match(/\b(1[0-9]{3}|20[0-9]{2})\b/)[0] : '',
+      year: yearMatch ? yearMatch[0] : '',
       language: cleanText(info.language),
       pageCount: info.pageCount || '',
       description: cleanText(info.description),
@@ -127,6 +221,7 @@
 
   function mapOpenLibraryEdition(doc) {
     var isbnList = doc.isbn || [];
+
     var isbn13 = isbnList.filter(function (item) {
       return cleanIsbn(item).length === 13;
     })[0];
@@ -147,7 +242,7 @@
       subtitle: '',
       authors: (doc.author_name || []).filter(Boolean),
       publisher: (doc.publisher || [])[0] || '',
-      year: doc.first_publish_year || doc.publish_year && doc.publish_year[0] || '',
+      year: doc.first_publish_year || (doc.publish_year && doc.publish_year[0]) || '',
       language: (doc.language || [])[0] || '',
       pageCount: doc.number_of_pages_median || '',
       description: '',
@@ -159,17 +254,20 @@
   }
 
   function isDuplicateEdition(existing, candidate) {
-    var sameIsbn = candidate.isbn &&
+    var sameIsbn =
+      candidate.isbn &&
       existing.isbn &&
       candidate.isbn === existing.isbn;
 
-    var sameTitle = normalizeTitle(candidate.title) &&
+    var sameTitle =
+      normalizeTitle(candidate.title) &&
       normalizeTitle(candidate.title) === normalizeTitle(existing.title);
 
-    var sameAuthor = candidate.authors[0] &&
+    var sameAuthor =
+      candidate.authors[0] &&
       existing.authors[0] &&
       cleanText(candidate.authors[0]).toLowerCase() ===
-      cleanText(existing.authors[0]).toLowerCase();
+        cleanText(existing.authors[0]).toLowerCase();
 
     return sameIsbn || (sameTitle && sameAuthor && candidate.cover === existing.cover);
   }
@@ -177,7 +275,7 @@
   function combineEditions(primary, secondary) {
     var combined = [];
 
-    primary.concat(secondary).forEach(function (edition) {
+    (primary || []).concat(secondary || []).forEach(function (edition) {
       if (!edition.title) {
         return;
       }
@@ -213,19 +311,27 @@
       return [];
     }
 
-    var response = await fetch(
+    var url =
       'https://www.googleapis.com/books/v1/volumes?q=' +
       encodeURIComponent(parts.join('+')) +
-      '&maxResults=20&printType=books'
-    );
+      '&maxResults=20&printType=books';
 
-    if (!response.ok) {
-      return [];
+    if (GOOGLE_BOOKS_API_KEY) {
+      url += '&key=' + encodeURIComponent(GOOGLE_BOOKS_API_KEY);
     }
 
-    var data = await response.json();
+    try {
+      var response = await fetch(url);
 
-    return (data.items || []).map(mapGoogleEdition);
+      if (!response.ok) {
+        return [];
+      }
+
+      var data = await response.json();
+      return (data.items || []).map(mapGoogleEdition);
+    } catch (_) {
+      return [];
+    }
   }
 
   async function searchOpenLibrary(title, author, isbn) {
@@ -248,19 +354,27 @@
     }
 
     params.push('limit=20');
-    params.push('fields=key,title,author_name,publisher,first_publish_year,publish_year,language,isbn,cover_i,cover_edition_key,number_of_pages_median,subject');
-
-    var response = await fetch(
-      'https://openlibrary.org/search.json?' + params.join('&')
+    params.push(
+      'fields=key,title,author_name,publisher,first_publish_year,publish_year,' +
+      'language,isbn,cover_i,cover_edition_key,number_of_pages_median,subject'
     );
 
-    if (!response.ok) {
-      return [];
-    }
+    return queueOpenLibraryRequest(async function () {
+      try {
+        var response = await fetch(
+          'https://openlibrary.org/search.json?' + params.join('&')
+        );
 
-    var data = await response.json();
+        if (!response.ok) {
+          return [];
+        }
 
-    return (data.docs || []).map(mapOpenLibraryEdition);
+        var data = await response.json();
+        return (data.docs || []).map(mapOpenLibraryEdition);
+      } catch (_) {
+        return [];
+      }
+    });
   }
 
   function escapeHtml(value) {
@@ -340,18 +454,19 @@
     panel.innerHTML =
       '<div class="edition-detail-cover">' + coverMarkup(edition) + '</div>' +
       '<div class="edition-detail-copy">' +
-      '<p class="edition-source">' + escapeHtml(edition.source) + '</p>' +
-      '<h3>' + escapeHtml(edition.title) + '</h3>' +
-      (edition.subtitle
-        ? '<p class="edition-subtitle">' + escapeHtml(edition.subtitle) + '</p>'
-        : '') +
-      '<p class="edition-author">' + escapeHtml(authorText) + '</p>' +
-      '<p class="edition-meta">' + escapeHtml(detailBits.join(' • ')) + '</p>' +
-      (edition.description
-        ? '<p class="edition-description">' +
-        escapeHtml(edition.description) + '</p>'
-        : '') +
-      '<button id="useEditionBtn" type="button">Use This Edition</button>' +
+        '<p class="edition-source">' + escapeHtml(edition.source) + '</p>' +
+        '<h3>' + escapeHtml(edition.title) + '</h3>' +
+        (edition.subtitle
+          ? '<p class="edition-subtitle">' + escapeHtml(edition.subtitle) + '</p>'
+          : '') +
+        '<p class="edition-author">' + escapeHtml(authorText) + '</p>' +
+        '<p class="edition-meta">' + escapeHtml(detailBits.join(' • ')) + '</p>' +
+        (edition.description
+          ? '<p class="edition-description">' +
+              escapeHtml(edition.description) +
+            '</p>'
+          : '') +
+        '<button id="useEditionBtn" type="button">Use This Edition</button>' +
       '</div>';
 
     document.getElementById('useEditionBtn').onclick = function () {
@@ -382,19 +497,32 @@
     }
 
     if (edition.authors.length) {
-      document.getElementById('fieldAuthor').value =
-        edition.authors.join(', ');
+      document.getElementById('fieldAuthor').value = edition.authors.join(', ');
     }
 
     if (edition.isbn) {
       document.getElementById('fieldIsbn').value = edition.isbn;
     }
 
-    values.publisher.value = edition.publisher || '';
-    values.publicationYear.value = edition.year || '';
-    values.language.value = edition.language || '';
-    values.pageCount.value = edition.pageCount || '';
-    values.description.value = edition.description || '';
+    if (values.publisher) {
+      values.publisher.value = edition.publisher || '';
+    }
+
+    if (values.publicationYear) {
+      values.publicationYear.value = edition.year || '';
+    }
+
+    if (values.language) {
+      values.language.value = edition.language || '';
+    }
+
+    if (values.pageCount) {
+      values.pageCount.value = edition.pageCount || '';
+    }
+
+    if (values.description) {
+      values.description.value = edition.description || '';
+    }
 
     var genre = document.getElementById('fieldGenre');
     var tags = document.getElementById('fieldTags');
@@ -414,7 +542,7 @@
 
     var message = document.getElementById('isbnLookupStatus');
 
-        clearEditionSearchUI();
+    clearEditionSearchUI();
 
     if (message) {
       message.textContent = 'Edition loaded. Review the details, then save.';
@@ -422,8 +550,7 @@
   }
 
   function getNativeScanner() {
-    var plugins = window.Capacitor &&
-      window.Capacitor.Plugins;
+    var plugins = window.Capacitor && window.Capacitor.Plugins;
 
     return plugins &&
       plugins.IsbnScanner &&
@@ -470,14 +597,17 @@
     isbn.closest('.field').insertAdjacentHTML(
       'afterend',
       '<div class="field isbn-lookup">' +
-      '<button id="isbnScanBtn" type="button">Scan ISBN</button>' +
-      '<button id="bookSearchBtn" type="button">Search</button>' +
-      '<span id="isbnLookupStatus" role="status"></span>' +
+        '<button id="isbnScanBtn" type="button">Scan ISBN</button>' +
+        '<button id="bookSearchBtn" type="button">Search</button>' +
+        '<span id="isbnLookupStatus" role="status"></span>' +
       '</div>' +
       '<section id="editionResults" class="edition-results hidden">' +
-      '<p class="edition-results-title">Choose an edition</p>' +
-      '<div id="editionCoverStrip" class="edition-cover-strip"></div>' +
-      '<div id="editionDetailsPanel" class="edition-details hidden"></div>' +
+        '<p class="edition-results-title">Choose an edition</p>' +
+        '<div id="editionCoverStrip" class="edition-cover-strip"></div>' +
+        '<button id="moreEditionsBtn" type="button" class="hidden">' +
+          'Search more editions' +
+        '</button>' +
+        '<div id="editionDetailsPanel" class="edition-details hidden"></div>' +
       '</section>' +
       field('fieldPublisher', 'Publisher') +
       field('fieldPublicationYear', 'Publication Year', 'number') +
@@ -488,8 +618,11 @@
 
     var searchButton = document.getElementById('bookSearchBtn');
     var scanButton = document.getElementById('isbnScanBtn');
+    var moreEditionsButton = document.getElementById('moreEditionsBtn');
     var message = document.getElementById('isbnLookupStatus');
     var resultsPanel = document.getElementById('editionResults');
+    var currentLookup = null;
+    var currentEditions = [];
 
     searchButton.style.cssText =
       'padding:9px 12px;border:1px solid #A8823C;background:#1B2129;' +
@@ -500,60 +633,205 @@
       'color:#F6F1E4;border-radius:3px;font-weight:600;cursor:pointer;' +
       'margin-right:8px';
 
+    moreEditionsButton.style.cssText =
+      'margin-top:10px;padding:8px 10px;border:1px solid #A8823C;' +
+      'background:#1B2129;color:#F6F1E4;border-radius:3px;' +
+      'font-weight:600;cursor:pointer';
+
     message.style.cssText =
-      'margin-left:8px;font-size:12px;color:#55493C';
+      'margin-left:8px;font-size:12px;color:#cdbdb4';
+
+    function setLookupButtonsDisabled(disabled) {
+      searchButton.disabled = disabled;
+      scanButton.disabled = disabled;
+    }
+
+    function resetResults() {
+      selectedEdition = null;
+      currentEditions = [];
+      resultsPanel.classList.add('hidden');
+      renderEditionDetails(null);
+
+      var coverStrip = document.getElementById('editionCoverStrip');
+
+      if (coverStrip) {
+        coverStrip.innerHTML = '';
+      }
+
+      moreEditionsButton.classList.add('hidden');
+      moreEditionsButton.disabled = false;
+      moreEditionsButton.textContent = 'Search more editions';
+    }
+
+    function showEditions(editions, fromCache, showMoreButton) {
+      currentEditions = editions;
+
+      if (!editions.length) {
+        return false;
+      }
+
+      resultsPanel.classList.remove('hidden');
+      renderEditionStrip(editions);
+
+      selectEdition(
+        editions[0],
+        document.querySelector('.edition-cover-choice')
+      );
+
+      moreEditionsButton.classList.toggle('hidden', !showMoreButton);
+
+      message.textContent =
+        editions.length +
+        ' edition' +
+        (editions.length === 1 ? '' : 's') +
+        (fromCache ? ' loaded from saved search.' : ' found.') +
+        (showMoreButton ? ' Search more editions for additional matches.' : '');
+
+      return true;
+    }
+
+    function sharedLookup(cacheKey, task) {
+      if (inFlightLookups[cacheKey]) {
+        return inFlightLookups[cacheKey];
+      }
+
+      inFlightLookups[cacheKey] = Promise.resolve()
+        .then(task)
+        .finally(function () {
+          delete inFlightLookups[cacheKey];
+        });
+
+      return inFlightLookups[cacheKey];
+    }
 
     async function searchForEditions(forceIsbn) {
       var titleValue = cleanText(title.value);
       var authorValue = cleanText(author.value);
       var isbnValue = cleanIsbn(forceIsbn || isbn.value);
+      var cacheKey = lookupCacheKey(titleValue, authorValue, isbnValue);
 
       if (!isbnValue && !titleValue) {
         message.textContent = 'Enter a title, or scan/enter an ISBN first.';
         return;
       }
 
-      selectedEdition = null;
-      resultsPanel.classList.add('hidden');
-      renderEditionDetails(null);
-      document.getElementById('editionCoverStrip').innerHTML = '';
+      currentLookup = {
+        title: titleValue,
+        author: authorValue,
+        isbn: isbnValue,
+        cacheKey: cacheKey
+      };
 
-      searchButton.disabled = true;
-      scanButton.disabled = true;
+      resetResults();
+      setLookupButtonsDisabled(true);
+
+      var cachedEditions = readCachedEditions(cacheKey);
+
+      if (cachedEditions && cachedEditions.length) {
+        showEditions(cachedEditions, true, true);
+        setLookupButtonsDisabled(false);
+        return;
+      }
+
       message.textContent = isbnValue
-        ? 'Searching editions by ISBN…'
-        : 'Searching editions…';
+        ? 'Searching Google Books by ISBN…'
+        : 'Searching Google Books…';
 
       try {
-        var results = await Promise.all([
-          searchGoogleBooks(titleValue, authorValue, isbnValue),
-          searchOpenLibrary(titleValue, authorValue, isbnValue)
-        ]);
+        var googleEditions = await sharedLookup(
+          'google:' + cacheKey,
+          function () {
+            return searchGoogleBooks(titleValue, authorValue, isbnValue);
+          }
+        );
 
-        var editions = combineEditions(results[0], results[1]);
-
-        if (!editions.length) {
-          throw new Error('No editions found. Try a shorter title or author name.');
+        if (googleEditions.length) {
+          cacheEditions(cacheKey, googleEditions);
+          showEditions(googleEditions, false, true);
+          return;
         }
 
-        resultsPanel.classList.remove('hidden');
-        renderEditionStrip(editions);
+        message.textContent =
+          'Google Books is unavailable. Trying Open Library…';
+
+        var openLibraryEditions = await sharedLookup(
+          'openlibrary:' + cacheKey,
+          function () {
+            return searchOpenLibrary(titleValue, authorValue, isbnValue);
+          }
+        );
+
+        if (openLibraryEditions.length) {
+          cacheEditions(cacheKey, openLibraryEditions);
+          showEditions(openLibraryEditions, false, false);
+          return;
+        }
+
+        message.textContent =
+          'No editions found. Google Books may be quota-limited and Open Library may be unavailable. Try again later, scan an ISBN, or enter the book manually.';
+      } catch (_) {
+        message.textContent =
+          'No editions found. Google Books may be quota-limited and Open Library may be unavailable. Try again later, scan an ISBN, or enter the book manually.';
+      } finally {
+        setLookupButtonsDisabled(false);
+      }
+    }
+
+    moreEditionsButton.onclick = async function () {
+      if (!currentLookup) {
+        return;
+      }
+
+      moreEditionsButton.disabled = true;
+      moreEditionsButton.textContent = 'Searching more editions…';
+      message.textContent = 'Searching Open Library for additional editions…';
+
+      try {
+        var openLibraryEditions = await sharedLookup(
+          'openlibrary:' + currentLookup.cacheKey,
+          function () {
+            return searchOpenLibrary(
+              currentLookup.title,
+              currentLookup.author,
+              currentLookup.isbn
+            );
+          }
+        );
+
+        var combined = combineEditions(currentEditions, openLibraryEditions);
+
+        if (!openLibraryEditions.length || combined.length === currentEditions.length) {
+          message.textContent =
+            currentEditions.length +
+            ' edition' +
+            (currentEditions.length === 1 ? '' : 's') +
+            ' found. No additional editions are available right now.';
+          moreEditionsButton.classList.add('hidden');
+          return;
+        }
+
+        currentEditions = combined;
+        cacheEditions(currentLookup.cacheKey, combined);
+        renderEditionStrip(combined);
+
         selectEdition(
-          editions[0],
+          combined[0],
           document.querySelector('.edition-cover-choice')
         );
 
-        message.textContent = editions.length +
-          ' edition' + (editions.length === 1 ? '' : 's') +
-          ' found. Choose a cover to compare details.';
-      } catch (error) {
         message.textContent =
-          error.message || 'Could not search for editions.';
+          combined.length +
+          ' editions available. Choose a cover to compare details.';
+
+        moreEditionsButton.classList.add('hidden');
+      } catch (_) {
+        message.textContent =
+          'Could not search for additional editions right now.';
       } finally {
-        searchButton.disabled = false;
-        scanButton.disabled = false;
+        moreEditionsButton.disabled = false;
+        moreEditionsButton.textContent = 'Search more editions';
       }
-    }
+    };
 
     searchButton.onclick = function () {
       searchForEditions('');
@@ -568,8 +846,7 @@
         return;
       }
 
-      scanButton.disabled = true;
-      searchButton.disabled = true;
+      setLookupButtonsDisabled(true);
       message.textContent = 'Opening camera…';
 
       try {
@@ -589,9 +866,7 @@
             (error && error.message) || 'Could not scan an ISBN.';
         }
       } finally {
-        if (!searchButton.disabled) {
-          scanButton.disabled = false;
-        }
+        setLookupButtonsDisabled(false);
       }
     };
 
@@ -604,6 +879,8 @@
 
         if (wasOpen && !isOpen) {
           clearEditionSearchUI();
+          currentLookup = null;
+          currentEditions = [];
         }
 
         wasOpen = isOpen;
