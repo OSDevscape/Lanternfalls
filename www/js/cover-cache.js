@@ -17,7 +17,10 @@
   }
 
   function coverUrl(isbn) {
-    return 'https://covers.openlibrary.org/b/isbn/' + encodeURIComponent(isbn) + '-M.jpg?default=false';
+    return 'https://covers.openlibrary.org/b/isbn/' +
+      encodeURIComponent(isbn) +
+      '-M.jpg?default=false&cb=' +
+      Date.now();
   }
 
   function filePath(isbn) {
@@ -78,7 +81,7 @@
 
         try {
           await fs.mkdir({ path: CACHE_FOLDER, directory: DIRECTORY, recursive: true });
-        } catch (_) {}
+        } catch (_) { }
 
         await fs.writeFile({
           path: filePath(isbn),

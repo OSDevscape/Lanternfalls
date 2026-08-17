@@ -1,10 +1,3 @@
 name = "readquest"
 main = "bookshelf-boss-worker.js"
 compatibility_date = "2026-08-16"
-
-[assets]
-directory = "../www"
-run_worker_first = ["/api/*"]
-
-[vars]
-ALLOWED_ORIGIN = "https://readquest.readquest-rpg.workers.dev"
