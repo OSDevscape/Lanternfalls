@@ -101,6 +101,78 @@
     return result;
   }
 
+  function escape(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
+      return {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[character];
+    });
+  }
+
+  function recentBattleLogs() {
+    var engine = window.BookShelfRewards;
+    if (!engine || !engine.ledger) return [];
+
+    var transactions = engine.ledger().transactions || {};
+
+    return Object.keys(transactions)
+      .map(function (key) { return transactions[key]; })
+      .filter(function (item) {
+        return item &&
+          item.type === 'session' &&
+          item.status === 'claimed' &&
+          item.battleLog;
+      })
+      .sort(function (left, right) {
+        return String(right.createdAt || '').localeCompare(String(left.createdAt || ''));
+      })
+      .slice(0, 8);
+  }
+
+  function battleLogHtml() {
+    var items = recentBattleLogs();
+
+    if (!items.length) {
+      return (
+        '<section class="adventure-card adventure-battle-log-card">' +
+        '<span class="adventure-label">Battle Log</span>' +
+        '<p class="adventure-muted">Claim a reading-session reward to record your first encounter.</p>' +
+        '</section>'
+      );
+    }
+
+    return (
+      '<section class="adventure-card adventure-battle-log-card">' +
+      '<span class="adventure-label">Battle Log</span>' +
+      '<div class="adventure-battle-log-list">' +
+      items.map(function (item) {
+        var log = item.battleLog;
+        return (
+          '<article class="adventure-battle-log-item' +
+          (log.critical ? ' is-critical' : '') + '">' +
+          '<div>' +
+          '<b>' + escape(log.enemyName || 'Unknown foe') + '</b>' +
+          '<span>' + escape(log.region || 'The Reading Realm') + '</span>' +
+          '</div>' +
+          '<strong>' + (Number(log.damage) || 0) + ' DMG</strong>' +
+          '<p>' + escape(log.message || '') + '</p>' +
+          '<small>' +
+          escape(item.bookTitle || log.bookTitle || 'Reading session') +
+          ' · ' + (Number(item.minutes) || 0) + ' min' +
+          (log.relic ? ' · Relic: ' + escape(log.relic) : '') +
+          '</small>' +
+          '</article>'
+        );
+      }).join('') +
+      '</div>' +
+      '</section>'
+    );
+  }
+
   function rememberSkillBonus(result, transaction) {
     if (!transaction || transaction.perkState !== 'triggered') return;
 
@@ -148,6 +220,78 @@
     return result;
   }
 
+  function escape(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
+      return {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[character];
+    });
+  }
+
+  function recentBattleLogs() {
+    var engine = window.BookShelfRewards;
+    if (!engine || !engine.ledger) return [];
+
+    var transactions = engine.ledger().transactions || {};
+
+    return Object.keys(transactions)
+      .map(function (key) { return transactions[key]; })
+      .filter(function (item) {
+        return item &&
+          item.type === 'session' &&
+          item.status === 'claimed' &&
+          item.battleLog;
+      })
+      .sort(function (left, right) {
+        return String(right.createdAt || '').localeCompare(String(left.createdAt || ''));
+      })
+      .slice(0, 8);
+  }
+
+  function battleLogHtml() {
+    var items = recentBattleLogs();
+
+    if (!items.length) {
+      return (
+        '<section class="adventure-card adventure-battle-log-card">' +
+        '<span class="adventure-label">Battle Log</span>' +
+        '<p class="adventure-muted">Claim a reading-session reward to record your first encounter.</p>' +
+        '</section>'
+      );
+    }
+
+    return (
+      '<section class="adventure-card adventure-battle-log-card">' +
+      '<span class="adventure-label">Battle Log</span>' +
+      '<div class="adventure-battle-log-list">' +
+      items.map(function (item) {
+        var log = item.battleLog;
+        return (
+          '<article class="adventure-battle-log-item' +
+          (log.critical ? ' is-critical' : '') + '">' +
+          '<div>' +
+          '<b>' + escape(log.enemyName || 'Unknown foe') + '</b>' +
+          '<span>' + escape(log.region || 'The Reading Realm') + '</span>' +
+          '</div>' +
+          '<strong>' + (Number(log.damage) || 0) + ' DMG</strong>' +
+          '<p>' + escape(log.message || '') + '</p>' +
+          '<small>' +
+          escape(item.bookTitle || log.bookTitle || 'Reading session') +
+          ' · ' + (Number(item.minutes) || 0) + ' min' +
+          (log.relic ? ' · Relic: ' + escape(log.relic) : '') +
+          '</small>' +
+          '</article>'
+        );
+      }).join('') +
+      '</div>' +
+      '</section>'
+    );
+  }
+
   function fireworks() {
     var effect = document.createElement('div');
     var colors = ['#ffd369', '#ff7a18', '#ff4d6d', '#9c6bff', '#25c8ff', '#a9e34b'];
@@ -180,27 +324,82 @@
 
     if (old) old.remove();
 
+    var battleTransactions = (result && result.transactions ? result.transactions : [])
+      .filter(function (item) {
+        return item &&
+          item.type === 'session' &&
+          item.battleLog;
+      });
+
+    var claimed = (result && result.transactions) || [];
+
+    var battleHtml = claimed
+      .filter(function (item) {
+        return item &&
+          item.type === 'session' &&
+          item.battleLog;
+      })
+      .map(function (item) {
+        var log = item.battleLog;
+
+        return (
+          '<div class="adventure-reward-battle-log' +
+          (log.critical ? ' is-critical' : '') + '">' +
+          '<span class="adventure-reward-battle-label">' +
+          (log.critical ? 'Critical Strike' : 'Battle Record') +
+          '</span>' +
+          '<b>' + escapeHtml(log.enemyName || 'Unknown foe') + '</b>' +
+          '<span>' + escapeHtml(log.region || 'The Reading Realm') + '</span>' +
+          '<p>' + escapeHtml(log.message || '') + '</p>' +
+          '<small>Damage: ' + (Number(log.damage) || 0) +
+          ' · Relic: ' + escapeHtml(log.relic || 'None') + '</small>' +
+          '</div>'
+        );
+      })
+      .join('');
+
+    var battleHtml = battleTransactions.map(function (item) {
+      var log = item.battleLog;
+
+      return (
+        '<div class="adventure-reward-battle-log' +
+        (log.critical ? ' is-critical' : '') + '">' +
+        '<span class="adventure-reward-battle-label">' +
+        (log.critical ? 'Critical Strike' : 'Battle Record') +
+        '</span>' +
+        '<b>' + escapeHtml(log.enemyName || 'Unknown foe') + '</b>' +
+        '<span>' + escapeHtml(log.region || 'The Reading Realm') + '</span>' +
+        '<p>' + escapeHtml(log.message || '') + '</p>' +
+        '<small>Damage: ' + (Number(log.damage) || 0) +
+        ' · Relic: ' + escapeHtml(log.relic || 'None') + '</small>' +
+        '</div>'
+      );
+    }).join('');
+
     var bonusHtml = result.skillBonuses.length
       ? '<div class="adventure-popup-skill"><span class="adventure-label">Class Skill Triggered</span>' +
-          result.skillBonuses.map(function (bonus) {
-            var reward =
-              (bonus.xp ? '+' + bonus.xp + ' XP' : '') +
-              (bonus.gold ? (bonus.xp ? ' · ' : '') + '+' + bonus.gold + ' gold' : '');
+      result.skillBonuses.map(function (bonus) {
+        var reward =
+          (bonus.xp ? '+' + bonus.xp + ' XP' : '') +
+          (bonus.gold ? (bonus.xp ? ' · ' : '') + '+' + bonus.gold + ' gold' : '');
 
-            return '<p><b>' + bonus.reason + '</b><span>' + reward + '</span></p>';
-          }).join('') +
-        '</div>'
+        return '<p><b>' + bonus.reason + '</b><span>' + reward + '</span></p>';
+      }).join('') +
+      '</div>'
       : '';
 
     var popup = document.createElement('div');
 
     popup.className = 'adventure-reward-popup';
     popup.innerHTML =
-      '<div class="adventure-popup-card" role="dialog" aria-modal="true" aria-label="Rewards claimed">' +
-        '<button class="adventure-popup-close" type="button" aria-label="Close">×</button>' +
-        '<span class="adventure-label">Rewards Claimed</span>' +
-        '<h2>+' + result.xp + ' XP · +' + result.gold + ' Gold</h2>' +
-        bonusHtml +
+      '<div class="adventure-popup-card">' +
+        '<button class="adventure-popup-close" type="button" aria-label="Close rewards">×</button>' +
+        '<h2>Rewards Claimed</h2>' +
+        '<div class="adventure-reward-totals">' +
+          '<strong>+' + (Number(result.xp) || 0) + ' XP</strong>' +
+          '<strong>+' + (Number(result.gold) || 0) + ' Gold</strong>' +
+        '</div>' +
+        battleHtml +
         '<button class="adventure-popup-done" type="button">Continue</button>' +
       '</div>';
 
@@ -245,57 +444,57 @@
 
     mount.innerHTML =
       '<div class="character-gold-total">' +
-        '<button type="button" data-tooltip="Gold is Adventure currency earned from eligible reading sessions and completion rewards after you claim them." aria-label="About gold" aria-expanded="false">◉ ' +
-          value.gold +
-        '</button>' +
+      '<button type="button" data-tooltip="Gold is Adventure currency earned from eligible reading sessions and completion rewards after you claim them." aria-label="About gold" aria-expanded="false">◉ ' +
+      value.gold +
+      '</button>' +
       '</div>' +
 
       '<div class="character-progression-card">' +
-        '<div class="adventure-xp-bar" data-tooltip="XP is earned by claiming eligible reading and completion rewards. The bar shows progress toward your next Adventure level." aria-label="About XP progress" aria-expanded="false" role="button" tabindex="0">' +
-          '<i style="width:' + percent + '%"></i>' +
-        '</div>' +
+      '<div class="adventure-xp-bar" data-tooltip="XP is earned by claiming eligible reading and completion rewards. The bar shows progress toward your next Adventure level." aria-label="About XP progress" aria-expanded="false" role="button" tabindex="0">' +
+      '<i style="width:' + percent + '%"></i>' +
+      '</div>' +
 
-        '<p class="adventure-xp-text">' +
-          intoLevel +
-          ' / ' +
-          needed +
-          ' XP to Level ' +
-          (level + 1) +
+      '<p class="adventure-xp-text">' +
+      intoLevel +
+      ' / ' +
+      needed +
+      ' XP to Level ' +
+      (level + 1) +
+      ' ' +
+      tooltipButton('This is your claimed XP progress within the current level. New levels grant 2 stat points.', 'About level progress') +
+      '</p>' +
+
+      '<details class="adventure-stats" ' + (points ? 'open' : '') + '>' +
+      '<summary>Stats <em>' +
+      points +
+      ' point' +
+      (points === 1 ? '' : 's') +
+      ' available</em></summary>' +
+      '<p class="adventure-stat-help">Spend available points to raise a stat. Each new level grants 2 points.</p>' +
+      '<div class="adventure-stat-grid">' +
+      STATS.map(function (stat) {
+        return '<div>' +
+          '<span>' +
+          stat.toUpperCase() +
           ' ' +
-          tooltipButton('This is your claimed XP progress within the current level. New levels grant 2 stat points.', 'About level progress') +
-        '</p>' +
-
-        '<details class="adventure-stats" ' + (points ? 'open' : '') + '>' +
-          '<summary>Stats <em>' +
-            points +
-            ' point' +
-            (points === 1 ? '' : 's') +
-            ' available</em></summary>' +
-          '<p class="adventure-stat-help">Spend available points to raise a stat. Each new level grants 2 points.</p>' +
-          '<div class="adventure-stat-grid">' +
-            STATS.map(function (stat) {
-              return '<div>' +
-                '<span>' +
-                  stat.toUpperCase() +
-                  ' ' +
-                  tooltipButton(STAT_TOOLTIPS[stat], 'About ' + stat.toUpperCase()) +
-                '</span>' +
-                '<b>' + value.stats[stat] + '</b>' +
-                '<button type="button" data-adventure-stat="' +
-                  stat +
-                  '" data-tooltip="Spend 1 available stat point on ' +
-                  stat.toUpperCase() +
-                  '. ' +
-                  STAT_TOOLTIPS[stat] +
-                  '" aria-label="Increase ' +
-                  stat.toUpperCase() +
-                  '" aria-expanded="false" ' +
-                  (points ? '' : 'disabled') +
-                '>+</button>' +
-              '</div>';
-            }).join('') +
-          '</div>' +
-        '</details>' +
+          tooltipButton(STAT_TOOLTIPS[stat], 'About ' + stat.toUpperCase()) +
+          '</span>' +
+          '<b>' + value.stats[stat] + '</b>' +
+          '<button type="button" data-adventure-stat="' +
+          stat +
+          '" data-tooltip="Spend 1 available stat point on ' +
+          stat.toUpperCase() +
+          '. ' +
+          STAT_TOOLTIPS[stat] +
+          '" aria-label="Increase ' +
+          stat.toUpperCase() +
+          '" aria-expanded="false" ' +
+          (points ? '' : 'disabled') +
+          '>+</button>' +
+          '</div>';
+      }).join('') +
+      '</div>' +
+      '</details>' +
       '</div>';
 
     mount.querySelectorAll('[data-adventure-stat]').forEach(function (button) {
@@ -340,50 +539,50 @@
 
     var detail = pendingCount
       ? sessions.items.length +
-        ' reading session' +
-        (sessions.items.length === 1 ? '' : 's') +
-        (bosses.books.length
-          ? ' · ' +
-            bosses.books.length +
-            ' boss defeat' +
-            (bosses.books.length === 1 ? '' : 's')
-          : '') +
-        ' ready to claim'
+      ' reading session' +
+      (sessions.items.length === 1 ? '' : 's') +
+      (bosses.books.length
+        ? ' · ' +
+        bosses.books.length +
+        ' boss defeat' +
+        (bosses.books.length === 1 ? '' : 's')
+        : '') +
+      ' ready to claim'
       : 'All logged rewards are claimed.';
 
     var bossHtml = bosses.books.length
       ? '<div class="adventure-boss-rewards">' +
-          '<span class="adventure-label">Boss Defeat Ready ' +
-            tooltipButton(
-              'A Finished book with a completion reward that has not yet been claimed. Claiming records its XP, gold, trophy, and loot reward.',
-              'About Boss Defeat Ready'
-            ) +
-          '</span>' +
-          bosses.books.map(function (item) {
-            return '<p><b>' +
-              item.reward.bookTitle +
-              '</b><span>+' +
-              item.reward.xp +
-              ' XP · +' +
-              item.reward.gold +
-              ' gold · Trophy · Loot drop</span></p>';
-          }).join('') +
-        '</div>'
+      '<span class="adventure-label">Boss Defeat Ready ' +
+      tooltipButton(
+        'A Finished book with a completion reward that has not yet been claimed. Claiming records its XP, gold, trophy, and loot reward.',
+        'About Boss Defeat Ready'
+      ) +
+      '</span>' +
+      bosses.books.map(function (item) {
+        return '<p><b>' +
+          item.reward.bookTitle +
+          '</b><span>+' +
+          item.reward.xp +
+          ' XP · +' +
+          item.reward.gold +
+          ' gold · Trophy · Loot drop</span></p>';
+      }).join('') +
+      '</div>'
       : '';
 
     mount.innerHTML =
       bossHtml +
       '<div class="adventure-reward-box">' +
-        '<p data-tooltip="Pending rewards come from logged reading sessions and Finished books. Rewards are added to XP and gold only after you claim them." tabindex="0">' +
-          detail +
-        '</p>' +
-        '<button id="claimRewards" type="button" data-tooltip="Claims all pending session and completion rewards once, then records their XP and gold in the Adventure ledger." aria-label="About claiming rewards" aria-expanded="false" ' +
-          (pendingCount ? '' : 'disabled') +
-        '>' +
-          (pendingCount
-            ? 'Claim ' + totalXp + ' XP · ' + totalGold + ' Gold'
-            : 'No Rewards Ready') +
-        '</button>' +
+      '<p data-tooltip="Pending rewards come from logged reading sessions and Finished books. Rewards are added to XP and gold only after you claim them." tabindex="0">' +
+      detail +
+      '</p>' +
+      '<button id="claimRewards" type="button" data-tooltip="Claims all pending session and completion rewards once, then records their XP and gold in the Adventure ledger." aria-label="About claiming rewards" aria-expanded="false" ' +
+      (pendingCount ? '' : 'disabled') +
+      '>' +
+      (pendingCount
+        ? 'Claim ' + totalXp + ' XP · ' + totalGold + ' Gold'
+        : 'No Rewards Ready') +
+      '</button>' +
       '</div>';
 
     var claimButton = mount.querySelector('#claimRewards');
@@ -458,7 +657,16 @@
       '.adventure-popup-skill p{display:flex;justify-content:space-between;gap:10px;margin:8px 0 0;font-size:12px}' +
       '.adventure-popup-skill p b{font-weight:normal}' +
       '.adventure-popup-skill p span{color:var(--accent,#4A90E2);white-space:nowrap}' +
-      '.adventure-popup-done{width:100%;padding:9px;border:1px solid var(--gold,#A8823C);border-radius:3px;background:transparent;color:var(--paper-light,#F6F1E4);font:inherit;font-weight:bold;cursor:pointer}';
+      '.adventure-popup-done{width:100%;padding:9px;border:1px solid var(--gold,#A8823C);border-radius:3px;background:transparent;color:var(--paper-light,#F6F1E4);font:inherit;font-weight:bold;cursor:pointer}' +
+
+      '.adventure-reward-battle-log{margin:12px 0;padding:12px;text-align:left;border:1px solid rgba(168,130,60,.35);background:rgba(0,0,0,.22)}' +
+      '.adventure-reward-battle-log.is-critical{border-color:rgba(255,122,24,.8)}' +
+      '.adventure-reward-battle-label,.adventure-reward-battle-log b,.adventure-reward-battle-log span,.adventure-reward-battle-log small{display:block}' +
+      '.adventure-reward-battle-label{color:var(--gold,#A8823C);font-size:10px;font-weight:bold;letter-spacing:.12em;text-transform:uppercase}' +
+      '.adventure-reward-battle-log b{margin-top:4px;color:var(--paper-light,#F6F1E4);font:17px Georgia,serif}' +
+      '.adventure-reward-battle-log span,.adventure-reward-battle-log p,.adventure-reward-battle-log small{color:var(--muted,#8A8378);font-size:12px}' +
+      '.adventure-reward-battle-log p{margin:7px 0}' +
+      '.adventure-reward-battle-log small{color:var(--gold,#A8823C)}';
 
     document.head.appendChild(style);
 
