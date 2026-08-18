@@ -8,13 +8,22 @@
   }
 
   function attachBookCover(image, book) {
+    var selectedCover = String((book && book.coverUrl) || '')
+      .replace(/^http:\/\//i, 'https://');
+
     var isbn = String((book && book.isbn) || '')
       .replace(/[^0-9Xx]/g, '');
 
     image.alt = '';
+
     image.onerror = function () {
       image.style.visibility = 'hidden';
     };
+
+    if (selectedCover) {
+      image.src = selectedCover;
+      return;
+    }
 
     if (!isbn) {
       image.style.visibility = 'hidden';
@@ -31,6 +40,7 @@
       encodeURIComponent(isbn) +
       '-M.jpg?default=false';
   }
+
 
   function seriesGroups() {
     var books = data('bookshelf-data', '{"books":[]}').books || [];
@@ -59,9 +69,10 @@
         title: book.title || 'Untitled',
         author: book.author || '',
         isbn: book.isbn || '',
+        coverUrl: book.coverUrl || '',
         number: meta.seriesNumber || book.seriesNumber || '',
         status: book.status || 'to-read'
-      });
+      });;
     });
 
     return Object.keys(groups).map(function (key) {
@@ -246,8 +257,8 @@
     window.className = 'hidden';
     window.innerHTML =
       '<header class="dash-series-window-head">' +
-        '<button type="button" aria-label="Back">‹ Back</button>' +
-        '<h2>Series</h2>' +
+      '<button type="button" aria-label="Back">‹ Back</button>' +
+      '<h2>Series</h2>' +
       '</header>' +
       '<main class="dash-series-window-list"></main>';
 

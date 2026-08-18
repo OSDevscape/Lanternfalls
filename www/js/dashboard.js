@@ -10,29 +10,38 @@
   }
 
   function attachBookCover(image, book) {
-    var isbn = String((book && book.isbn) || '')
-      .replace(/[^0-9Xx]/g, '');
+  var selectedCover = String((book && book.coverUrl) || '')
+    .replace(/^http:\/\//i, 'https://');
 
-    image.alt = '';
-    image.onerror = function () {
-      image.style.visibility = 'hidden';
-    };
+  var isbn = String((book && book.isbn) || '')
+    .replace(/[^0-9Xx]/g, '');
 
-    if (!isbn) {
-      image.style.visibility = 'hidden';
-      return;
-    }
+  image.alt = '';
 
-    if (window.BookCoverCache && window.BookCoverCache.attach) {
-      window.BookCoverCache.attach(image, isbn);
-      return;
-    }
+  image.onerror = function () {
+    image.style.visibility = 'hidden';
+  };
 
-    image.src =
-      'https://covers.openlibrary.org/b/isbn/' +
-      encodeURIComponent(isbn) +
-      '-M.jpg?default=false';
+  if (selectedCover) {
+    image.src = selectedCover;
+    return;
   }
+
+  if (!isbn) {
+    image.style.visibility = 'hidden';
+    return;
+  }
+
+  if (window.BookCoverCache && window.BookCoverCache.attach) {
+    window.BookCoverCache.attach(image, isbn);
+    return;
+  }
+
+  image.src =
+    'https://covers.openlibrary.org/b/isbn/' +
+    encodeURIComponent(isbn) +
+    '-M.jpg?default=false';
+}
 
   function install() {
     var head = document.querySelector('.app-header');
