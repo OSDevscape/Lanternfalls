@@ -3,11 +3,73 @@
         HOME: 'home',
         CATEGORIES: 'categories',
         TIERS: 'tiers',
-        ITEMS: 'items'
+        ITEMS: 'items',
+        INVENTORY: 'inventory',
+        ITEM_DETAIL: 'item-detail'
     };
+
+    var currentItemId = null;
 
     var currentView = VIEWS.HOME;
     var currentTier = 'potion';
+    function navigation() {
+    return window.ReadQuestNavigation || null;
+}
+
+    function routeForView(view, extra) {
+        var route = {
+            page: 'bazaar',
+            view: view
+        };
+
+        Object.keys(extra || {}).forEach(function (key) {
+            route[key] = extra[key];
+        });
+
+        return route;
+    }
+
+    function navigateBazaar(view, extra) {
+        var route = routeForView(view, extra);
+
+        if (navigation() && typeof navigation().navigate === 'function') {
+            navigation().navigate(route);
+            return;
+        }
+
+        applyRoute(route);
+    }
+
+    function backBazaar() {
+        if (navigation() && typeof navigation().back === 'function') {
+            navigation().back();
+            return;
+        }
+
+        closeBazaar();
+    }
+
+    function applyRoute(route) {
+        route = route || routeForView(VIEWS.HOME);
+
+        currentView = route.view || VIEWS.HOME;
+        currentTier = route.tier || currentTier || 'potion';
+        currentItemId = route.itemId || null;
+
+        removeItemPreview();
+
+        var bazaar = document.getElementById('bookwyrmBazaar');
+
+        if (!bazaar) return;
+
+        bazaar.classList.remove('hidden');
+
+        requestAnimationFrame(function () {
+            bazaar.classList.add('is-open');
+        });
+
+        renderBazaar();
+    }
 
     var TABS = ['potion', 'scroll', 'tome'];
 
@@ -150,6 +212,13 @@
     function closeBazaar() {
         removeItemPreview();
 
+        var nav = navigation();
+
+        if (nav && typeof nav.back === 'function') {
+            nav.back();
+            return;
+        }
+
         var bazaar = document.getElementById('bookwyrmBazaar');
 
         if (!bazaar) return;
@@ -164,24 +233,34 @@
     }
 
     function showBazaar() {
-        var bazaar = document.getElementById('bookwyrmBazaar');
+    currentView = VIEWS.HOME;
+    currentTier = 'potion';
+    currentItemId = null;
 
-        if (!bazaar) return;
+    var bazaar = document.getElementById('bookwyrmBazaar');
 
-        currentView = VIEWS.HOME;
-        bazaar.classList.remove('hidden');
+    if (!bazaar) return;
 
-        requestAnimationFrame(function () {
-            bazaar.classList.add('is-open');
-        });
+    bazaar.classList.remove('hidden');
 
-        renderBazaar();
-    }
+    requestAnimationFrame(function () {
+        bazaar.classList.add('is-open');
+    });
+
+    renderBazaar();
+}
 
     function itemPreview(item) {
         var api = economy();
 
         if (!api || !item) return;
+        if (currentView !== VIEWS.ITEM_DETAIL) {
+            navigateBazaar(VIEWS.ITEM_DETAIL, {
+                tier: item.tier,
+                itemId: item.id
+            });
+            return;
+        }
 
         removeItemPreview();
 
@@ -269,10 +348,10 @@
             action +
             '</div>';
 
-        preview.querySelector('.bookwyrm-preview-close').onclick = removeItemPreview;
+        preview.querySelector('.bookwyrm-preview-close').onclick = backBazaar;
 
         preview.onclick = function (event) {
-            if (event.target === preview) removeItemPreview();
+            if (event.target === preview) backBazaar();
         };
 
         var buy = preview.querySelector('[data-bazaar-buy]');
@@ -286,9 +365,8 @@
                     return;
                 }
 
-                removeItemPreview();
                 toast(result.item.name + ' added to Bazaar Inventory.');
-                renderBazaar();
+                itemPreview(item);
             };
         }
 
@@ -299,6 +377,10 @@
         var api = economy();
 
         if (!api) return;
+        if (currentView !== VIEWS.INVENTORY) {
+            navigateBazaar(VIEWS.INVENTORY);
+            return;
+        }
 
         removeItemPreview();
 
@@ -363,10 +445,10 @@
             '<div class="bookwyrm-inventory-list">' + rows + '</div>' +
             '</div>';
 
-        modal.querySelector('.bookwyrm-preview-close').onclick = removeItemPreview;
+        modal.querySelector('.bookwyrm-preview-close').onclick = backBazaar;
 
         modal.onclick = function (event) {
-            if (event.target === modal) removeItemPreview();
+            if (event.target === modal) backBazaar();
         };
 
         modal.querySelectorAll('[data-bazaar-activate]').forEach(function (button) {
@@ -378,9 +460,8 @@
                     return;
                 }
 
-                removeItemPreview();
                 toast(result.item.name + ' is now active.');
-                renderBazaar();
+                inventoryModal();
             };
         });
 
@@ -389,16 +470,20 @@
 
     function headerMarkup(gold) {
         var back = '';
+        var label = '‹ Realm';
 
-        if (currentView === VIEWS.CATEGORIES) {
-            back = '<button type="button" class="bookwyrm-page-nav" data-bazaar-nav="home">‹ Bazaar</button>';
-        } else if (currentView === VIEWS.TIERS) {
-            back = '<button type="button" class="bookwyrm-page-nav" data-bazaar-nav="categories">‹ Market</button>';
-        } else if (currentView === VIEWS.ITEMS) {
-            back = '<button type="button" class="bookwyrm-page-nav" data-bazaar-nav="tiers">‹ Consumables</button>';
-        } else {
-            back = '<button type="button" class="bookwyrm-page-nav" data-bazaar-close>Close</button>';
+        if (currentView === VIEWS.CATEGORIES) label = '‹ Bazaar';
+        if (currentView === VIEWS.TIERS) label = '‹ Market';
+        if (currentView === VIEWS.ITEMS) label = '‹ Consumables';
+        if (currentView === VIEWS.INVENTORY) label = '‹ Bazaar';
+        if (currentView === VIEWS.ITEM_DETAIL) {
+            label = '‹ ' + (TAB_LABELS[currentTier] || 'Items');
         }
+
+        back =
+            '<button type="button" class="bookwyrm-page-nav" data-bazaar-back>' +
+            escape(label) +
+            '</button>';
 
         return (
             '<header class="bookwyrm-page-header">' +
@@ -563,9 +648,18 @@
     }
 
     function contentMarkup(api, state, level, gold) {
-        if (currentView === VIEWS.CATEGORIES) return categoriesMarkup();
-        if (currentView === VIEWS.TIERS) return tiersMarkup();
-        if (currentView === VIEWS.ITEMS) return itemsMarkup(api, level, gold);
+        if (currentView === VIEWS.CATEGORIES) {
+            return categoriesMarkup();
+        }
+
+        if (currentView === VIEWS.TIERS) {
+            return tiersMarkup();
+        }
+
+        if (currentView === VIEWS.ITEMS) {
+            return itemsMarkup(api, level, gold);
+        }
+
         return homeMarkup(state);
     }
 
@@ -584,35 +678,54 @@
             headerMarkup(gold) +
             contentMarkup(api, state, level, gold);
 
-        bazaar.querySelectorAll('[data-bazaar-close]').forEach(function (button) {
-            button.onclick = closeBazaar;
+        if (currentView === VIEWS.INVENTORY) {
+            bazaar.innerHTML = headerMarkup(gold);
+            inventoryModal();
+            return;
+        }
+
+        if (currentView === VIEWS.ITEM_DETAIL) {
+            bazaar.innerHTML = headerMarkup(gold);
+            itemPreview(api.item(currentItemId));
+            return;
+        }
+
+        bazaar.querySelectorAll('[data-bazaar-back]').forEach(function (button) {
+            button.onclick = backBazaar;
         });
 
         bazaar.querySelectorAll('[data-bazaar-nav]').forEach(function (button) {
             button.onclick = function () {
-                currentView = button.dataset.bazaarNav;
-                renderBazaar();
+                navigateBazaar(button.dataset.bazaarNav);
             };
         });
 
         bazaar.querySelectorAll('[data-bazaar-tier]').forEach(function (button) {
             button.onclick = function () {
-                currentTier = button.dataset.bazaarTier;
-                currentView = VIEWS.ITEMS;
-                renderBazaar();
+                navigateBazaar(VIEWS.ITEMS, {
+                    tier: button.dataset.bazaarTier
+                });
             };
         });
 
         bazaar.querySelectorAll('[data-bazaar-item]').forEach(function (button) {
             button.onclick = function () {
-                itemPreview(api.item(button.dataset.bazaarItem));
+                var item = api.item(button.dataset.bazaarItem);
+
+                if (!item) return;
+
+                navigateBazaar(VIEWS.ITEM_DETAIL, {
+                    tier: item.tier,
+                    itemId: item.id
+                });
             };
         });
 
         bazaar.querySelectorAll('[data-bazaar-inventory]').forEach(function (button) {
-            button.onclick = inventoryModal;
+            button.onclick = function () {
+                navigateBazaar(VIEWS.INVENTORY);
+            };
         });
-
         api.markViewed();
     }
 
@@ -663,8 +776,39 @@
         window.BookwyrmBazaar = {
             open: showBazaar,
             close: closeBazaar,
-            inventory: inventoryModal
+            inventory: function () {
+                navigateBazaar(VIEWS.INVENTORY);
+            },
+            navigate: function (route) {
+                applyRoute(route);
+            }
         };
+        window.addEventListener('bookshelf-navigation-changed', function (event) {
+            var route = event.detail && event.detail.route;
+
+            if (route && route.page === 'bazaar') {
+                applyRoute(route);
+                return;
+            }
+
+            if (route && route.page === 'bazaar-item') {
+                applyRoute({
+                    page: 'bazaar',
+                    view: VIEWS.ITEM_DETAIL,
+                    tier: route.tier,
+                    itemId: route.itemId
+                });
+                return;
+            }
+
+            var bazaar = document.getElementById('bookwyrmBazaar');
+
+            if (bazaar) {
+                removeItemPreview();
+                bazaar.classList.remove('is-open');
+                bazaar.classList.add('hidden');
+            }
+        });
     }
 
     if (document.readyState === 'loading') {

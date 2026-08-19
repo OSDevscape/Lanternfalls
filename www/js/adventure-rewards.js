@@ -1585,40 +1585,98 @@
     };
   }
 
-  function createBattleLog(session, reward) {
+    function createBattleLog(session, reward) {
     var book = bookForSession(session);
-    var sourceId = String((session || {}).id || book.id || book.title || 'reading-session');
+    var sessionId = String(
+      (session || {}).id ||
+      book.id ||
+      book.title ||
+      'reading-session'
+    );
+
+    var minutes = Math.max(
+      1,
+      Math.floor(Number((reward || {}).minutes) || 0)
+    );
+
     var set = theme(book);
+    var durations = encounterDurations(minutes, sessionId);
+    var encounters = [];
 
-    var region = pick(set.regions, sourceId, 1);
-    var enemyTitle = pick(set.titles, sourceId, 2);
-    var adjective = pick(set.adjectives, sourceId, 3);
-    var form = pick(set.forms, sourceId, 4);
-    var relic = pick(set.relics, sourceId, 5);
+    for (var index = 0; index < durations.length; index += 1) {
+      var seed = sessionId + '|encounter|' + index;
+      var duration = durations[index];
 
-    var minutes = Math.max(0, Math.floor(Number((reward || {}).minutes) || 0));
-    var damage = Math.max(1, minutes);
-    var critical = hash(sourceId + '|critical') % 100 < 15;
-    var finalDamage = critical ? Math.floor(damage * 1.5) : damage;
+      var adjective = pick(set.adjectives, seed, 1);
+      var form = pick(set.forms, seed, 2);
+      var region = pick(set.regions, seed, 3);
+      var enemyTitle = pick(set.titles, seed, 4);
+      var relic = pick(set.relics, seed, 5);
+
+      var critical = hash(seed + '|critical') % 100 < 15;
+      var baseDamage = Math.max(1, duration);
+      var damage = critical
+        ? Math.floor(baseDamage * 1.5)
+        : baseDamage;
+
+      encounters.push({
+        index: index + 1,
+        duration: duration,
+        region: region,
+        enemyTitle: enemyTitle,
+        enemyName: adjective + ' ' + form,
+        relic: relic,
+        baseDamage: baseDamage,
+        damage: damage,
+        critical: critical,
+        message: critical
+          ? 'Critical hit! You struck the ' + adjective + ' ' + form +
+            ' for ' + damage + ' damage in ' + region + '.'
+          : 'You struck the ' + adjective + ' ' + form +
+            ' for ' + damage + ' damage in ' + region + '.'
+      });
+    }
 
     return {
-      version: 1,
-      region: region,
-      enemyTitle: enemyTitle,
-      enemyName: adjective + ' ' + form,
-      relic: relic,
-      damage: finalDamage,
-      baseDamage: damage,
-      critical: critical,
-      message: critical
-        ? 'Critical hit! You struck the ' + adjective + ' ' + form +
-        ' for ' + finalDamage + ' damage in ' + region + '.'
-        : 'You struck the ' + adjective + ' ' + form +
-        ' for ' + finalDamage + ' damage in ' + region + '.',
+      version: 2,
+      sessionId: sessionId,
       bookId: book.id || '',
       bookTitle: book.title || (session || {}).bookTitle || 'Reading session',
-      genre: book.genre || ''
+      genre: book.genre || '',
+      minutes: minutes,
+      encounterCount: encounters.length,
+      encounters: encounters
     };
+  }
+
+
+  function encounterDurations(totalMinutes, seed) {
+    var blocks = [3, 4, 5, 6, 7, 8, 10, 12, 15];
+    var remaining = Math.max(1, Math.floor(Number(totalMinutes) || 0));
+    var durations = [];
+    var step = 0;
+
+    while (remaining > 0) {
+      var available = blocks.filter(function (minutes) {
+        return minutes <= remaining;
+      });
+
+      if (!available.length) {
+        if (durations.length) {
+          durations[durations.length - 1] += remaining;
+        } else {
+          durations.push(remaining);
+        }
+        break;
+      }
+
+      var block = Number(pick(available, seed, step + 100));
+      durations.push(block);
+      remaining -= block;
+      step += 1;
+    }
+
+    return durations;
   }
 
   function game() {

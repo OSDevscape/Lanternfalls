@@ -9,19 +9,58 @@
 
   function battleHtml(item) {
     var log = item && item.battleLog;
-    if (!log) return '';
+    var encounters = log && Array.isArray(log.encounters)
+      ? log.encounters
+      : [];
+
+    if (!encounters.length) return '';
 
     return (
-      '<div class="session-reward-battle">' +
-      '<span class="session-reward-battle-label">' +
-      (log.critical ? 'Critical Strike' : 'Battle Record') +
-      '</span>' +
-      '<b>' + escape(log.enemyName || 'Unknown foe') + '</b>' +
-      '<span>' + escape(log.region || 'The Reading Realm') + '</span>' +
-      '<p>' + escape(log.message || '') + '</p>' +
-      '<small>Damage: ' + (Number(log.damage) || 0) +
-      ' · Relic: ' + escape(log.relic || 'None') + '</small>' +
-      '</div>'
+      '<details class="session-reward-battle">' +
+      '<summary class="session-reward-battle-summary">' +
+      '<span class="session-reward-battle-label">Battle Log</span>' +
+      '<b>' + encounters.length + ' encounter' +
+      (encounters.length === 1 ? '' : 's') +
+      '</b>' +
+      '<small>' + (Number(log.minutes) || 0) + ' minutes</small>' +
+      '</summary>' +
+
+      '<div class="session-reward-encounters">' +
+      encounters.map(function (encounter) {
+        var number = Number(encounter.index) || 1;
+        var duration = Number(encounter.duration) || 0;
+        var damage = Number(encounter.damage) || 0;
+
+        return (
+          '<details class="session-reward-encounter' +
+          (encounter.critical ? ' is-critical' : '') + '">' +
+
+          '<summary class="session-reward-encounter-summary">' +
+          '<span class="session-reward-encounter-number">' +
+          'Encounter ' + number +
+          '</span>' +
+          '<b>' + escape(encounter.enemyName || 'Unknown foe') + '</b>' +
+          '<small>' +
+          duration + ' min · ' + damage + ' DMG' +
+          (encounter.critical ? ' · Critical' : '') +
+          '</small>' +
+          '</summary>' +
+
+          '<div class="session-reward-encounter-detail">' +
+          '<span>' +
+          escape(encounter.region || 'The Reading Realm') +
+          '</span>' +
+          '<p>' + escape(encounter.message || '') + '</p>' +
+          '<small>Relic: ' +
+          escape(encounter.relic || 'None') +
+          '</small>' +
+          '</div>' +
+
+          '</details>'
+        );
+      }).join('') +
+      '</div>' +
+      '</details>'
     );
   }
 
@@ -312,20 +351,41 @@
 
       .session-reward-battle {
         margin: 12px 0;
-        padding: 12px;
         border: 1px solid rgba(212, 166, 79, .35);
         background: rgba(0, 0, 0, .22);
         text-align: left;
       }
 
-      .session-reward-battle-label,
-      .session-reward-battle b,
-      .session-reward-battle span,
-      .session-reward-battle small {
-        display: block;
+      .session-reward-battle-summary {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 2px 12px;
+        align-items: center;
+        width: 100%;
+        padding: 12px;
+        box-sizing: border-box;
+        cursor: pointer;
+        list-style: none;
+      }
+
+      .session-reward-battle-summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .session-reward-battle-summary::before {
+        content: "▸";
+        grid-row: 1 / span 2;
+        color: #d4a64f;
+        font-size: 16px;
+        transition: transform .15s ease;
+      }
+
+      .session-reward-battle[open] > .session-reward-battle-summary::before {
+        transform: rotate(90deg);
       }
 
       .session-reward-battle-label {
+        grid-column: 1;
         color: #d4a64f;
         font-size: 10px;
         font-weight: bold;
@@ -333,25 +393,110 @@
         text-transform: uppercase;
       }
 
-      .session-reward-battle b {
-        margin-top: 4px;
+      .session-reward-battle-summary > b {
+        grid-column: 1;
         color: #f5d58f;
         font: 17px Georgia, serif;
       }
 
-      .session-reward-battle span,
-      .session-reward-battle p,
-      .session-reward-battle small {
+      .session-reward-battle-summary > small {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        color: #b8b0a3;
+        font-size: 11px;
+        text-align: right;
+      }
+
+      .session-reward-encounters {
+        padding: 0 12px 12px;
+        border-top: 1px solid rgba(212, 166, 79, .22);
+      }
+
+      .session-reward-encounter {
+        border-bottom: 1px solid rgba(212, 166, 79, .16);
+      }
+
+      .session-reward-encounter:last-child {
+        border-bottom: 0;
+      }
+
+      .session-reward-encounter-summary {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 3px 12px;
+        padding: 11px 0;
+        cursor: pointer;
+        list-style: none;
+      }
+
+      .session-reward-encounter-summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .session-reward-encounter-summary::before {
+        content: "▸";
+        grid-row: 1 / span 2;
+        color: #d4a64f;
+        font-size: 13px;
+        transition: transform .15s ease;
+      }
+
+      .session-reward-encounter[open] >
+      .session-reward-encounter-summary::before {
+        transform: rotate(90deg);
+      }
+
+      .session-reward-encounter-number {
+        grid-column: 1;
+        color: #d4a64f;
+        font-size: 10px;
+        font-weight: bold;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+      }
+
+      .session-reward-encounter-summary > b {
+        grid-column: 1;
+        color: #f5d58f;
+        font: 15px Georgia, serif;
+      }
+
+      .session-reward-encounter-summary > small {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        align-self: center;
+        color: #b8b0a3;
+        font-size: 11px;
+        text-align: right;
+      }
+
+      .session-reward-encounter-detail {
+        padding: 0 0 11px 13px;
         color: #b8b0a3;
         font-size: 12px;
       }
 
-      .session-reward-battle p {
-        margin: 7px 0;
+      .session-reward-encounter-detail span,
+      .session-reward-encounter-detail small {
+        display: block;
       }
 
-      .session-reward-battle small {
+      .session-reward-encounter-detail p {
+        margin: 6px 0;
+      }
+
+      .session-reward-encounter-detail small {
         color: #d4a64f;
+      }
+
+      .session-reward-encounter.is-critical {
+        padding-left: 8px;
+        border-left: 2px solid #ff7a18;
+      }
+
+      .session-reward-encounter.is-critical
+      .session-reward-encounter-summary > small {
+        color: #ff7a18;
       }
     `;
 

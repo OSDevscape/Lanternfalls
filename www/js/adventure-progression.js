@@ -185,36 +185,52 @@
 
   function claimAll() {
     var engine = window.BookShelfRewards;
+
+    if (!engine) {
+      return {
+        sessions: 0,
+        bosses: 0,
+        xp: 0,
+        gold: 0,
+        transactions: [],
+        skillBonuses: []
+      };
+    }
+
+    var sessions = pendingSessions();
+    var bosses = pendingBosses();
+
     var result = {
       sessions: 0,
       bosses: 0,
       xp: 0,
       gold: 0,
+      transactions: [],
       skillBonuses: []
     };
 
-    if (!engine) return result;
-
-    pendingSessions().items.forEach(function (item) {
+    sessions.items.forEach(function (item) {
       var claim = engine.claimSession(item.session);
 
-      if (!claim.ok) return;
-
-      result.sessions += 1;
-      result.xp += claim.transaction.xp;
-      result.gold += claim.transaction.gold;
-      rememberSkillBonus(result, claim.transaction);
+      if (claim.ok) {
+        result.sessions += 1;
+        result.xp += Number(claim.transaction.xp) || 0;
+        result.gold += Number(claim.transaction.gold) || 0;
+        result.transactions.push(claim.transaction);
+        rememberSkillBonus(result, claim.transaction);
+      }
     });
 
-    pendingBosses().books.forEach(function (item) {
+    bosses.books.forEach(function (item) {
       var claim = engine.claimCompletion(item.book);
 
-      if (!claim.ok) return;
-
-      result.bosses += 1;
-      result.xp += claim.transaction.xp;
-      result.gold += claim.transaction.gold;
-      rememberSkillBonus(result, claim.transaction);
+      if (claim.ok) {
+        result.bosses += 1;
+        result.xp += Number(claim.transaction.xp) || 0;
+        result.gold += Number(claim.transaction.gold) || 0;
+        result.transactions.push(claim.transaction);
+        rememberSkillBonus(result, claim.transaction);
+      }
     });
 
     return result;
@@ -320,9 +336,52 @@
   }
 
   function rewardPopup(result) {
-    var old = document.querySelector('.adventure-reward-popup');
+    var claimed = (result && result.transactions) || [];
 
-    if (old) old.remove();
+    var battleHtml = claimed
+      .filter(function (item) {
+        return item &&
+          item.type === 'session' &&
+          item.battleLog &&
+          Array.isArray(item.battleLog.encounters);
+      })
+      .map(function (item) {
+        var log = item.battleLog;
+
+        return (
+          '<details class="adventure-reward-battle-log">' +
+          '<summary>' +
+          '<span class="adventure-reward-battle-label">Battle Log</span>' +
+          '<b>' + log.encounters.length + ' encounter' +
+          (log.encounters.length === 1 ? '' : 's') +
+          '</b>' +
+          '<small>' + (Number(log.minutes) || 0) + ' reading minutes</small>' +
+          '</summary>' +
+
+          '<div class="adventure-reward-encounters">' +
+          log.encounters.map(function (encounter) {
+            return (
+              '<article class="adventure-reward-encounter' +
+              (encounter.critical ? ' is-critical' : '') + '">' +
+              '<span class="adventure-reward-encounter-number">' +
+              'Encounter ' + (Number(encounter.index) || 1) +
+              '</span>' +
+              '<b>' + escape(encounter.enemyName || 'Unknown foe') + '</b>' +
+              '<span>' + escape(encounter.region || 'The Reading Realm') + '</span>' +
+              '<p>' + escape(encounter.message || '') + '</p>' +
+              '<small>' +
+              (Number(encounter.duration) || 0) + ' min' +
+              ' · Damage: ' + (Number(encounter.damage) || 0) +
+              ' · Relic: ' + escape(encounter.relic || 'None') +
+              '</small>' +
+              '</article>'
+            );
+          }).join('') +
+          '</div>' +
+          '</details>'
+        );
+      })
+      .join('');
 
     var battleTransactions = (result && result.transactions ? result.transactions : [])
       .filter(function (item) {
@@ -348,11 +407,11 @@
           '<span class="adventure-reward-battle-label">' +
           (log.critical ? 'Critical Strike' : 'Battle Record') +
           '</span>' +
-          '<b>' + escapeHtml(log.enemyName || 'Unknown foe') + '</b>' +
-          '<span>' + escapeHtml(log.region || 'The Reading Realm') + '</span>' +
-          '<p>' + escapeHtml(log.message || '') + '</p>' +
+          '<b>' + escape(log.enemyName || 'Unknown foe') + '</b>' +
+          '<span>' + escape(log.region || 'The Reading Realm') + '</span>' +
+          '<p>' + escape(log.message || '') + '</p>' +
           '<small>Damage: ' + (Number(log.damage) || 0) +
-          ' · Relic: ' + escapeHtml(log.relic || 'None') + '</small>' +
+          ' · Relic: ' + escape(log.relic || 'None') + '</small>' +
           '</div>'
         );
       })
@@ -367,17 +426,16 @@
         '<span class="adventure-reward-battle-label">' +
         (log.critical ? 'Critical Strike' : 'Battle Record') +
         '</span>' +
-        '<b>' + escapeHtml(log.enemyName || 'Unknown foe') + '</b>' +
-        '<span>' + escapeHtml(log.region || 'The Reading Realm') + '</span>' +
-        '<p>' + escapeHtml(log.message || '') + '</p>' +
+        '<b>' + escape(log.enemyName || 'Unknown foe') + '</b>' +
+        '<span>' + escape(log.region || 'The Reading Realm') + '</span>' +
+        '<p>' + escape(log.message || '') + '</p>' +
         '<small>Damage: ' + (Number(log.damage) || 0) +
-        ' · Relic: ' + escapeHtml(log.relic || 'None') + '</small>' +
+        ' · Relic: ' + escape(log.relic || 'None') + '</small>' +
         '</div>'
       );
     }).join('');
 
-    var bonusHtml = result.skillBonuses.length
-      ? '<div class="adventure-popup-skill"><span class="adventure-label">Class Skill Triggered</span>' +
+    var bonusHtml = (result.skillBonuses || []).length ? '<div class="adventure-popup-skill"><span class="adventure-label">Class Skill Triggered</span>' +
       result.skillBonuses.map(function (bonus) {
         var reward =
           (bonus.xp ? '+' + bonus.xp + ' XP' : '') +
@@ -393,14 +451,14 @@
     popup.className = 'adventure-reward-popup';
     popup.innerHTML =
       '<div class="adventure-popup-card">' +
-        '<button class="adventure-popup-close" type="button" aria-label="Close rewards">×</button>' +
-        '<h2>Rewards Claimed</h2>' +
-        '<div class="adventure-reward-totals">' +
-          '<strong>+' + (Number(result.xp) || 0) + ' XP</strong>' +
-          '<strong>+' + (Number(result.gold) || 0) + ' Gold</strong>' +
-        '</div>' +
-        battleHtml +
-        '<button class="adventure-popup-done" type="button">Continue</button>' +
+      '<button class="adventure-popup-close" type="button" aria-label="Close rewards">×</button>' +
+      '<h2>Rewards Claimed</h2>' +
+      '<div class="adventure-reward-totals">' +
+      '<strong>+' + (Number(result.xp) || 0) + ' XP</strong>' +
+      '<strong>+' + (Number(result.gold) || 0) + ' Gold</strong>' +
+      '</div>' +
+      battleHtml +
+      '<button class="adventure-popup-done" type="button">Continue</button>' +
       '</div>';
 
     document.body.appendChild(popup);
@@ -591,12 +649,19 @@
       claimButton.onclick = function () {
         var result = claimAll();
 
-        if (!result.sessions && !result.bosses) return;
+        if (!result.sessions && !result.bosses) {
+          return;
+        }
 
         fireworks();
 
-        window.dispatchEvent(new Event('bookshelf-adventure-claim-complete'));
-        window.dispatchEvent(new Event('bookshelf-character-updated'));
+        window.dispatchEvent(
+          new Event('bookshelf-adventure-claim-complete')
+        );
+
+        window.dispatchEvent(
+          new Event('bookshelf-character-updated')
+        );
 
         renderAdventureRewards();
       };
@@ -646,9 +711,11 @@
       '.adventure-stat-grid b{margin:3px 0;font-size:18px}' +
       '.adventure-stat-grid button{border:1px solid var(--gold,#A8823C);border-radius:50%;background:transparent;color:var(--paper-light,#F6F1E4);width:25px;height:25px}' +
       '.adventure-stat-grid button:disabled{opacity:.35}' +
+
       '.pixel-fireworks{position:fixed;z-index:500;inset:0;pointer-events:none;overflow:hidden}' +
       '.pixel-firework{position:absolute;width:8px;height:8px;background:var(--firework-color);box-shadow:0 0 12px var(--firework-color);animation:pixel-firework-pop .85s steps(8,end) forwards}' +
       '@keyframes pixel-firework-pop{0%{opacity:1;transform:translate(-50%,-50%) scale(1)}70%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(0)}}' +
+
       '.adventure-reward-popup{position:fixed;z-index:600;inset:0;display:grid;place-items:center;padding:18px;background:rgba(0,0,0,.62)}' +
       '.adventure-popup-card{position:relative;width:min(100%,390px);padding:22px;border:1px solid var(--gold,#A8823C);border-radius:4px;background:var(--paper,#24211d);box-shadow:0 18px 52px rgba(0,0,0,.5)}' +
       '.adventure-popup-card h2{margin:7px 28px 16px 0;color:var(--paper-light,#F6F1E4);font:21px Georgia,serif}' +
@@ -666,7 +733,34 @@
       '.adventure-reward-battle-log b{margin-top:4px;color:var(--paper-light,#F6F1E4);font:17px Georgia,serif}' +
       '.adventure-reward-battle-log span,.adventure-reward-battle-log p,.adventure-reward-battle-log small{color:var(--muted,#8A8378);font-size:12px}' +
       '.adventure-reward-battle-log p{margin:7px 0}' +
-      '.adventure-reward-battle-log small{color:var(--gold,#A8823C)}';
+      '.adventure-reward-battle-log small{color:var(--gold,#A8823C)}' +
+
+            '#navPlaceholder.character-page{' +
+        'display:block!important;' +
+        'position:absolute!important;' +
+        'inset:0!important;' +
+        'height:auto!important;' +
+        'min-height:0!important;' +
+        'max-height:none!important;' +
+        'overflow-y:scroll!important;' +
+        'overflow-x:hidden!important;' +
+        'overscroll-behavior-y:contain;' +
+        '-webkit-overflow-scrolling:touch;' +
+        'touch-action:pan-y;' +
+      '}' +
+
+      '#navPlaceholder.character-page{' +
+  'padding-bottom:220px!important;' +
+  'box-sizing:border-box;' +
+'}' +
+
+      '#navPlaceholder.character-page details{' +
+        'overflow:visible!important;' +
+      '}' +
+
+      '#navPlaceholder.character-page summary{' +
+        'touch-action:manipulation;' +
+      '}';
 
     document.head.appendChild(style);
 
