@@ -163,7 +163,7 @@
     function art(item, size) {
         var dimensions = size === 'preview' ? ' bazaar-art-preview' : '';
 
-        if (item.artType === 'potion' && item.image) {
+        if (item.image) {
             return (
                 '<div class="bazaar-art' + dimensions + ' bazaar-art-potion">' +
                 '<img src="' + escape(item.image) + '" alt="" loading="lazy">' +

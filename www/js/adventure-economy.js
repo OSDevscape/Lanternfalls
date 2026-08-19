@@ -49,7 +49,8 @@
       valueType: 'percent-xp',
       value: 20,
       price: 220,
-      artType: 'scroll'
+      artType: 'scroll',
+      image: 'assets/items/scrolls/Scroll_of_Insight.png'
     },
     {
       id: 'insight-tome',
@@ -62,7 +63,8 @@
       valueType: 'percent-xp',
       value: 35,
       price: 450,
-      artType: 'tome'
+      artType: 'tome',
+      image: 'assets/items/tomes/Tome_of_Insight.png'
     },
     {
       id: 'fortune-potion',
@@ -89,7 +91,8 @@
       valueType: 'percent-gold',
       value: 20,
       price: 240,
-      artType: 'scroll'
+      artType: 'scroll',
+      image: 'assets/items/scrolls/Scroll_of_Fortune.png'
     },
     {
       id: 'fortune-tome',
@@ -102,7 +105,8 @@
       valueType: 'percent-gold',
       value: 35,
       price: 480,
-      artType: 'tome'
+      artType: 'tome',
+      image: 'assets/items/tomes/Tome_of_Fortune.png'
     },
     {
       id: 'focus-potion',
@@ -131,7 +135,8 @@
       value: 160,
       minimumMinutes: 30,
       price: 260,
-      artType: 'scroll'
+      artType: 'scroll',
+      image: 'assets/items/scrolls/Scroll_of_Focus.png'
     },
     {
       id: 'focus-tome',
@@ -145,7 +150,8 @@
       value: 280,
       minimumMinutes: 30,
       price: 520,
-      artType: 'tome'
+      artType: 'tome',
+      image: 'assets/items/tomes/Tome_of_Focus.png'
     },
     {
       id: 'momentum-potion',
@@ -176,7 +182,8 @@
       minimumMinutes: 10,
       maximumMinutes: 25,
       price: 190,
-      artType: 'scroll'
+      artType: 'scroll',
+      image: 'assets/items/scrolls/Scroll_of_Momentum.png'
     },
     {
       id: 'momentum-tome',
@@ -191,7 +198,8 @@
       minimumMinutes: 10,
       maximumMinutes: 25,
       price: 390,
-      artType: 'tome'
+      artType: 'tome',
+      image: 'assets/items/tomes/Tome_of_Momentum.png'
     },
     {
       id: 'hunt-potion',
@@ -218,7 +226,8 @@
       valueType: 'percent-completion-gold',
       value: 20,
       price: 320,
-      artType: 'scroll'
+      artType: 'scroll',
+      image: 'assets/items/scrolls/Scroll_of_the_Hunt.png'
     },
     {
       id: 'hunt-tome',
@@ -231,7 +240,8 @@
       valueType: 'percent-completion-gold',
       value: 35,
       price: 650,
-      artType: 'tome'
+      artType: 'tome',
+      image: 'assets/items/tomes/Tome_of_the_Hunt.png'
     },
     {
       id: 'wonders-potion',
@@ -258,7 +268,8 @@
       valueType: 'loot-luck',
       value: 2,
       price: 360,
-      artType: 'scroll'
+      artType: 'scroll',
+      image: 'assets/items/scrolls/Scroll_of_Wonders.png'
     },
     {
       id: 'wonders-tome',
@@ -271,7 +282,8 @@
       valueType: 'loot-luck',
       value: 3,
       price: 720,
-      artType: 'tome'
+      artType: 'tome',
+      image: 'assets/items/tomes/Tome_of_Wonders.png'
     }
   ];
 
