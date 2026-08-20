@@ -118,9 +118,23 @@
     add.setAttribute('data-tooltip', 'Adds this reading session to your history. Add a book only if you want the session linked to that title.');
     form.append(book, minutes, date, add); logCard.appendChild(form);
 
-    var history = document.createElement('section');
-    history.className = 'reading-profile-card';
-    history.appendChild(headingWithTooltip('Recent Sessions', 'Shows your ten most recent reading or listening entries and their reward status.'));
+    var history = document.createElement('details');
+history.className = 'reading-profile-card reading-recent-sessions';
+history.open = false;
+
+var historySummary = document.createElement('summary');
+historySummary.appendChild(
+  headingWithTooltip(
+    'Recent Sessions',
+    'Shows your ten most recent reading or listening entries and their reward status.'
+  )
+);
+
+var historyCount = document.createElement('em');
+historyCount.textContent = log.length ? log.length + ' entries' : 'None';
+historySummary.appendChild(historyCount);
+
+history.appendChild(historySummary);
     var entries = log.slice().sort(function (a, b) {
       return String(b.date || b.createdAt || '').localeCompare(String(a.date || a.createdAt || ''));
     }).slice(0, 10);

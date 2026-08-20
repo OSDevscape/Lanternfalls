@@ -36,7 +36,11 @@
 
   function render() {
     var page = document.getElementById('navPlaceholder');
-    if (!page || page.classList.contains('hidden') || !page.classList.contains('adventure-page')) return;
+    if (
+      !page ||
+      page.classList.contains('hidden') ||
+      (!page.classList.contains('adventure-page') && !page.classList.contains('character-page'))
+    ) return;
 
     var choices = page.querySelector('.adventure-classes');
     if (!choices) return;
@@ -97,7 +101,10 @@
 
     page.addEventListener('click', function (event) {
       var choice = event.target.closest('[data-adventure-class]');
-      if (!choice || !page.classList.contains('adventure-page')) return;
+      if (
+        !choice ||
+        (!page.classList.contains('adventure-page') && !page.classList.contains('character-page'))
+      ) return;
       event.preventDefault();
       event.stopImmediatePropagation();
       previewClass = choice.dataset.adventureClass;
