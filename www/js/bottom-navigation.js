@@ -113,19 +113,6 @@
 
       showPlaceholder(labels[page] || 'ReadQuest', loading[page] || 'Loading...', page + '-page');
       announce(page);
-
-      if (addToHistory === false) {
-        var tab = nav.querySelector('[data-page="' + page + '"]');
-        if (tab) {
-          setTimeout(function () {
-            tab.dispatchEvent(new MouseEvent('click', {
-              bubbles: true,
-              cancelable: true,
-              view: window
-            }));
-          }, 0);
-        }
-      }
     }
 
     function isOpen(element) {

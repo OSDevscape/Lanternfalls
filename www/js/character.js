@@ -15,7 +15,7 @@
   function tooltip(text, message, label) {
     return '<span class="adventure-tooltip-label">' +
       text +
-      '<button type="button" class="adventure-tooltip-trigger" data-tooltip="' + message + '" aria-label="' + (label || 'More information') + '" aria-expanded="false">ⓘ</button>' +
+      '<button type="button" class="tooltip-trigger" data-tooltip="' + message + '" aria-label="' + (label || 'More information') + '" aria-expanded="false">ⓘ</button>' +
       '</span>';
   }
 

@@ -62,6 +62,31 @@
     document.body.appendChild(view);
 
     function close() {
+      var history = window.BookDetailsHistory || [];
+
+      if (history.length) {
+        var previous = history.pop();
+
+        var card = Array.prototype.slice.call(
+          document.querySelectorAll('.book-card')
+        ).filter(function (item) {
+          var title = item.querySelector('.book-title');
+          var author = item.querySelector('.book-author');
+
+          return title &&
+            title.textContent.trim() === previous.title &&
+            (!previous.author || (
+              author &&
+              author.textContent.trim() === previous.author
+            ));
+        })[0];
+
+        if (card) {
+          card.click();
+          return;
+        }
+      }
+
       view.classList.add('hidden');
     }
 

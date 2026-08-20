@@ -4,41 +4,73 @@
     catch (_) { return JSON.parse(fallback); }
   }
 
-  function cover(isbn) {
-    var id = String(isbn || '').replace(/[^0-9Xx]/g, '');
-    return id ? 'https://covers.openlibrary.org/b/isbn/' + encodeURIComponent(id) + '-S.jpg?default=false' : '';
+  function libraryCover(book) {
+    var cards = Array.prototype.slice.call(
+      document.querySelectorAll('.book-card')
+    );
+
+    var matchingCard = cards.filter(function (card) {
+      var title = card.querySelector('.book-title');
+      var author = card.querySelector('.book-author');
+
+      return title &&
+        title.textContent.trim() === String(book.title || '').trim() &&
+        (
+          !book.author ||
+          (
+            author &&
+            author.textContent.trim() === String(book.author).trim()
+          )
+        );
+    })[0];
+
+    if (!matchingCard) return '';
+
+    var image = matchingCard.querySelector('.book-cover');
+
+    return image
+      ? (image.currentSrc || image.src || '')
+      : '';
   }
 
   function openOriginalPreview(book) {
     var details = document.getElementById('bookDetails');
-    if (details) details.classList.add('hidden');
 
-    function findBookCard() {
-      return Array.prototype.slice.call(document.querySelectorAll('.book-card')).filter(function (card) {
-        var title = card.querySelector('.book-title');
-        var author = card.querySelector('.book-author');
-        return title &&
-          title.textContent.trim() === String(book.title || '').trim() &&
-          (!book.author || (author && author.textContent.trim() === String(book.author).trim()));
-      })[0];
+    if (!details) return;
+
+    var title = String(book.title || '').trim();
+    var author = String(book.author || '').trim();
+
+    var card = Array.prototype.slice.call(
+      document.querySelectorAll('.book-card')
+    ).filter(function (item) {
+      var cardTitle = item.querySelector('.book-title');
+      var cardAuthor = item.querySelector('.book-author');
+
+      return cardTitle &&
+        cardTitle.textContent.trim() === title &&
+        (!author || (
+          cardAuthor &&
+          cardAuthor.textContent.trim() === author
+        ));
+    })[0];
+
+    if (!card) return;
+
+    var history = window.BookDetailsHistory || [];
+
+    history.push({
+      title: (details.querySelector('.bd-title') || {}).textContent || '',
+      author: (details.querySelector('.bd-author') || {}).textContent || ''
+    });
+
+    if (history.length > 100) {
+      history.shift();
     }
 
-    function openMatchingCard() {
-      var card = findBookCard();
-      if (card) card.click();
-    }
+    window.BookDetailsHistory = history;
 
-    var card = findBookCard();
-    if (card) {
-      card.click();
-      return;
-    }
-
-    var search = document.getElementById('searchInput');
-    if (!search) return;
-    search.value = book.title || '';
-    search.dispatchEvent(new Event('input', { bubbles: true }));
-    setTimeout(openMatchingCard, 50);
+    card.click();
   }
 
   function render() {
@@ -92,9 +124,16 @@
       item.setAttribute('aria-label', 'Open ' + (book.title || 'book') + ' preview');
 
       var image = document.createElement('img');
-      image.src = cover(book.isbn);
+      var source = libraryCover(book);
+
       image.alt = '';
-      image.onerror = function () { image.style.display = 'none'; };
+      image.loading = 'lazy';
+
+      if (source) {
+        image.src = source;
+      } else {
+        image.style.display = 'none';
+      }
 
       var text = document.createElement('div');
       var name = document.createElement('strong');

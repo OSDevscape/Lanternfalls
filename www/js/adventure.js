@@ -23,7 +23,7 @@
   function tooltip(text, message, label) {
     return '<span class="adventure-tooltip-label">' +
       text +
-      '<button type="button" class="adventure-tooltip-trigger" data-tooltip="' +
+      '<button type="button" class="tooltip-trigger" data-tooltip="' +
       message +
       '" aria-label="' +
       (label || 'More information') +
@@ -213,8 +213,6 @@
       '.adventure-card h2{margin:5px 0;font:21px Georgia,serif}' +
       '.adventure-label{color:var(--gold,#A8823C);font-size:11px;letter-spacing:.08em;text-transform:uppercase}' +
       '.adventure-tooltip-label{display:inline-flex;align-items:center}' +
-      '.adventure-tooltip-trigger{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-left:4px;padding:0;border:1px solid currentColor;border-radius:50%;background:transparent;color:inherit;font:700 10px/1 sans-serif;cursor:pointer}' +
-      '.adventure-tooltip-trigger:focus-visible{outline:2px solid currentColor;outline-offset:2px}' +
       '.adventure-muted{margin:7px 0 0;color:var(--muted,#8A8378);font-size:13px;line-height:1.4}' +
       '.adventure-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}' +
       '.adventure-grid .adventure-card{min-width:0}' +
