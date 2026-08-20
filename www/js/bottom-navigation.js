@@ -175,6 +175,22 @@
       return true;
     }
 
+    function closeBookDetails() {
+      var bookDetails = document.getElementById('bookDetails');
+
+      if (!isOpen(bookDetails)) return false;
+
+      var closeButton = bookDetails.querySelector('.bd-close');
+
+      if (closeButton) {
+        closeButton.click();
+      } else {
+        bookDetails.classList.add('hidden');
+      }
+
+      return true;
+    }
+
     function closeBookwyrmBazaar() {
       var bazaar = document.getElementById('bookwyrmBazaar');
 
@@ -202,6 +218,7 @@
     }
 
     function handleBackButton() {
+      if (closeBookDetails()) return;
       if (closeBookwyrmBazaar()) return;
       if (closeBossVictory()) return;
       if (closeFormView()) return;

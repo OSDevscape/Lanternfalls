@@ -13,8 +13,8 @@
     var currentView = VIEWS.HOME;
     var currentTier = 'potion';
     function navigation() {
-    return window.ReadQuestNavigation || null;
-}
+        return window.ReadQuestNavigation || null;
+    }
 
     function routeForView(view, extra) {
         var route = {
@@ -43,7 +43,8 @@
     function backBazaar() {
         var nav = navigation();
 
-        if (nav && typeof nav.back === 'function' && nav.back()) {
+        if (nav && typeof nav.back === 'function') {
+            nav.back();
             return;
         }
 
@@ -233,16 +234,16 @@
     }
 
     function showBazaar() {
-    var route = routeForView(VIEWS.HOME, { tier: 'potion' });
-    var nav = navigation();
+        var route = routeForView(VIEWS.HOME, { tier: 'potion' });
+        var nav = navigation();
 
-    if (nav && typeof nav.reset === 'function') {
-        nav.reset(route);
-        return;
+        if (nav && typeof nav.reset === 'function') {
+            nav.reset(route);
+            return;
+        }
+
+        applyRoute(route);
     }
-
-    applyRoute(route);
-}
 
     function itemPreview(item) {
         var api = economy();
@@ -769,13 +770,13 @@
 
         window.BookwyrmBazaar = {
             open: showBazaar,
+
             close: closeBazaar,
+
             back: backBazaar,
+
             inventory: function () {
                 navigateBazaar(VIEWS.INVENTORY);
-            },
-            navigate: function (route) {
-                applyRoute(route);
             }
         };
         window.addEventListener('bookshelf-navigation-changed', function (event) {
