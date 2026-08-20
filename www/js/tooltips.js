@@ -77,6 +77,7 @@
         '.adventure-loot-tooltip,' +
         '.adventure-progress-tooltip,' +
         '.adventure-quest-tooltip,' +
+        '.reading-tooltip-trigger,' +
         '[data-tooltip-trigger]'
       );
 
@@ -99,6 +100,7 @@
         '.adventure-loot-tooltip,' +
         '.adventure-progress-tooltip,' +
         '.adventure-quest-tooltip,' +
+        '.reading-tooltip-trigger,' +
         '[data-tooltip-trigger]'
       );
 
