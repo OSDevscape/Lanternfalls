@@ -186,7 +186,9 @@
         return false;
       }
 
-      if (window.BookwyrmBazaar && typeof window.BookwyrmBazaar.close === 'function') {
+      if (window.BookwyrmBazaar && typeof window.BookwyrmBazaar.back === 'function') {
+        window.BookwyrmBazaar.back();
+      } else if (window.BookwyrmBazaar && typeof window.BookwyrmBazaar.close === 'function') {
         window.BookwyrmBazaar.close();
       } else {
         bazaar.classList.remove('is-open');

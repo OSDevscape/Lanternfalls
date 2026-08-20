@@ -52,23 +52,25 @@
 
     style.textContent =
       '.adventure-bazaar-header-actions{' +
-        'display:flex;align-items:center;gap:12px' +
+      'display:flex;align-items:center;gap:12px' +
       '}' +
       '#adventureBazaarInventoryBtn{' +
-        'display:inline-flex;align-items:center;justify-content:center;' +
-        'width:36px;height:36px;padding:0;' +
-        'border:1px solid rgba(168,130,60,.55);border-radius:50%;' +
-        'background:rgba(27,33,41,.7);color:#A8823C;' +
-        'font-size:19px;line-height:1;cursor:pointer' +
+      'display:inline-flex;align-items:center;justify-content:center;' +
+      'width:36px;height:36px;padding:0;' +
+      'border:1px solid color-mix(in srgb,var(--accent,#A8823C) 55%,transparent);' +
+      'border-radius:50%;' +
+      'background:var(--bg-elevated,var(--bg,#14181C));' +
+      'color:var(--accent,var(--gold,#A8823C));' +
+      'font-size:19px;line-height:1;cursor:pointer' +
       '}' +
       '#adventureBazaarInventoryBtn:active{' +
-        'transform:scale(.94)' +
+      'transform:scale(.94)' +
       '}' +
       '#adventureBazaarInventoryBtn:focus-visible{' +
-        'outline:2px solid #A8823C;outline-offset:2px' +
+      'outline:2px solid var(--accent,var(--gold,#A8823C));outline-offset:2px' +
       '}' +
       '.adventure-bazaar-header-sword{' +
-        'color:var(--gold,#A8823C);font-size:29px;line-height:1' +
+      'color:var(--gold,#A8823C);font-size:29px;line-height:1' +
       '}';
 
     document.head.appendChild(style);

@@ -41,8 +41,9 @@
     }
 
     function backBazaar() {
-        if (navigation() && typeof navigation().back === 'function') {
-            navigation().back();
+        var nav = navigation();
+
+        if (nav && typeof nav.back === 'function' && nav.back()) {
             return;
         }
 
@@ -214,9 +215,8 @@
 
         var nav = navigation();
 
-        if (nav && typeof nav.back === 'function') {
-            nav.back();
-            return;
+        if (nav && typeof nav.sync === 'function') {
+            nav.sync(null);
         }
 
         var bazaar = document.getElementById('bookwyrmBazaar');
@@ -233,21 +233,15 @@
     }
 
     function showBazaar() {
-    currentView = VIEWS.HOME;
-    currentTier = 'potion';
-    currentItemId = null;
+    var route = routeForView(VIEWS.HOME, { tier: 'potion' });
+    var nav = navigation();
 
-    var bazaar = document.getElementById('bookwyrmBazaar');
+    if (nav && typeof nav.reset === 'function') {
+        nav.reset(route);
+        return;
+    }
 
-    if (!bazaar) return;
-
-    bazaar.classList.remove('hidden');
-
-    requestAnimationFrame(function () {
-        bazaar.classList.add('is-open');
-    });
-
-    renderBazaar();
+    applyRoute(route);
 }
 
     function itemPreview(item) {
@@ -776,6 +770,7 @@
         window.BookwyrmBazaar = {
             open: showBazaar,
             close: closeBazaar,
+            back: backBazaar,
             inventory: function () {
                 navigateBazaar(VIEWS.INVENTORY);
             },
@@ -792,12 +787,19 @@
             }
 
             if (route && route.page === 'bazaar-item') {
-                applyRoute({
+                var itemRoute = {
                     page: 'bazaar',
                     view: VIEWS.ITEM_DETAIL,
                     tier: route.tier,
                     itemId: route.itemId
-                });
+                };
+                var nav = navigation();
+
+                if (nav && typeof nav.sync === 'function') {
+                    nav.sync(itemRoute);
+                }
+
+                applyRoute(itemRoute);
                 return;
             }
 
