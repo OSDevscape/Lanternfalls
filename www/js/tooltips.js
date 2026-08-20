@@ -70,7 +70,14 @@
 
     document.addEventListener('click', function (event) {
       var trigger = event.target.closest(
-        'button[data-tooltip], [role="button"][data-tooltip], [tabindex][data-tooltip]'
+        '.tooltip-trigger,' +
+        '.adventure-tooltip-trigger,' +
+        '.adventure-combat-tooltip,' +
+        '.adventure-class-tooltip,' +
+        '.adventure-loot-tooltip,' +
+        '.adventure-progress-tooltip,' +
+        '.adventure-quest-tooltip,' +
+        '[data-tooltip-trigger]'
       );
 
       if (trigger && trigger.hasAttribute('data-tooltip')) {
@@ -85,7 +92,14 @@
 
     document.addEventListener('pointerdown', function (event) {
       var trigger = event.target.closest(
-        'button[data-tooltip], [role="button"][data-tooltip], [tabindex][data-tooltip]'
+        '.tooltip-trigger,' +
+        '.adventure-tooltip-trigger,' +
+        '.adventure-combat-tooltip,' +
+        '.adventure-class-tooltip,' +
+        '.adventure-loot-tooltip,' +
+        '.adventure-progress-tooltip,' +
+        '.adventure-quest-tooltip,' +
+        '[data-tooltip-trigger]'
       );
 
       if (!trigger && !event.target.closest('.rq-tooltip')) close();

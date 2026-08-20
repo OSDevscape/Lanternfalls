@@ -370,14 +370,9 @@
 
     function inventoryModal() {
         var api = economy();
+        var bazaar = document.getElementById('bookwyrmBazaar');
 
-        if (!api) return;
-        if (currentView !== VIEWS.INVENTORY) {
-            navigateBazaar(VIEWS.INVENTORY);
-            return;
-        }
-
-        removeItemPreview();
+        if (!api || !bazaar) return;
 
         var state = api.state();
         var active = state.activeItem;
@@ -413,40 +408,35 @@
                     '<small>' + escape(readableScope(item)) + '</small>' +
                     '</div>' +
                     '<button type="button" data-bazaar-activate="' +
-                    escape(item.instanceId) +
-                    '"' + (active ? ' disabled' : '') + '>' +
+                    escape(item.instanceId) + '"' +
+                    (active ? ' disabled' : '') +
+                    '>' +
                     (active ? 'Active slot full' : 'Activate') +
                     '</button>' +
                     '</article>'
                 );
             }).join('')
-            : (
-                '<p class="bookwyrm-inventory-none">Your inventory is empty. Visit the market to buy an enchantment.</p>'
-            );
+            : '<p class="bookwyrm-inventory-none">Your inventory is empty. Visit the market to buy an enchantment.</p>';
 
-        var modal = document.createElement('section');
-        modal.id = 'bookwyrmItemPreview';
-        modal.className = 'bookwyrm-preview-overlay';
-        modal.setAttribute('role', 'dialog');
-        modal.setAttribute('aria-modal', 'true');
-        modal.setAttribute('aria-label', 'Bazaar Inventory');
-
-        modal.innerHTML =
-            '<div class="bookwyrm-preview-card bookwyrm-inventory-card">' +
-            '<button type="button" class="bookwyrm-preview-close" aria-label="Close Bazaar Inventory">×</button>' +
+        bazaar.innerHTML =
+            headerMarkup(Math.max(0, Number(api.game().gold) || 0)) +
+            '<main class="bookwyrm-page-content">' +
+            '<section class="bookwyrm-page-intro">' +
             '<span class="adventure-label">The Bookwyrm Bazaar</span>' +
             '<h2>Bazaar Inventory <em>' + items.length + '</em></h2>' +
+            '<p>Stored enchantments can be activated before an eligible reward claim.</p>' +
+            '</section>' +
             activeHtml +
-            '<div class="bookwyrm-inventory-list">' + rows + '</div>' +
-            '</div>';
+            '<section class="bookwyrm-inventory-list">' +
+            rows +
+            '</section>' +
+            '</main>';
 
-        modal.querySelector('.bookwyrm-preview-close').onclick = backBazaar;
+        bazaar.querySelectorAll('[data-bazaar-back]').forEach(function (button) {
+            button.onclick = backBazaar;
+        });
 
-        modal.onclick = function (event) {
-            if (event.target === modal) backBazaar();
-        };
-
-        modal.querySelectorAll('[data-bazaar-activate]').forEach(function (button) {
+        bazaar.querySelectorAll('[data-bazaar-activate]').forEach(function (button) {
             button.onclick = function () {
                 var result = api.activate(button.dataset.bazaarActivate);
 
@@ -459,8 +449,6 @@
                 inventoryModal();
             };
         });
-
-        document.body.appendChild(modal);
     }
 
     function headerMarkup(gold) {
@@ -674,7 +662,6 @@
             contentMarkup(api, state, level, gold);
 
         if (currentView === VIEWS.INVENTORY) {
-            bazaar.innerHTML = headerMarkup(gold);
             inventoryModal();
             return;
         }

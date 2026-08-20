@@ -102,7 +102,7 @@
       '<div class="adventure-boss-meta"><span data-tooltip="The boss region is chosen from the active book’s genre." tabindex="0">' + boss.region + '</span><span data-tooltip="Momentum is the total reading or listening time logged while this book is linked to a session." tabindex="0">' + totalMinutes + ' minutes of momentum</span></div>' +
       '<div class="adventure-combat-stats"><span data-tooltip="Strength slightly increases display damage from your latest session." tabindex="0">STR ' + strength + '</span><span data-tooltip="Luck increases critical-hit chance. Critical chance starts at 5% and is capped at 25%." tabindex="0">LCK ' + luck + ' · ' + critDisplay + '% crit</span></div>' +
       combat +
-      '<button type="button" class="adventure-combat-log" data-tooltip="Opens your Profile so you can add a reading or listening session. Link the session to this book to build its momentum and create a combat result." aria-label="About logging time against this boss" aria-expanded="false">Log Time Against Boss</button>';
+      '<button type="button" class="adventure-combat-log" aria-label="Log time against this boss">Log Time Against Boss</button>';
 
     var progression = content.querySelector('.adventure-progression-card');
     if (progression && progression.nextSibling) content.insertBefore(card, progression.nextSibling);
