@@ -1,40 +1,90 @@
-## ✨ Feature Request
+name: ✨ Feature Request
+description: Suggest a new feature or improvement for ReadQuest.
+title: "[Feature]: "
+labels:
+  - feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ✨ Feature Request
 
-<!-- Tell us what feature or improvement you would like to see added to ReadQuest. -->
+        Thanks for helping make ReadQuest better! 📚⚔️
 
-### What would you like to see?
+        Please provide as much detail as you can about your idea.
 
-<!-- Describe the feature or improvement you are requesting. -->
+  - type: textarea
+    id: feature
+    attributes:
+      label: What would you like to see?
+      description: Describe the feature or improvement you are requesting.
+      placeholder: Tell us about your idea...
+    validations:
+      required: true
 
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would you like this feature?
+      description: What problem would this solve, or how would it improve your ReadQuest experience?
+      placeholder: Explain why you think this would be useful...
+    validations:
+      required: true
 
-### Why would you like this feature?
+  - type: textarea
+    id: how
+    attributes:
+      label: How do you think it should work?
+      description: Give us an idea of how you would like the feature to function. You don't need to know how it should be programmed.
+      placeholder: Describe how you imagine it working...
+    validations:
+      required: false
 
-<!-- What problem would this solve, or how would it improve your ReadQuest experience? -->
+  - type: dropdown
+    id: area
+    attributes:
+      label: What area of ReadQuest does this relate to?
+      options:
+        - 📚 Reading
+        - ⚔️ Combat
+        - 🎒 Inventory
+        - 💰 Gold & Loot
+        - ⭐ XP & Leveling
+        - 🧙 Character
+        - 🤖 AI
+        - 🎨 UI / Visuals
+        - 🗺️ World / Map
+        - 📖 Books
+        - 🔧 Other
+    validations:
+      required: true
 
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples / References
+      description: Have you seen something similar elsewhere? Attach screenshots, images, or links if helpful.
+      placeholder: Share examples or references here...
+    validations:
+      required: false
 
-### How do you think it should work?
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Information
+      description: Anything else you'd like us to know?
+      placeholder: Anything else that might help...
+    validations:
+      required: false
 
-<!-- Give us an idea of how you would like the feature to function. 
-     You don't need to know how it would be programmed. -->
-
-
-### 📱 Where would this feature be used?
-
-<!-- If applicable, tell us where you think this feature should appear in the app. -->
-
-
-### 🎨 Examples / References
-
-<!-- If you have examples from another app, screenshots, drawings, or other ideas, attach them here. -->
-
-
-### 📝 Additional Information
-
-<!-- Anything else you think would help us understand your idea. -->
-
-
-## ☑️ Checklist
-
-- [ ] I have checked the existing issues and feature requests to make sure this hasn't already been requested.
-- [ ] This feature is related to ReadQuest.
-- [ ] I have explained why I think this feature would be useful.
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have checked existing issues and feature requests to make sure this hasn't already been requested.
+          required: true
+        - label: This feature is related to ReadQuest.
+          required: true
+        - label: I have explained why I think this feature would be useful.
+          required: true
