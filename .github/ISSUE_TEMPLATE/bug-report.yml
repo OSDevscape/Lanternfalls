@@ -1,50 +1,133 @@
-## 🐛 Bug Description
+name: 🐛 Bug Report
+description: Report something that isn't working correctly in ReadQuest.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🐛 Bug Report
 
-<!-- Give a clear and concise description of what went wrong. -->
+        Thanks for helping us squash bugs and improve ReadQuest! 📚⚔️
 
-### What happened?
+        Please provide as much detail as possible so we can reproduce and fix the problem.
 
-<!-- Describe the bug in as much detail as possible. -->
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug or problem you encountered.
+      placeholder: Tell us what went wrong...
+    validations:
+      required: true
 
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+      description: Describe what you expected ReadQuest to do instead.
+      placeholder: Tell us what you expected to happen...
+    validations:
+      required: true
 
-### What did you expect to happen?
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Tell us exactly what you did before the bug occurred.
+      placeholder: |
+        1. Open...
+        2. Go to...
+        3. Tap...
+        4. The problem occurs...
+    validations:
+      required: true
 
-<!-- Describe what you expected ReadQuest to do. -->
+  - type: dropdown
+    id: area
+    attributes:
+      label: What area of ReadQuest does this relate to?
+      options:
+        - 📚 Reading
+        - ⚔️ Combat
+        - 🎒 Inventory
+        - 💰 Gold & Loot
+        - ⭐ XP & Leveling
+        - 🧙 Character
+        - 🤖 AI
+        - 🎨 UI / Visuals
+        - 🗺️ World / Map
+        - 📖 Books
+        - 🔧 Other
+    validations:
+      required: true
 
+  - type: dropdown
+    id: severity
+    attributes:
+      label: How serious is the problem?
+      options:
+        - 🔴 Critical - App crashes or prevents major functionality
+        - 🟠 High - Major feature is broken
+        - 🟡 Medium - Feature doesn't work correctly but has a workaround
+        - 🟢 Low - Minor issue or visual problem
+    validations:
+      required: true
 
-### Steps to Reproduce
+  - type: input
+    id: version
+    attributes:
+      label: ReadQuest Version
+      description: What version of ReadQuest are you using?
+      placeholder: "Example: v3.0.0-alpha"
+    validations:
+      required: true
 
-<!-- Tell us exactly how to make the bug happen. -->
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      description: What device are you using?
+      placeholder: "Example: Google Pixel 8"
+    validations:
+      required: true
 
-1.
-2.
-3.
+  - type: input
+    id: android
+    attributes:
+      label: Android Version
+      description: What version of Android is your device running?
+      placeholder: "Example: Android 16"
+    validations:
+      required: true
 
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots / Video
+      description: Attach screenshots or a screen recording if possible.
+      placeholder: Drag and drop screenshots or videos here...
+    validations:
+      required: false
 
-### 📱 Device Information
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Information
+      description: Anything else that might help us understand or reproduce the issue?
+      placeholder: Add any other information here...
+    validations:
+      required: false
 
-**ReadQuest Version:**
-<!-- Example: v3.0.0-alpha -->
-
-**Device:**
-<!-- Example: Google Pixel 8 -->
-
-**Android Version:**
-<!-- Example: Android 16 -->
-
-
-### 📸 Screenshots / Video
-
-<!-- If possible, attach screenshots or a screen recording showing the bug. -->
-
-
-### 📝 Additional Information
-
-<!-- Anything else that might help us understand or reproduce the issue. -->
-
-
-## ☑️ Checklist
-
-- [ ] I am using the latest available version of ReadQuest.
-- [ ] I have checked the existing issues to make sure this hasn't already been reported.
-- [ ] I have provided enough information to reproduce the bug.
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I am using the latest available version of ReadQuest.
+          required: true
+        - label: I have searched existing issues to make sure this bug hasn't already been reported.
+          required: true
+        - label: I have provided enough information to reproduce the issue.
+          required: true
