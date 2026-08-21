@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: 💬 ReadQuest Discussions
+    url: https://github.com/OSDevscape/ReadQuest/discussions
+    about: Ask questions, share ideas, give feedback, and discuss ReadQuest with the community.
+
+  - name: 🗺️ ReadQuest Roadmap
+    url: https://github.com/OSDevscape/ReadQuest/issues
+    about: See current bugs, planned features, and ongoing development.
+
+  - name: 📚 ReadQuest Documentation
+    url: https://github.com/OSDevscape/ReadQuest#readme
+    about: Learn more about ReadQuest and how to get started.
