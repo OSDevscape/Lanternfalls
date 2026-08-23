@@ -1,4 +1,4 @@
-package com.osmays.bookorganizer;
+package com.osdevscape.readquest;
 
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
@@ -29,10 +29,10 @@ import java.util.UUID;
 
 public class ReadingWidgetProvider extends AppWidgetProvider {
     private static final String PREFS = "reading_widget_state";
-    private static final String ACTION_START = "com.osmays.bookorganizer.widget.START";
-    private static final String ACTION_PAUSE = "com.osmays.bookorganizer.widget.PAUSE";
-    private static final String ACTION_RESUME = "com.osmays.bookorganizer.widget.RESUME";
-    private static final String ACTION_STOP = "com.osmays.bookorganizer.widget.STOP";
+    private static final String ACTION_START = "com.osdevscape.readquest.widget.START";
+    private static final String ACTION_PAUSE = "com.osdevscape.readquest.widget.PAUSE";
+    private static final String ACTION_RESUME = "com.osdevscape.readquest.widget.RESUME";
+    private static final String ACTION_STOP = "com.osdevscape.readquest.widget.STOP";
     private static final String BOOKS_FILE = "books.json";
     private static final String SESSIONS_FILE = "reading-widget-sessions.json";
     private static final String APPEARANCE_FILE = "reading-widget-appearance.json";

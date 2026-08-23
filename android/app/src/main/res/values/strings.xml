@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">ReadQuest</string>
     <string name="title_activity_main">ReadQuest</string>
-    <string name="package_name">com.osmays.bookorganizer</string>
-    <string name="custom_url_scheme">com.osmays.bookorganizer</string>
+    <string name="package_name">com.osdevscape.readquest</string>
+<string name="custom_url_scheme">com.osdevscape.readquest</string>
 </resources>

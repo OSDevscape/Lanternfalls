@@ -1,4 +1,4 @@
-package com.osmays.bookorganizer;
+package com.osdevscape.readquest;
 
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
@@ -16,7 +16,7 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 public class WidgetRefreshPlugin extends Plugin {
 
     private static final String ACTION_WIDGET_PINNED =
-        "com.osmays.bookorganizer.widget.PINNED";
+    "com.osdevscape.readquest.widget.PINNED";
 
     @PluginMethod
     public void refresh(PluginCall call) {

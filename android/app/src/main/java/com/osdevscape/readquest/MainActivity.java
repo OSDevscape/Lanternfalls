@@ -1,4 +1,4 @@
-package com.osmays.bookorganizer;
+package com.osdevscape.readquest;
 
 import android.content.Intent;
 import android.os.Bundle;
