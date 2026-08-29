@@ -133,46 +133,6 @@
       .slice(0, 8);
   }
 
-  function battleLogHtml() {
-    var items = recentBattleLogs();
-
-    if (!items.length) {
-      return (
-        '<section class="adventure-card adventure-battle-log-card">' +
-        '<span class="adventure-label">Battle Log</span>' +
-        '<p class="adventure-muted">Claim a reading-session reward to record your first encounter.</p>' +
-        '</section>'
-      );
-    }
-
-    return (
-      '<section class="adventure-card adventure-battle-log-card">' +
-      '<span class="adventure-label">Battle Log</span>' +
-      '<div class="adventure-battle-log-list">' +
-      items.map(function (item) {
-        var log = item.battleLog;
-        return (
-          '<article class="adventure-battle-log-item' +
-          (log.critical ? ' is-critical' : '') + '">' +
-          '<div>' +
-          '<b>' + escape(log.enemyName || 'Unknown foe') + '</b>' +
-          '<span>' + escape(log.region || 'The Reading Realm') + '</span>' +
-          '</div>' +
-          '<strong>' + (Number(log.damage) || 0) + ' DMG</strong>' +
-          '<p>' + escape(log.message || '') + '</p>' +
-          '<small>' +
-          escape(item.bookTitle || log.bookTitle || 'Reading session') +
-          ' · ' + (Number(item.minutes) || 0) + ' min' +
-          (log.relic ? ' · Relic: ' + escape(log.relic) : '') +
-          '</small>' +
-          '</article>'
-        );
-      }).join('') +
-      '</div>' +
-      '</section>'
-    );
-  }
-
   function rememberSkillBonus(result, transaction) {
     if (!transaction || transaction.perkState !== 'triggered') return;
 
@@ -250,12 +210,15 @@
 
   function recentBattleLogs() {
     var engine = window.BookShelfRewards;
+
     if (!engine || !engine.ledger) return [];
 
     var transactions = engine.ledger().transactions || {};
 
     return Object.keys(transactions)
-      .map(function (key) { return transactions[key]; })
+      .map(function (key) {
+        return transactions[key];
+      })
       .filter(function (item) {
         return item &&
           item.type === 'session' &&
@@ -263,9 +226,105 @@
           item.battleLog;
       })
       .sort(function (left, right) {
-        return String(right.createdAt || '').localeCompare(String(left.createdAt || ''));
+        return String(right.createdAt || '').localeCompare(
+          String(left.createdAt || '')
+        );
       })
       .slice(0, 8);
+  }
+
+  function battleAttackHtml(encounter) {
+    var attacks = Array.isArray(encounter.attacks)
+      ? encounter.attacks
+      : [];
+
+    if (!attacks.length) {
+      return (
+        '<p class="adventure-battle-attack adventure-battle-legacy">' +
+        escape(encounter.message || 'No detailed encounter record is available.') +
+        '</p>'
+      );
+    }
+
+    return (
+      '<div class="adventure-battle-attacks">' +
+      attacks.map(function (attack) {
+        var actor = attack.actor || 'player';
+
+        var actorLabel = actor === 'player'
+          ? (attack.className || encounter.className || 'Reader')
+          : actor === 'enemy'
+            ? (encounter.enemyName || 'Enemy')
+            : 'Outcome';
+
+        var detail = '';
+
+        if (actor === 'player') {
+          detail =
+            (attack.critical ? 'Critical · ' : '') +
+            (Number(attack.damage) || 0) + ' DMG';
+        } else if (actor === 'outcome') {
+          detail = String(encounter.outcome || 'complete')
+            .replace(/^./, function (letter) {
+              return letter.toUpperCase();
+            });
+        }
+
+        return (
+          '<div class="adventure-battle-attack is-' + actor +
+          (attack.critical ? ' is-critical' : '') + '">' +
+          '<b>' + escape(actorLabel) + '</b>' +
+          '<span>' + escape(attack.message || '') + '</span>' +
+          (detail ? '<small>' + escape(detail) + '</small>' : '') +
+          '</div>'
+        );
+      }).join('') +
+      '</div>'
+    );
+  }
+
+  function battleEncounterHtml(encounter) {
+    var number = Number(encounter.index) || 1;
+    var duration = Number(encounter.duration) || 0;
+    var damage = Number(encounter.damage) || 0;
+    var enemy = encounter.enemyName || 'Unknown foe';
+    var region = encounter.region || 'The Reading Realm';
+    var relic = encounter.relic || 'None';
+    var outcome = encounter.outcome || '';
+
+    return (
+      '<details class="adventure-battle-encounter' +
+      (encounter.critical ? ' is-critical' : '') + '">' +
+
+      '<summary class="adventure-battle-encounter-summary">' +
+      '<span>Encounter ' + number + '</span>' +
+      '<b>' + escape(enemy) + '</b>' +
+      '<small>' +
+      duration + ' min · ' + damage + ' DMG' +
+      (encounter.critical ? ' · Critical' : '') +
+      '</small>' +
+      '</summary>' +
+
+      '<div class="adventure-battle-encounter-detail">' +
+      '<em>' + escape(region) + '</em>' +
+
+      battleAttackHtml(encounter) +
+
+      '<button type="button" class="adventure-battle-relic adventure-relic-tooltip" ' +
+      'data-tooltip="Relics are encounter traces recovered while reading. They are collectible for now; a future Bazaar update may let you sell, trade, or refine them." ' +
+      'aria-label="About relics: ' + escape(relic) + '" aria-expanded="false">' +
+      'Relic recovered: ' + escape(relic) + ' &#9432;' +
+      '</button>' +
+
+      (outcome
+        ? '<small class="adventure-battle-outcome">Outcome: ' +
+        escape(outcome) +
+        '</small>'
+        : '') +
+      '</div>' +
+
+      '</details>'
+    );
   }
 
   function battleLogHtml() {
@@ -275,7 +334,9 @@
       return (
         '<section class="adventure-card adventure-battle-log-card">' +
         '<span class="adventure-label">Battle Log</span>' +
-        '<p class="adventure-muted">Claim a reading-session reward to record your first encounter.</p>' +
+        '<p class="adventure-muted">' +
+        'Claim a reading-session reward to record your first encounter.' +
+        '</p>' +
         '</section>'
       );
     }
@@ -284,25 +345,41 @@
       '<section class="adventure-card adventure-battle-log-card">' +
       '<span class="adventure-label">Battle Log</span>' +
       '<div class="adventure-battle-log-list">' +
+
       items.map(function (item) {
         var log = item.battleLog;
+        var encounters = Array.isArray(log.encounters)
+          ? log.encounters
+          : [];
+
         return (
-          '<article class="adventure-battle-log-item' +
-          (log.critical ? ' is-critical' : '') + '">' +
-          '<div>' +
-          '<b>' + escape(log.enemyName || 'Unknown foe') + '</b>' +
-          '<span>' + escape(log.region || 'The Reading Realm') + '</span>' +
+          '<details class="adventure-battle-session">' +
+
+          '<summary class="adventure-battle-session-summary">' +
+          '<span>' + escape(item.bookTitle || log.bookTitle || 'Reading session') + '</span>' +
+          '<b>' + encounters.length + ' encounter' +
+          (encounters.length === 1 ? '' : 's') +
+          '</b>' +
+          '<small>' + (Number(log.minutes) || Number(item.minutes) || 0) +
+          ' min</small>' +
+          '</summary>' +
+
+          '<div class="adventure-battle-session-detail">' +
+
+          (encounters.length
+            ? encounters.map(battleEncounterHtml).join('')
+            : (
+              '<p class="adventure-battle-legacy">' +
+              escape(log.message || 'No detailed battle record is available.') +
+              '</p>'
+            )) +
+
           '</div>' +
-          '<strong>' + (Number(log.damage) || 0) + ' DMG</strong>' +
-          '<p>' + escape(log.message || '') + '</p>' +
-          '<small>' +
-          escape(item.bookTitle || log.bookTitle || 'Reading session') +
-          ' · ' + (Number(item.minutes) || 0) + ' min' +
-          (log.relic ? ' · Relic: ' + escape(log.relic) : '') +
-          '</small>' +
-          '</article>'
+
+          '</details>'
         );
       }).join('') +
+
       '</div>' +
       '</section>'
     );
@@ -336,87 +413,6 @@
   }
 
   function rewardPopup(result) {
-    var claimed = (result && result.transactions) || [];
-
-    var battleHtml = claimed
-      .filter(function (item) {
-        return item &&
-          item.type === 'session' &&
-          item.battleLog &&
-          Array.isArray(item.battleLog.encounters);
-      })
-      .map(function (item) {
-        var log = item.battleLog;
-
-        return (
-          '<details class="adventure-reward-battle-log">' +
-          '<summary>' +
-          '<span class="adventure-reward-battle-label">Battle Log</span>' +
-          '<b>' + log.encounters.length + ' encounter' +
-          (log.encounters.length === 1 ? '' : 's') +
-          '</b>' +
-          '<small>' + (Number(log.minutes) || 0) + ' reading minutes</small>' +
-          '</summary>' +
-
-          '<div class="adventure-reward-encounters">' +
-          log.encounters.map(function (encounter) {
-            return (
-              '<article class="adventure-reward-encounter' +
-              (encounter.critical ? ' is-critical' : '') + '">' +
-              '<span class="adventure-reward-encounter-number">' +
-              'Encounter ' + (Number(encounter.index) || 1) +
-              '</span>' +
-              '<b>' + escape(encounter.enemyName || 'Unknown foe') + '</b>' +
-              '<span>' + escape(encounter.region || 'The Reading Realm') + '</span>' +
-              '<p>' + escape(encounter.message || '') + '</p>' +
-              '<small>' +
-              (Number(encounter.duration) || 0) + ' min' +
-              ' · Damage: ' + (Number(encounter.damage) || 0) +
-              ' · Relic: ' + escape(encounter.relic || 'None') +
-              '</small>' +
-              '</article>'
-            );
-          }).join('') +
-          '</div>' +
-          '</details>'
-        );
-      })
-      .join('');
-
-    var battleTransactions = (result && result.transactions ? result.transactions : [])
-      .filter(function (item) {
-        return item &&
-          item.type === 'session' &&
-          item.battleLog;
-      });
-
-    var claimed = (result && result.transactions) || [];
-
-    var battleHtml = claimed
-      .filter(function (item) {
-        return item &&
-          item.type === 'session' &&
-          item.battleLog;
-      })
-      .map(function (item) {
-        var log = item.battleLog;
-
-        return (
-          '<div class="adventure-reward-battle-log' +
-          (log.critical ? ' is-critical' : '') + '">' +
-          '<span class="adventure-reward-battle-label">' +
-          (log.critical ? 'Critical Strike' : 'Battle Record') +
-          '</span>' +
-          '<b>' + escape(log.enemyName || 'Unknown foe') + '</b>' +
-          '<span>' + escape(log.region || 'The Reading Realm') + '</span>' +
-          '<p>' + escape(log.message || '') + '</p>' +
-          '<small>Damage: ' + (Number(log.damage) || 0) +
-          ' · Relic: ' + escape(log.relic || 'None') + '</small>' +
-          '</div>'
-        );
-      })
-      .join('');
-
     var battleHtml = battleTransactions.map(function (item) {
       var log = item.battleLog;
 
@@ -684,82 +680,582 @@
     var style = document.createElement('style');
 
     style.textContent =
-      '.character-gold-total{float:right;margin-top:-28px;padding-bottom:13px}' +
-      '.character-gold-total button{padding:0;border:0;background:transparent;color:var(--gold,#A8823C);font:19px Georgia,serif;white-space:nowrap;cursor:pointer}' +
-      '.character-gold-total button:focus-visible,.adventure-progress-tooltip:focus-visible,.adventure-xp-bar:focus-visible{outline:2px solid var(--gold,#A8823C);outline-offset:2px}' +
-      '.character-progression-card{clear:both;margin-top:14px;padding-top:13px;border-top:1px solid rgba(168,130,60,.25)}' +
-      '.adventure-xp-bar{height:8px;margin-top:0;overflow:hidden;border-radius:8px;background:rgba(246,241,228,.13);cursor:pointer}' +
-      '.adventure-xp-bar i{display:block;height:100%;background:var(--gold,#A8823C);border-radius:8px}' +
-      '.adventure-xp-text{margin:6px 0 0;color:var(--muted,#8A8378);font-size:11px}' +
-      '.adventure-progress-tooltip{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-left:4px;padding:0;border:1px solid currentColor;border-radius:50%;background:transparent;color:inherit;font:700 10px/1 sans-serif;vertical-align:middle;cursor:pointer}' +
-      '.adventure-boss-rewards{margin-top:13px;padding:11px;border-left:3px solid var(--gold,#A8823C);background:rgba(0,0,0,.14)}' +
-      '.adventure-boss-rewards p{display:flex;justify-content:space-between;gap:10px;margin:8px 0 0;font-size:12px}' +
-      '.adventure-boss-rewards p b,.adventure-boss-rewards p span{display:block}' +
-      '.adventure-boss-rewards p span{color:var(--muted,#8A8378);text-align:right}' +
-      '.adventure-reward-box{margin-top:10px;padding-top:10px;border-top:1px solid rgba(168,130,60,.18)}' +
-      '.adventure-reward-box p{margin:0 0 8px;color:var(--muted,#8A8378);font-size:11px;cursor:help}' +
-      '.adventure-reward-box button{width:100%;padding:10px;border:1px solid var(--gold,#A8823C);border-radius:3px;background:var(--accent,#8B3A3A);color:var(--paper-light,#F6F1E4);font:inherit;font-weight:bold;cursor:pointer}' +
-      '.adventure-reward-box button:disabled{opacity:.45;cursor:not-allowed}' +
-      '.adventure-stats{margin-top:13px;padding-top:12px;border-top:1px solid rgba(168,130,60,.18)}' +
-      '.adventure-stats summary{display:flex;justify-content:space-between;cursor:pointer;font:15px Georgia,serif}' +
-      '.adventure-stats summary em{color:var(--muted,#8A8378);font:11px var(--font-body,-apple-system);font-style:normal}' +
-      '.adventure-stat-help{margin:8px 0 0;color:var(--muted,#8A8378);font-size:11px;line-height:1.4}' +
-      '.adventure-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}' +
-      '.adventure-stat-grid>div{padding:9px;text-align:center;background:rgba(0,0,0,.14);border-radius:3px}' +
-      '.adventure-stat-grid span,.adventure-stat-grid b{display:block}' +
-      '.adventure-stat-grid span{color:var(--gold,#A8823C);font-size:11px}' +
-      '.adventure-stat-grid b{margin:3px 0;font-size:18px}' +
-      '.adventure-stat-grid button{border:1px solid var(--gold,#A8823C);border-radius:50%;background:transparent;color:var(--paper-light,#F6F1E4);width:25px;height:25px}' +
-      '.adventure-stat-grid button:disabled{opacity:.35}' +
+      '.character-gold-total{' +
+      'float:right;' +
+      'margin-top:-28px;' +
+      'padding-bottom:13px;' +
+      '}' +
 
-      '.pixel-fireworks{position:fixed;z-index:500;inset:0;pointer-events:none;overflow:hidden}' +
-      '.pixel-firework{position:absolute;width:8px;height:8px;background:var(--firework-color);box-shadow:0 0 12px var(--firework-color);animation:pixel-firework-pop .85s steps(8,end) forwards}' +
-      '@keyframes pixel-firework-pop{0%{opacity:1;transform:translate(-50%,-50%) scale(1)}70%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(0)}}' +
+      '.character-gold-total button{' +
+      'padding:0;' +
+      'border:0;' +
+      'background:transparent;' +
+      'color:var(--gold,#A8823C);' +
+      'font:19px Georgia,serif;' +
+      'white-space:nowrap;' +
+      'cursor:pointer;' +
+      '}' +
 
-      '.adventure-reward-popup{position:fixed;z-index:600;inset:0;display:grid;place-items:center;padding:18px;background:rgba(0,0,0,.62)}' +
-      '.adventure-popup-card{position:relative;width:min(100%,390px);padding:22px;border:1px solid var(--gold,#A8823C);border-radius:4px;background:var(--paper,#24211d);box-shadow:0 18px 52px rgba(0,0,0,.5)}' +
-      '.adventure-popup-card h2{margin:7px 28px 16px 0;color:var(--paper-light,#F6F1E4);font:21px Georgia,serif}' +
-      '.adventure-popup-close{position:absolute;top:10px;right:11px;border:0;background:transparent;color:var(--muted,#8A8378);font-size:23px;cursor:pointer}' +
-      '.adventure-popup-skill{margin:14px 0;padding:11px;border-left:3px solid var(--accent,#4A90E2);background:rgba(0,0,0,.15)}' +
-      '.adventure-popup-skill p{display:flex;justify-content:space-between;gap:10px;margin:8px 0 0;font-size:12px}' +
-      '.adventure-popup-skill p b{font-weight:normal}' +
-      '.adventure-popup-skill p span{color:var(--accent,#4A90E2);white-space:nowrap}' +
-      '.adventure-popup-done{width:100%;padding:9px;border:1px solid var(--gold,#A8823C);border-radius:3px;background:transparent;color:var(--paper-light,#F6F1E4);font:inherit;font-weight:bold;cursor:pointer}' +
+      '.character-gold-total button:focus-visible,' +
+      '.adventure-progress-tooltip:focus-visible,' +
+      '.adventure-relic-tooltip:focus-visible,' +
+      '.adventure-xp-bar:focus-visible{' +
+      'outline:2px solid var(--gold,#A8823C);' +
+      'outline-offset:2px;' +
+      '}' +
 
-      '.adventure-reward-battle-log{margin:12px 0;padding:12px;text-align:left;border:1px solid rgba(168,130,60,.35);background:rgba(0,0,0,.22)}' +
-      '.adventure-reward-battle-log.is-critical{border-color:rgba(255,122,24,.8)}' +
-      '.adventure-reward-battle-label,.adventure-reward-battle-log b,.adventure-reward-battle-log span,.adventure-reward-battle-log small{display:block}' +
-      '.adventure-reward-battle-label{color:var(--gold,#A8823C);font-size:10px;font-weight:bold;letter-spacing:.12em;text-transform:uppercase}' +
-      '.adventure-reward-battle-log b{margin-top:4px;color:var(--paper-light,#F6F1E4);font:17px Georgia,serif}' +
-      '.adventure-reward-battle-log span,.adventure-reward-battle-log p,.adventure-reward-battle-log small{color:var(--muted,#8A8378);font-size:12px}' +
-      '.adventure-reward-battle-log p{margin:7px 0}' +
-      '.adventure-reward-battle-log small{color:var(--gold,#A8823C)}' +
+      '.character-progression-card{' +
+      'clear:both;' +
+      'margin-top:14px;' +
+      'padding-top:13px;' +
+      'border-top:1px solid rgba(168,130,60,.25);' +
+      '}' +
 
-            '#navPlaceholder.character-page{' +
-        'display:block!important;' +
-        'position:absolute!important;' +
-        'inset:0!important;' +
-        'height:auto!important;' +
-        'min-height:0!important;' +
-        'max-height:none!important;' +
-        'overflow-y:scroll!important;' +
-        'overflow-x:hidden!important;' +
-        'overscroll-behavior-y:contain;' +
-        '-webkit-overflow-scrolling:touch;' +
-        'touch-action:pan-y;' +
+      '.adventure-xp-bar{' +
+      'height:8px;' +
+      'margin-top:0;' +
+      'overflow:hidden;' +
+      'border-radius:8px;' +
+      'background:rgba(246,241,228,.13);' +
+      'cursor:pointer;' +
+      '}' +
+
+      '.adventure-xp-bar i{' +
+      'display:block;' +
+      'height:100%;' +
+      'background:var(--gold,#A8823C);' +
+      'border-radius:8px;' +
+      '}' +
+
+      '.adventure-xp-text{' +
+      'margin:6px 0 0;' +
+      'color:var(--muted,#8A8378);' +
+      'font-size:11px;' +
+      '}' +
+
+      '.adventure-progress-tooltip{' +
+      'display:inline-flex;' +
+      'align-items:center;' +
+      'justify-content:center;' +
+      'width:16px;' +
+      'height:16px;' +
+      'margin-left:4px;' +
+      'padding:0;' +
+      'border:1px solid currentColor;' +
+      'border-radius:50%;' +
+      'background:transparent;' +
+      'color:inherit;' +
+      'font:700 10px/1 sans-serif;' +
+      'vertical-align:middle;' +
+      'cursor:pointer;' +
+      '}' +
+
+      '.adventure-boss-rewards{' +
+      'margin-top:13px;' +
+      'padding:11px;' +
+      'border-left:3px solid var(--gold,#A8823C);' +
+      'background:rgba(0,0,0,.14);' +
+      '}' +
+
+      '.adventure-boss-rewards p{' +
+      'display:flex;' +
+      'justify-content:space-between;' +
+      'gap:10px;' +
+      'margin:8px 0 0;' +
+      'font-size:12px;' +
+      '}' +
+
+      '.adventure-boss-rewards p b,' +
+      '.adventure-boss-rewards p span{' +
+      'display:block;' +
+      '}' +
+
+      '.adventure-boss-rewards p span{' +
+      'color:var(--muted,#8A8378);' +
+      'text-align:right;' +
+      '}' +
+
+      '.adventure-reward-box{' +
+      'margin-top:10px;' +
+      'padding-top:10px;' +
+      'border-top:1px solid rgba(168,130,60,.18);' +
+      '}' +
+
+      '.adventure-reward-box p{' +
+      'margin:0 0 8px;' +
+      'color:var(--muted,#8A8378);' +
+      'font-size:11px;' +
+      'cursor:help;' +
+      '}' +
+
+      '.adventure-reward-box button{' +
+      'width:100%;' +
+      'padding:10px;' +
+      'border:1px solid var(--gold,#A8823C);' +
+      'border-radius:3px;' +
+      'background:var(--accent,#8B3A3A);' +
+      'color:var(--paper-light,#F6F1E4);' +
+      'font:inherit;' +
+      'font-weight:bold;' +
+      'cursor:pointer;' +
+      '}' +
+
+      '.adventure-reward-box button:disabled{' +
+      'opacity:.45;' +
+      'cursor:not-allowed;' +
+      '}' +
+
+      '.adventure-stats{' +
+      'margin-top:13px;' +
+      'padding-top:12px;' +
+      'border-top:1px solid rgba(168,130,60,.18);' +
+      '}' +
+
+      '.adventure-stats summary{' +
+      'display:flex;' +
+      'justify-content:space-between;' +
+      'cursor:pointer;' +
+      'font:15px Georgia,serif;' +
+      '}' +
+
+      '.adventure-stats summary em{' +
+      'color:var(--muted,#8A8378);' +
+      'font:11px var(--font-body,-apple-system);' +
+      'font-style:normal;' +
+      '}' +
+
+      '.adventure-stat-help{' +
+      'margin:8px 0 0;' +
+      'color:var(--muted,#8A8378);' +
+      'font-size:11px;' +
+      'line-height:1.4;' +
+      '}' +
+
+      '.adventure-stat-grid{' +
+      'display:grid;' +
+      'grid-template-columns:repeat(3,1fr);' +
+      'gap:8px;' +
+      'margin-top:12px;' +
+      '}' +
+
+      '.adventure-stat-grid>div{' +
+      'padding:9px;' +
+      'text-align:center;' +
+      'background:rgba(0,0,0,.14);' +
+      'border-radius:3px;' +
+      '}' +
+
+      '.adventure-stat-grid span,' +
+      '.adventure-stat-grid b{' +
+      'display:block;' +
+      '}' +
+
+      '.adventure-stat-grid span{' +
+      'color:var(--gold,#A8823C);' +
+      'font-size:11px;' +
+      '}' +
+
+      '.adventure-stat-grid b{' +
+      'margin:3px 0;' +
+      'font-size:18px;' +
+      '}' +
+
+      '.adventure-stat-grid button{' +
+      'width:25px;' +
+      'height:25px;' +
+      'border:1px solid var(--gold,#A8823C);' +
+      'border-radius:50%;' +
+      'background:transparent;' +
+      'color:var(--paper-light,#F6F1E4);' +
+      '}' +
+
+      '.adventure-stat-grid button:disabled{' +
+      'opacity:.35;' +
+      '}' +
+
+      '.pixel-fireworks{' +
+      'position:fixed;' +
+      'z-index:500;' +
+      'inset:0;' +
+      'pointer-events:none;' +
+      'overflow:hidden;' +
+      '}' +
+
+      '.pixel-firework{' +
+      'position:absolute;' +
+      'width:8px;' +
+      'height:8px;' +
+      'background:var(--firework-color);' +
+      'box-shadow:0 0 12px var(--firework-color);' +
+      'animation:pixel-firework-pop .85s steps(8,end) forwards;' +
+      '}' +
+
+      '@keyframes pixel-firework-pop{' +
+      '0%{opacity:1;transform:translate(-50%,-50%) scale(1)}' +
+      '70%{opacity:1}' +
+      '100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(0)}' +
+      '}' +
+
+      '.adventure-reward-popup{' +
+      'position:fixed;' +
+      'z-index:600;' +
+      'inset:0;' +
+      'display:grid;' +
+      'place-items:center;' +
+      'padding:18px;' +
+      'background:rgba(0,0,0,.62);' +
+      '}' +
+
+      '.adventure-popup-card{' +
+      'position:relative;' +
+      'width:min(100%,390px);' +
+      'padding:22px;' +
+      'border:1px solid var(--gold,#A8823C);' +
+      'border-radius:4px;' +
+      'background:var(--paper,#24211d);' +
+      'box-shadow:0 18px 52px rgba(0,0,0,.5);' +
+      '}' +
+
+      '.adventure-popup-card h2{' +
+      'margin:7px 28px 16px 0;' +
+      'color:var(--paper-light,#F6F1E4);' +
+      'font:21px Georgia,serif;' +
+      '}' +
+
+      '.adventure-popup-close{' +
+      'position:absolute;' +
+      'top:10px;' +
+      'right:11px;' +
+      'border:0;' +
+      'background:transparent;' +
+      'color:var(--muted,#8A8378);' +
+      'font-size:23px;' +
+      'cursor:pointer;' +
+      '}' +
+
+      '.adventure-popup-skill{' +
+      'margin:14px 0;' +
+      'padding:11px;' +
+      'border-left:3px solid var(--accent,#4A90E2);' +
+      'background:rgba(0,0,0,.15);' +
+      '}' +
+
+      '.adventure-popup-skill p{' +
+      'display:flex;' +
+      'justify-content:space-between;' +
+      'gap:10px;' +
+      'margin:8px 0 0;' +
+      'font-size:12px;' +
+      '}' +
+
+      '.adventure-popup-skill p b{' +
+      'font-weight:normal;' +
+      '}' +
+
+      '.adventure-popup-skill p span{' +
+      'color:var(--accent,#4A90E2);' +
+      'white-space:nowrap;' +
+      '}' +
+
+      '.adventure-popup-done{' +
+      'width:100%;' +
+      'padding:9px;' +
+      'border:1px solid var(--gold,#A8823C);' +
+      'border-radius:3px;' +
+      'background:transparent;' +
+      'color:var(--paper-light,#F6F1E4);' +
+      'font:inherit;' +
+      'font-weight:bold;' +
+      'cursor:pointer;' +
+      '}' +
+
+      '.adventure-reward-battle-log{' +
+      'margin:12px 0;' +
+      'padding:12px;' +
+      'text-align:left;' +
+      'border:1px solid rgba(168,130,60,.35);' +
+      'background:rgba(0,0,0,.22);' +
+      '}' +
+
+      '.adventure-reward-battle-log.is-critical{' +
+      'border-color:rgba(255,122,24,.8);' +
+      '}' +
+
+      '.adventure-reward-battle-label,' +
+      '.adventure-reward-battle-log b,' +
+      '.adventure-reward-battle-log span,' +
+      '.adventure-reward-battle-log small{' +
+      'display:block;' +
+      '}' +
+
+      '.adventure-reward-battle-label{' +
+      'color:var(--gold,#A8823C);' +
+      'font-size:10px;' +
+      'font-weight:bold;' +
+      'letter-spacing:.12em;' +
+      'text-transform:uppercase;' +
+      '}' +
+
+      '.adventure-reward-battle-log b{' +
+      'margin-top:4px;' +
+      'color:var(--paper-light,#F6F1E4);' +
+      'font:17px Georgia,serif;' +
+      '}' +
+
+      '.adventure-reward-battle-log span,' +
+      '.adventure-reward-battle-log p,' +
+      '.adventure-reward-battle-log small{' +
+      'color:var(--muted,#8A8378);' +
+      'font-size:12px;' +
+      '}' +
+
+      '.adventure-reward-battle-log p{' +
+      'margin:7px 0;' +
+      '}' +
+
+      '.adventure-reward-battle-log small{' +
+      'color:var(--gold,#A8823C);' +
       '}' +
 
       '#navPlaceholder.character-page{' +
-  'padding-bottom:220px!important;' +
-  'box-sizing:border-box;' +
-'}' +
+      'display:block!important;' +
+      'position:absolute!important;' +
+      'inset:0!important;' +
+      'height:auto!important;' +
+      'min-height:0!important;' +
+      'max-height:none!important;' +
+      'overflow-y:scroll!important;' +
+      'overflow-x:hidden!important;' +
+      'overscroll-behavior-y:contain;' +
+      '-webkit-overflow-scrolling:touch;' +
+      'touch-action:pan-y;' +
+      'padding-bottom:220px!important;' +
+      'box-sizing:border-box;' +
+      '}' +
 
       '#navPlaceholder.character-page details{' +
-        'overflow:visible!important;' +
+      'overflow:visible!important;' +
       '}' +
 
       '#navPlaceholder.character-page summary{' +
-        'touch-action:manipulation;' +
+      'touch-action:manipulation;' +
+      '}' +
+
+      '.adventure-battle-log-card{' +
+      'border-color:rgba(168,130,60,.45);' +
+      '}' +
+
+      '.adventure-battle-log-list{' +
+      'margin-top:11px;' +
+      'border-top:1px solid rgba(168,130,60,.18);' +
+      '}' +
+
+      '.adventure-battle-session{' +
+      'border-bottom:1px solid rgba(168,130,60,.18);' +
+      '}' +
+
+      '.adventure-battle-session:last-child{' +
+      'border-bottom:0;' +
+      '}' +
+
+      '.adventure-battle-session-summary{' +
+      'display:grid;' +
+      'grid-template-columns:1fr auto;' +
+      'gap:2px 12px;' +
+      'padding:12px 0;' +
+      'cursor:pointer;' +
+      'list-style:none;' +
+      '}' +
+
+      '.adventure-battle-session-summary::-webkit-details-marker{' +
+      'display:none;' +
+      '}' +
+
+      '.adventure-battle-session-summary::before{' +
+      'content:"▸";' +
+      'grid-row:1 / span 2;' +
+      'color:var(--gold,#A8823C);' +
+      'font-size:15px;' +
+      'transition:transform .15s ease;' +
+      '}' +
+
+      '.adventure-battle-session[open]>.adventure-battle-session-summary::before{' +
+      'transform:rotate(90deg);' +
+      '}' +
+
+      '.adventure-battle-session-summary span{' +
+      'grid-column:1;' +
+      'color:var(--gold,#A8823C);' +
+      'font-size:10px;' +
+      'letter-spacing:.08em;' +
+      'text-transform:uppercase;' +
+      '}' +
+
+      '.adventure-battle-session-summary b{' +
+      'grid-column:1;' +
+      'font:16px Georgia,serif;' +
+      '}' +
+
+      '.adventure-battle-session-summary small{' +
+      'grid-column:2;' +
+      'grid-row:1 / span 2;' +
+      'align-self:center;' +
+      'color:var(--muted,#8A8378);' +
+      'font-size:11px;' +
+      'text-align:right;' +
+      '}' +
+
+      '.adventure-battle-session-detail{' +
+      'padding:0 0 12px;' +
+      '}' +
+
+      '.adventure-battle-encounter{' +
+      'margin-top:8px;' +
+      'border:1px solid rgba(168,130,60,.25);' +
+      'border-radius:3px;' +
+      'background:rgba(0,0,0,.10);' +
+      '}' +
+
+      '.adventure-battle-encounter.is-critical{' +
+      'border-color:rgba(255,122,24,.8);' +
+      '}' +
+
+      '.adventure-battle-encounter-summary{' +
+      'display:grid;' +
+      'grid-template-columns:1fr auto;' +
+      'gap:2px 10px;' +
+      'padding:10px;' +
+      'cursor:pointer;' +
+      'list-style:none;' +
+      '}' +
+
+      '.adventure-battle-encounter-summary::-webkit-details-marker{' +
+      'display:none;' +
+      '}' +
+
+      '.adventure-battle-encounter-summary::before{' +
+      'content:"▸";' +
+      'grid-row:1 / span 2;' +
+      'color:var(--gold,#A8823C);' +
+      'font-size:13px;' +
+      'transition:transform .15s ease;' +
+      '}' +
+
+      '.adventure-battle-encounter[open]>.adventure-battle-encounter-summary::before{' +
+      'transform:rotate(90deg);' +
+      '}' +
+
+      '.adventure-battle-encounter-summary span{' +
+      'grid-column:1;' +
+      'color:var(--gold,#A8823C);' +
+      'font-size:10px;' +
+      'letter-spacing:.08em;' +
+      'text-transform:uppercase;' +
+      '}' +
+
+      '.adventure-battle-encounter-summary b{' +
+      'grid-column:1;' +
+      'font:15px Georgia,serif;' +
+      '}' +
+
+      '.adventure-battle-encounter-summary small{' +
+      'grid-column:2;' +
+      'grid-row:1 / span 2;' +
+      'align-self:center;' +
+      'color:var(--muted,#8A8378);' +
+      'font-size:10px;' +
+      'text-align:right;' +
+      '}' +
+
+      '.adventure-battle-encounter-detail{' +
+      'padding:0 10px 11px;' +
+      '}' +
+
+      '.adventure-battle-encounter-detail>em{' +
+      'display:block;' +
+      'color:var(--gold,#A8823C);' +
+      'font-size:10px;' +
+      'font-style:normal;' +
+      'letter-spacing:.05em;' +
+      'text-transform:uppercase;' +
+      '}' +
+
+      '.adventure-battle-attacks{' +
+      'margin:9px 0;' +
+      'padding-left:10px;' +
+      'border-left:1px solid rgba(168,130,60,.28);' +
+      '}' +
+
+      '.adventure-battle-attack{' +
+      'margin:0;' +
+      'padding:8px 0;' +
+      'border-bottom:1px solid rgba(168,130,60,.13);' +
+      '}' +
+
+      '.adventure-battle-attack:last-child{' +
+      'border-bottom:0;' +
+      '}' +
+
+      '.adventure-battle-attack b,' +
+      '.adventure-battle-attack span,' +
+      '.adventure-battle-attack small{' +
+      'display:block;' +
+      '}' +
+
+      '.adventure-battle-attack b{' +
+      'color:var(--paper-light,#F6F1E4);' +
+      'font-size:11px;' +
+      '}' +
+
+      '.adventure-battle-attack.is-enemy b{' +
+      'color:var(--muted,#8A8378);' +
+      '}' +
+
+      '.adventure-battle-attack.is-outcome b{' +
+      'color:var(--gold,#A8823C);' +
+      '}' +
+
+      '.adventure-battle-attack span{' +
+      'margin-top:3px;' +
+      'color:var(--muted,#8A8378);' +
+      'font-size:12px;' +
+      'line-height:1.4;' +
+      '}' +
+
+      '.adventure-battle-attack small{' +
+      'margin-top:4px;' +
+      'color:var(--gold,#A8823C);' +
+      'font-size:10px;' +
+      '}' +
+
+      '.adventure-battle-attack.is-critical{' +
+      'margin-left:-10px;' +
+      'padding-left:8px;' +
+      'border-left:2px solid #ff7a18;' +
+      '}' +
+
+      '.adventure-battle-attack.is-critical b,' +
+      '.adventure-battle-attack.is-critical small{' +
+      'color:#ffb15d;' +
+      '}' +
+
+      '.adventure-battle-relic{display:inline-flex;align-items:center;gap:5px;margin:9px 0 0;padding:5px 7px;border:1px solid rgba(168,130,60,.48);border-radius:3px;background:rgba(168,130,60,.08);color:var(--gold,#A8823C);font:11px/1.3 var(--font-body,-apple-system);cursor:pointer}' +
+      '.adventure-battle-relic:focus-visible{outline:2px solid currentColor;outline-offset:2px}' +
+      '.adventure-reward-relic{margin:9px 0 0;color:var(--gold,#A8823C);font-size:11px}' +
+
+      '.adventure-battle-outcome{' +
+      'display:block;' +
+      'margin-top:4px;' +
+      'color:var(--muted,#8A8378);' +
+      'font-size:10px;' +
+      'text-transform:capitalize;' +
+      '}' +
+
+      '.adventure-battle-legacy{' +
+      'margin:9px 0;' +
+      'color:var(--muted,#8A8378);' +
+      'font-size:12px;' +
+      'line-height:1.4;' +
       '}';
 
     document.head.appendChild(style);

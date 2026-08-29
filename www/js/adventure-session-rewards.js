@@ -7,6 +7,52 @@
     });
   }
 
+  function attackLogHtml(encounter) {
+    var attacks = Array.isArray(encounter.attacks) ? encounter.attacks : [];
+
+    if (!attacks.length) {
+      return '<p class="session-reward-attack legacy">' +
+        escape(encounter.message || 'No detailed battle record is available.') +
+        '</p>';
+    }
+
+    return (
+      '<div class="session-reward-attack-log">' +
+      attacks.map(function (attack) {
+        var actor = attack.actor || 'player';
+        var actorLabel = actor === 'player'
+          ? (attack.className || 'Reader')
+          : actor === 'enemy'
+            ? (encounter.enemyName || 'Enemy')
+            : 'Outcome';
+
+        var meta = '';
+
+        if (actor === 'player') {
+          meta =
+            '<small>' +
+            (attack.critical ? 'Critical · ' : '') +
+            (Number(attack.damage) || 0) + ' DMG' +
+            '</small>';
+        } else if (actor === 'outcome') {
+          meta = '<small>Encounter ' + escape(encounter.outcome || 'complete') + '</small>';
+        }
+
+        return (
+          '<p class="session-reward-attack ' +
+          'is-' + actor +
+          (attack.critical ? ' is-critical' : '') +
+          '">' +
+          '<b>' + escape(actorLabel) + '</b>' +
+          '<span>' + escape(attack.message || '') + '</span>' +
+          meta +
+          '</p>'
+        );
+      }).join('') +
+      '</div>'
+    );
+  }
+
   function battleHtml(item) {
     var log = item && item.battleLog;
     var encounters = log && Array.isArray(log.encounters)
@@ -30,16 +76,20 @@
         var number = Number(encounter.index) || 1;
         var duration = Number(encounter.duration) || 0;
         var damage = Number(encounter.damage) || 0;
+        var enemyName = encounter.enemyName || 'Unknown foe';
+        var relic = encounter.relic || 'None';
+        var outcome = encounter.outcome || '';
 
         return (
           '<details class="session-reward-encounter' +
-          (encounter.critical ? ' is-critical' : '') + '">' +
+          (encounter.critical ? ' is-critical' : '') +
+          '">' +
 
           '<summary class="session-reward-encounter-summary">' +
           '<span class="session-reward-encounter-number">' +
           'Encounter ' + number +
           '</span>' +
-          '<b>' + escape(encounter.enemyName || 'Unknown foe') + '</b>' +
+          '<b>' + escape(enemyName) + '</b>' +
           '<small>' +
           duration + ' min · ' + damage + ' DMG' +
           (encounter.critical ? ' · Critical' : '') +
@@ -47,13 +97,24 @@
           '</summary>' +
 
           '<div class="session-reward-encounter-detail">' +
-          '<span>' +
+          '<span class="session-reward-encounter-region">' +
           escape(encounter.region || 'The Reading Realm') +
           '</span>' +
-          '<p>' + escape(encounter.message || '') + '</p>' +
-          '<small>Relic: ' +
-          escape(encounter.relic || 'None') +
-          '</small>' +
+
+          attackLogHtml(encounter) +
+
+          '<p class="session-reward-relic">' +
+          'Relic recovered: ' + escape(relic) +
+          '<button type="button" class="session-reward-relic-tooltip adventure-relic-tooltip" ' +
+          'data-tooltip="Relics are encounter traces recovered while reading. They are collectible for now; a future Bazaar update may let you sell, trade, or refine them." ' +
+          'aria-label="About relics" aria-expanded="false">&#9432;</button>' +
+          '</p>' +
+
+          (outcome
+            ? '<small class="session-reward-outcome">Outcome: ' +
+            escape(outcome) +
+            '</small>'
+            : '') +
           '</div>' +
 
           '</details>'
@@ -135,7 +196,8 @@
     overlay.id = 'sessionRewardOverlay';
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
-    overlay.innerHTML = '<div class="session-reward-card"><span class="session-reward-kicker">' + kicker + '</span><h2>' + title + '</h2><p class="session-reward-summary">' + escape(summary) + '</p><div class="session-reward-totals">' + (xp ? '<b>+' + xp + ' XP</b>' : '') + '<b>+' + gold + ' gold</b></div>' + bossLoot + battleLogs + '<div class="session-reward-bonuses"></div>' + '<div class="session-reward-bonuses"></div><button type="button">Continue Adventure</button></div>';
+    overlay.innerHTML = '<div class="session-reward-card"><span class="session-reward-kicker">' + kicker + '</span><h2>' + title + '</h2><p class="session-reward-summary">' + escape(summary) + '</p><div class="session-reward-totals">' + (xp ? '<b>+' + xp + ' XP</b>' : '') + '<b>+' + gold + ' gold</b></div>' + bossLoot + battleLogs + '<div class="session-reward-bonuses"></div>' +
+      '<button type="button" class="session-reward-continue">Continue Adventure</button></div>';
 
     var bonusBox = overlay.querySelector('.session-reward-bonuses');
     if (bonuses.length) {
@@ -186,29 +248,36 @@
       bonusBox.innerHTML = '<p><span>No class or Bazaar bonus triggered this time.</span></p>';
     }
 
-    overlay.querySelector('button').onclick = function () { overlay.remove(); };
-    document.body.appendChild(overlay);
-    fireworks(overlay);
-  }
+    var continueButton = overlay.querySelector('.session-reward-continue');
+
+    continueButton.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      overlay.remove();
+    });
+  
+  document.body.appendChild(overlay);
+  fireworks(overlay);
+}
 
   function capture(method) {
-    var original = window.BookShelfRewards[method];
-    window.BookShelfRewards[method] = function () {
-      var result = original.apply(window.BookShelfRewards, arguments);
-      if (result && result.ok && result.transaction) claimed.push(result.transaction);
-      return result;
-    };
-  }
+  var original = window.BookShelfRewards[method];
+  window.BookShelfRewards[method] = function () {
+    var result = original.apply(window.BookShelfRewards, arguments);
+    if (result && result.ok && result.transaction) claimed.push(result.transaction);
+    return result;
+  };
+}
 
-  function install() {
-    if (!window.BookShelfRewards || window.BookShelfRewards.__sessionRewardPopup) return;
-    capture('claimSession');
-    capture('claimCompletion');
-    window.BookShelfRewards.__sessionRewardPopup = true;
+function install() {
+  if (!window.BookShelfRewards || window.BookShelfRewards.__sessionRewardPopup) return;
+  capture('claimSession');
+  capture('claimCompletion');
+  window.BookShelfRewards.__sessionRewardPopup = true;
 
-    var style = document.createElement('style');
+  var style = document.createElement('style');
 
-style.textContent = `
+  style.textContent = `
   #sessionRewardOverlay {
     position: fixed;
     z-index: 1200;
@@ -315,7 +384,7 @@ style.textContent = `
     color: #f5d58f;
   }
 
-  .session-reward-card button {
+  .session-reward-card .session-reward-continue {
     width: 100%;
     margin-top: 16px;
     padding: 11px;
@@ -509,16 +578,135 @@ style.textContent = `
   .session-reward-encounter-summary > small {
     color: #ff7a18;
   }
-`;
 
-document.head.appendChild(style);
-    window.addEventListener('bookshelf-adventure-claim-complete', function () {
-      var items = claimed.slice();
-      claimed = [];
-      show(items);
-    });
+    .session-reward-encounter-region {
+    display: block;
+    color: #d4a64f;
+    font-size: 11px;
+    letter-spacing: .04em;
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install);
-  else install();
-})();
+  .session-reward-attack-log {
+    margin: 10px 0 8px;
+    padding-left: 10px;
+    border-left: 1px solid rgba(212, 166, 79, .28);
+  }
+
+  .session-reward-attack {
+    margin: 0;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(212, 166, 79, .13);
+  }
+
+  .session-reward-attack:last-child {
+    border-bottom: 0;
+  }
+
+  .session-reward-attack b,
+  .session-reward-attack span,
+  .session-reward-attack small {
+    display: block;
+  }
+
+  .session-reward-attack b {
+    color: #f5d58f;
+    font-size: 11px;
+  }
+
+  .session-reward-attack.is-enemy b {
+    color: #b8b0a3;
+  }
+
+  .session-reward-attack.is-outcome b {
+    color: #d4a64f;
+  }
+
+  .session-reward-attack span {
+    margin-top: 3px;
+    color: #d7d0c4;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .session-reward-attack small {
+    margin-top: 4px;
+    color: #d4a64f;
+    font-size: 10px;
+  }
+
+  .session-reward-attack.is-critical {
+    margin-left: -10px;
+    padding-left: 8px;
+    border-left: 2px solid #ff7a18;
+  }
+
+  .session-reward-attack.is-critical b,
+  .session-reward-attack.is-critical small {
+    color: #ffb15d;
+  }
+
+  .session-reward-attack.legacy {
+    margin: 8px 0;
+    color: #d7d0c4;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .session-reward-relic {
+  margin: 9px 0 0;
+  color: #d4a64f;
+  font-size: 11px;
+}
+
+ .session-reward-relic .session-reward-relic-tooltip {
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   width: 18px;
+   height: 18px;
+   margin: 0 0 0 5px;
+   padding: 0;
+   border: 1px solid currentColor;
+   border-radius: 50%;
+   background: transparent;
+   color: inherit;
+   font: 700 12px/1 sans-serif;
+   vertical-align: middle;
+   cursor: pointer;
+}
+
+ .session-reward-relic .session-reward-relic-tooltip:focus-visible {
+   outline: 2px solid currentColor;
+   outline-offset: 2px;
+}
+
+  .session-reward-card .session-reward-relic-tooltip {
+   width: 18px;
+   margin-top: 0;
+   padding: 0;
+   border: 1px solid currentColor;
+   border-radius: 50%;
+   background: transparent;
+   color: inherit;
+   font: 700 12px/1 sans-serif;
+}
+
+  .session-reward-outcome {
+    display: block;
+    margin-top: 3px;
+    color: #b8b0a3;
+    text-transform: capitalize;
+  }
+`;
+
+  document.head.appendChild(style);
+  window.addEventListener('bookshelf-adventure-claim-complete', function () {
+    var items = claimed.slice();
+    claimed = [];
+    show(items);
+  });
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install);
+else install();
+}) ();

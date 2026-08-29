@@ -1585,7 +1585,224 @@
     };
   }
 
-    function createBattleLog(session, reward) {
+  var CLASS_ATTACK_TEMPLATES = {
+    Scholar: [
+      'You analyzed {enemy}’s pattern and dealt {damage} damage.',
+      'You decoded a hidden weakness in {enemy} for {damage} damage.',
+      'You annotated a flaw in {enemy}’s ward for {damage} damage.',
+      'You deciphered an old passage that struck {enemy} for {damage} damage.',
+      'You disproved {enemy}’s argument, dealing {damage} damage.',
+      'You interpreted a forgotten clue and wounded {enemy} for {damage} damage.',
+      'You cross-referenced the archives and exposed {enemy} for {damage} damage.',
+      'You revised the battlefield’s logic, dealing {damage} damage to {enemy}.',
+      'You exposed a contradiction in {enemy} for {damage} damage.',
+      'You reasoned through the danger and struck {enemy} for {damage} damage.',
+      'You translated a lost warning into {damage} damage against {enemy}.',
+      'You examined the margins and found {enemy}’s weak point for {damage} damage.',
+      'You catalogued {enemy}’s tells and dealt {damage} damage.',
+      'You quoted a binding passage, striking {enemy} for {damage} damage.',
+      'You unraveled {enemy}’s defense for {damage} damage.'
+    ],
+
+    Warrior: [
+      'You struck {enemy} with a decisive blow for {damage} damage.',
+      'You braced against the pressure and hit {enemy} for {damage} damage.',
+      'You charged through {enemy}’s guard for {damage} damage.',
+      'You shattered {enemy}’s defense for {damage} damage.',
+      'You drove {enemy} back with {damage} damage.',
+      'You guarded your ground, then countered {enemy} for {damage} damage.',
+      'You pressed the attack and dealt {damage} damage to {enemy}.',
+      'You cleaved through the opening for {damage} damage.',
+      'You endured the blow and answered with {damage} damage.',
+      'You hammered {enemy}’s ward for {damage} damage.',
+      'You rallied and struck {enemy} for {damage} damage.',
+      'You blocked the assault and punished {enemy} for {damage} damage.',
+      'You pushed {enemy} off balance for {damage} damage.',
+      'You confronted {enemy} head-on for {damage} damage.',
+      'You overpowered {enemy} with a {damage}-damage strike.'
+    ],
+
+    Mage: [
+      'You invoked a rune that hit {enemy} for {damage} damage.',
+      'You conjured a burst of force against {enemy} for {damage} damage.',
+      'You channeled arcane energy into {enemy} for {damage} damage.',
+      'You raised a ward, then reflected {damage} damage onto {enemy}.',
+      'You transmuted a loose page into {damage} damage against {enemy}.',
+      'You summoned a spectral force that struck {enemy} for {damage} damage.',
+      'You illuminated {enemy}’s weakness for {damage} damage.',
+      'You bound {enemy} in a sigil that dealt {damage} damage.',
+      'You fractured {enemy}’s spellwork for {damage} damage.',
+      'You cast a precise spell for {damage} damage against {enemy}.',
+      'You etched a glowing mark that burned {enemy} for {damage} damage.',
+      'You wove a counterspell that struck {enemy} for {damage} damage.',
+      'You unleashed a surge of inkfire for {damage} damage.',
+      'You banished a shadow from {enemy}, dealing {damage} damage.',
+      'You awakened an old charm that struck {enemy} for {damage} damage.'
+    ],
+
+    Rogue: [
+      'You slipped through {enemy}’s guard for {damage} damage.',
+      'You feinted, then struck {enemy} for {damage} damage.',
+      'You sabotaged {enemy}’s defense for {damage} damage.',
+      'You vanished into the shadows and hit {enemy} for {damage} damage.',
+      'You darted through an opening for {damage} damage.',
+      'You ambushed {enemy} for {damage} damage.',
+      'You disarmed {enemy}’s trap and dealt {damage} damage.',
+      'You evaded the attack and answered with {damage} damage.',
+      'You shadowed {enemy}’s movement, then struck for {damage} damage.',
+      'You flanked {enemy} for {damage} damage.',
+      'You intercepted the opening and dealt {damage} damage.',
+      'You picked apart {enemy}’s defenses for {damage} damage.',
+      'You outpaced {enemy} and struck for {damage} damage.',
+      'You misdirected {enemy}, landing {damage} damage.',
+      'You infiltrated its guard for {damage} damage.'
+    ],
+
+    Ranger: [
+      'You tracked {enemy} through {region} and dealt {damage} damage.',
+      'You marked {enemy}’s weak point for {damage} damage.',
+      'You followed the trail and struck {enemy} for {damage} damage.',
+      'You guided your attack into {enemy} for {damage} damage.',
+      'You aimed carefully and dealt {damage} damage.',
+      'You stalked {enemy} through the terrain for {damage} damage.',
+      'You mapped the battlefield and hit {enemy} for {damage} damage.',
+      'You snared {enemy}’s movement for {damage} damage.',
+      'You scouted an opening and dealt {damage} damage.',
+      'You struck from range for {damage} damage against {enemy}.',
+      'You surveyed {region} and found {enemy}’s weakness for {damage} damage.',
+      'You navigated the hazards and struck for {damage} damage.',
+      'You outmaneuvered {enemy} for {damage} damage.',
+      'You pursued {enemy} and landed {damage} damage.',
+      'You pinpointed the opening for {damage} damage.'
+    ],
+
+    Bard: [
+      'You composed a sharp refrain that struck {enemy} for {damage} damage.',
+      'Your words resonated through {region}, dealing {damage} damage.',
+      'You harmonized with the realm and hit {enemy} for {damage} damage.',
+      'You echoed {enemy}’s threat back for {damage} damage.',
+      'You rallied your courage and struck for {damage} damage.',
+      'You reframed the moment, dealing {damage} damage to {enemy}.',
+      'You inspired a bold counterattack for {damage} damage.',
+      'You answered {enemy} with a cutting verse for {damage} damage.',
+      'You sang a defiant note that dealt {damage} damage.',
+      'You recited a legend that struck {enemy} for {damage} damage.',
+      'You conducted the echoes of {region} into {damage} damage.',
+      'You improvised a verse that wounded {enemy} for {damage} damage.',
+      'You attuned to the room’s rhythm for {damage} damage.',
+      'You uplifted your resolve and dealt {damage} damage.',
+      'Your final crescendo struck {enemy} for {damage} damage.'
+    ]
+  };
+
+  var DEFAULT_ATTACK_TEMPLATES = [
+    'You struck {enemy} for {damage} damage.',
+    'You found an opening and dealt {damage} damage to {enemy}.',
+    'You pressed forward and hit {enemy} for {damage} damage.',
+    'You turned the encounter’s momentum and dealt {damage} damage.'
+  ];
+
+  var CRITICAL_TEMPLATES = {
+    Scholar: [
+      'Critical! You uncovered the decisive contradiction and dealt {damage} damage.',
+      'Critical! A forbidden citation shattered {enemy}’s defense for {damage} damage.',
+      'Critical! You exposed the final flaw in {enemy} for {damage} damage.'
+    ],
+
+    Warrior: [
+      'Critical! You broke through {enemy}’s guard for {damage} damage.',
+      'Critical! A powerful strike drove {enemy} back for {damage} damage.',
+      'Critical! You shattered {enemy}’s defense with {damage} damage.'
+    ],
+
+    Mage: [
+      'Critical! A surge of inkfire struck {enemy} for {damage} damage.',
+      'Critical! Your counterspell fractured {enemy} for {damage} damage.',
+      'Critical! A blazing rune dealt {damage} damage to {enemy}.'
+    ],
+
+    Rogue: [
+      'Critical! You found the hidden seam in {enemy}’s defense and dealt {damage} damage.',
+      'Critical! A flawless feint left {enemy} exposed for {damage} damage.',
+      'Critical! You struck from the blind side for {damage} damage.'
+    ],
+
+    Ranger: [
+      'Critical! You pinpointed {enemy}’s weak point for {damage} damage.',
+      'Critical! Your careful aim struck {enemy} for {damage} damage.',
+      'Critical! You turned the terrain against {enemy} for {damage} damage.'
+    ],
+
+    Bard: [
+      'Critical! Your crescendo shattered {enemy}’s rhythm for {damage} damage.',
+      'Critical! A legendary refrain struck {enemy} for {damage} damage.',
+      'Critical! Your verse echoed through {region} for {damage} damage.'
+    ]
+  };
+
+  var DEFAULT_CRITICAL_TEMPLATES = [
+    'Critical! You found a decisive opening and dealt {damage} damage to {enemy}.',
+    'Critical! Your strike hit {enemy} for {damage} damage.',
+    'Critical! You turned the encounter in your favor for {damage} damage.'
+  ];
+
+  var COUNTERATTACKS = [
+    '{enemy} hurled a storm of loose pages, but you kept your focus.',
+    '{enemy} answered with a cutting footnote that nearly broke your concentration.',
+    '{enemy} shifted through the shadows of {region}, searching for an opening.',
+    '{enemy} unleashed a burst of ink, but your resolve held.',
+    '{enemy} pressed forward with a forgotten argument.',
+    '{enemy} rattled the shelves and forced you to regroup.',
+    '{enemy} tried to bury you in unfinished chapters.',
+    '{enemy} whispered a distraction, but you returned to the page.',
+    '{enemy} twisted the path through {region}, slowing your advance.',
+    '{enemy} answered with a furious counterspell.'
+  ];
+
+  function fillEncounterTemplate(template, values) {
+    return String(template || '').replace(/\{(enemy|damage|region)\}/g, function (_, key) {
+      return String(values[key] == null ? '' : values[key]);
+    });
+  }
+
+  function classForBattleLog() {
+    return String(read('bookshelf-adventure-v1', '{}').className || '');
+  }
+
+  function battleStrength() {
+    return Math.max(
+      10,
+      Number((read(GAME_KEY, '{}').stats || {}).str) || 10
+    );
+  }
+
+  function battleLuck() {
+    return Math.max(
+      10,
+      Number((read(GAME_KEY, '{}').stats || {}).lck) || 10
+    );
+  }
+
+  function battleCritChance(luck) {
+    return Math.min(25, 5 + luck / 20);
+  }
+
+  function attackDamage(strength, seed, critical) {
+    var variation = hash(seed + '|damage') % 6;
+    var damage = 4 + Math.floor(strength / 5) + variation;
+
+    return critical ? Math.floor(damage * 1.5) : damage;
+  }
+
+  function battleOutcome(seed) {
+    var value = hash(seed + '|outcome') % 100;
+
+    if (value < 20) return 'defeated';
+    if (value < 75) return 'retreated';
+    return 'survives';
+  }
+
+  function createBattleLog(session, reward) {
     var book = bookForSession(session);
     var sessionId = String(
       (session || {}).id ||
@@ -1601,6 +1818,10 @@
 
     var set = theme(book);
     var durations = encounterDurations(minutes, sessionId);
+    var className = classForBattleLog();
+    var strength = battleStrength();
+    var luck = battleLuck();
+    var critChance = battleCritChance(luck);
     var encounters = [];
 
     for (var index = 0; index < durations.length; index += 1) {
@@ -1612,33 +1833,103 @@
       var region = pick(set.regions, seed, 3);
       var enemyTitle = pick(set.titles, seed, 4);
       var relic = pick(set.relics, seed, 5);
+      var enemyName = adjective + ' ' + form;
 
-      var critical = hash(seed + '|critical') % 100 < 15;
-      var baseDamage = Math.max(1, duration);
-      var damage = critical
-        ? Math.floor(baseDamage * 1.5)
-        : baseDamage;
+      var rounds = duration <= 4
+        ? 2
+        : duration <= 7
+          ? 3
+          : duration <= 10
+            ? 4
+            : 5;
+
+      var attacks = [];
+      var totalDamage = 0;
+      var encounterCritical = false;
+
+      for (var round = 0; round < rounds; round += 1) {
+        var attackSeed = seed + '|round|' + round;
+        var critical = (hash(attackSeed + '|critical') % 10000) <
+          Math.round(critChance * 100);
+
+        var damage = attackDamage(strength, attackSeed, critical);
+        var templates = critical
+          ? (CRITICAL_TEMPLATES[className] || DEFAULT_CRITICAL_TEMPLATES)
+          : (CLASS_ATTACK_TEMPLATES[className] || DEFAULT_ATTACK_TEMPLATES);
+
+        var template = pick(templates, attackSeed, critical ? 7 : 6);
+        var playerMessage = fillEncounterTemplate(template, {
+          enemy: enemyName,
+          damage: damage,
+          region: region
+        });
+
+        attacks.push({
+          actor: 'player',
+          round: round + 1,
+          className: className || 'Reader',
+          damage: damage,
+          critical: critical,
+          message: playerMessage
+        });
+
+        totalDamage += damage;
+        encounterCritical = encounterCritical || critical;
+
+        if (round < rounds - 1) {
+          var counterTemplate = pick(COUNTERATTACKS, attackSeed, 8);
+
+          attacks.push({
+            actor: 'enemy',
+            round: round + 1,
+            damage: 0,
+            critical: false,
+            message: fillEncounterTemplate(counterTemplate, {
+              enemy: enemyName,
+              damage: '',
+              region: region
+            })
+          });
+        }
+      }
+
+      var outcome = battleOutcome(seed);
+      var outcomeMessage = outcome === 'defeated'
+        ? enemyName + ' was defeated and left ' + relic + ' behind.'
+        : outcome === 'retreated'
+          ? enemyName + ' retreated into ' + region + '.'
+          : enemyName + ' survived the exchange and vanished deeper into ' + region + '.';
+
+      attacks.push({
+        actor: 'outcome',
+        round: rounds,
+        damage: 0,
+        critical: false,
+        message: outcomeMessage
+      });
 
       encounters.push({
         index: index + 1,
         duration: duration,
         region: region,
         enemyTitle: enemyTitle,
-        enemyName: adjective + ' ' + form,
+        enemyName: enemyName,
+        className: className || 'Reader',
         relic: relic,
-        baseDamage: baseDamage,
-        damage: damage,
-        critical: critical,
-        message: critical
-          ? 'Critical hit! You struck the ' + adjective + ' ' + form +
-            ' for ' + damage + ' damage in ' + region + '.'
-          : 'You struck the ' + adjective + ' ' + form +
-            ' for ' + damage + ' damage in ' + region + '.'
+        damage: totalDamage,
+        critical: encounterCritical,
+        outcome: outcome,
+        attacks: attacks,
+
+        message: attacks
+          .filter(function (attack) { return attack.actor === 'player'; })
+          .map(function (attack) { return attack.message; })
+          .join(' ')
       });
     }
 
     return {
-      version: 2,
+      version: 3,
       sessionId: sessionId,
       bookId: book.id || '',
       bookTitle: book.title || (session || {}).bookTitle || 'Reading session',
