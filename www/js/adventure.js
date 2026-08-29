@@ -16,7 +16,10 @@
 
   function totalMinutes(log) {
     return log.reduce(function (total, entry) {
-      return total + Math.max(0, Math.floor(Number((entry || {}).minutes) || 0));
+      return total + Math.max(
+        0,
+        Math.floor(Number((entry || {}).minutes) || 0)
+      );
     }, 0);
   }
 
@@ -28,7 +31,7 @@
       '" aria-label="' +
       (label || 'More information') +
       '" aria-expanded="false">ⓘ</button>' +
-    '</span>';
+      '</span>';
   }
 
   function render() {
@@ -54,47 +57,28 @@
       ? window.BookShelfAchievements.update()
       : null;
 
-    var quest = achievementData && achievementData.quest;
-    var questState = achievementData && achievementData.state.weeklyQuest;
-    var streak = achievementData && achievementData.state.streak;
+    var streak = achievementData &&
+      achievementData.state &&
+      achievementData.state.streak
+      ? achievementData.state.streak
+      : {
+        current: 0,
+        longest: 0
+      };
 
-    var questHtml = quest
-      ? '<section class="adventure-card adventure-weekly-quest">' +
-          '<span class="adventure-label">' +
-            tooltip(
-              'Weekly Quest',
-              'A time-limited reading goal. Complete its requirement before claiming its reward.',
-              'About Weekly Quest'
-            ) +
-          '</span>' +
-          '<h2>' + quest.title + '</h2>' +
-          '<p class="adventure-muted">' + quest.detail + '</p>' +
-          '<div class="adventure-quest-progress"><i style="width:' +
-            Math.min(100, Math.round(questState.progress / quest.target * 100)) +
-          '%"></i></div>' +
-          '<p class="adventure-quest-count">' +
-            questState.progress +
-            ' / ' +
-            quest.target +
-          '</p>' +
-          '<button type="button" data-claim-quest data-tooltip="Claims this completed weekly-quest reward once. The button becomes available only when the goal is complete." aria-label="About claiming the weekly quest reward" aria-expanded="false" ' +
-            (questState.claimedAt || questState.progress < quest.target ? 'disabled' : '') +
-          '>' +
-            (questState.claimedAt
-              ? 'Quest Claimed'
-              : questState.progress >= quest.target
-                ? 'Claim Quest Reward'
-                : 'Quest in Progress') +
-          '</button>' +
-        '</section>'
-      : '';
+    /*
+      Weekly quest markup is intentionally disabled in this recovery version.
+      The multiple-quest backend remains installed; this prevents a UI error
+      from blocking the entire Adventure page.
+    */
+    var questHtml = '';
 
     page.className = 'adventure-page';
 
     page.innerHTML =
       '<header class="adventure-header">' +
-  '<div><h1>Adventure</h1><p>Read minutes. Become legendary.</p></div>' +
-'</header>' +
+        '<div><h1>Adventure</h1><p>Read minutes. Become legendary.</p></div>' +
+      '</header>' +
 
       '<main class="adventure-content">' +
         '<section class="adventure-card">' +
@@ -105,7 +89,9 @@
               'About Current Reading Quest'
             ) +
           '</span>' +
-          '<h2>' + (reading ? reading.title : 'Choose your next book') + '</h2>' +
+          '<h2>' +
+            (reading ? reading.title : 'Choose your next book') +
+          '</h2>' +
           '<p class="adventure-muted">' +
             (reading
               ? 'Log time to build momentum against this book’s boss.'
@@ -155,7 +141,7 @@
                 'About Reading Streak'
               ) +
             '</span>' +
-            '<h2>' + (streak ? streak.current : 0) + '</h2>' +
+            '<h2>' + (Number(streak.current) || 0) + '</h2>' +
             '<p class="adventure-muted">current days</p>' +
           '</section>' +
 
@@ -167,26 +153,13 @@
                 'About Longest Streak'
               ) +
             '</span>' +
-            '<h2>' + (streak ? streak.longest : 0) + '</h2>' +
+            '<h2>' + (Number(streak.longest) || 0) + '</h2>' +
             '<p class="adventure-muted">days achieved</p>' +
           '</section>' +
         '</section>' +
 
         questHtml +
       '</main>';
-
-    var claim = page.querySelector('[data-claim-quest]');
-
-    if (claim) {
-      claim.onclick = function () {
-        var result = window.BookShelfAchievements.claimQuest();
-
-        if (result.ok) {
-          window.dispatchEvent(new Event('bookshelf-adventure-quest-claimed'));
-          render();
-        }
-      };
-    }
   }
 
   function install() {
@@ -208,7 +181,8 @@
       '#navPlaceholder.adventure-page{display:flex;flex-direction:column;padding:0;overflow:hidden;background:var(--bg,#14181C)}' +
       '.adventure-header{display:flex;align-items:center;justify-content:space-between;padding:20px;border-bottom:1px solid rgba(168,130,60,.24)}' +
       '.adventure-header h1{margin:0;font:27px Georgia,serif}' +
-      '.adventure-header p{margin:4px 0 0;color:var(--muted,#8A8378);font-size:12px}' + '.adventure-content{flex:1;overflow:auto;padding:16px 20px 130px}' +
+      '.adventure-header p{margin:4px 0 0;color:var(--muted,#8A8378);font-size:12px}' +
+      '.adventure-content{flex:1;overflow:auto;padding:16px 20px 130px}' +
       '.adventure-card{margin:0 0 13px;padding:16px;background:var(--bg-elevated,#1B2129);border:1px solid rgba(168,130,60,.28);border-radius:4px}' +
       '.adventure-card h2{margin:5px 0;font:21px Georgia,serif}' +
       '.adventure-label{color:var(--gold,#A8823C);font-size:11px;letter-spacing:.08em;text-transform:uppercase}' +
@@ -217,12 +191,6 @@
       '.adventure-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}' +
       '.adventure-grid .adventure-card{min-width:0}' +
       '.adventure-grid h2{font-size:26px}' +
-      '.adventure-weekly-quest button{width:100%;margin-top:10px;padding:10px;border:1px solid rgba(168,130,60,.48);border-radius:3px;background:transparent;color:var(--paper-light,#F6F1E4)}' +
-      '.adventure-weekly-quest button:not(:disabled){background:var(--gold,#A8823C);border-color:var(--gold,#A8823C)}' +
-      '.adventure-weekly-quest button:disabled{opacity:.5}' +
-      '.adventure-quest-progress{height:7px;overflow:hidden;margin-top:13px;border-radius:7px;background:rgba(246,241,228,.13)}' +
-      '.adventure-quest-progress i{display:block;height:100%;background:var(--gold,#A8823C)}' +
-      '.adventure-quest-count{margin:6px 0 0;color:var(--muted,#8A8378);font-size:11px}' +
       '.hidden{display:none!important}';
 
     document.head.appendChild(style);

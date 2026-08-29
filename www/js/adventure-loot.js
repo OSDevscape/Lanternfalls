@@ -91,12 +91,146 @@
   }
 
   function data() {
-    var value = read(LOOT_KEY, '{"items":[],"events":[]}');
+    var value = read(
+      LOOT_KEY,
+      '{"items":[],"events":[],"relics":{},"equippedItemId":""}'
+    );
 
-    value.items = value.items || [];
-    value.events = value.events || [];
+    value.items = Array.isArray(value.items) ? value.items : [];
+    value.events = Array.isArray(value.events) ? value.events : [];
+
+    value.relics = value.relics &&
+      typeof value.relics === 'object' &&
+      !Array.isArray(value.relics)
+      ? value.relics
+      : {};
+
+    value.equippedItemId = String(value.equippedItemId || '');
+
+    value.items.forEach(function (item) {
+      if (!item) return;
+
+      item.instanceId = String(
+        item.instanceId ||
+        item.id ||
+        ('loot-' + String(item.bookId || item.name || 'unknown'))
+      );
+    });
 
     return value;
+  }
+
+  function saveEquipment(value) {
+    write(LOOT_KEY, value);
+
+    window.dispatchEvent(
+      new Event('bookshelf-adventure-equipment-changed')
+    );
+  }
+
+  function artifactEffect(item) {
+    var name = String((item || {}).name || '');
+
+    var effects = {
+      'Inkstone Charm': {
+        label: '+2 XP on every claimed reading session',
+        type: 'flat-session-xp',
+        value: 2
+      },
+      'Paperbound Token': {
+        label: '+1 gold on every claimed reading session',
+        type: 'flat-session-gold',
+        value: 1
+      },
+      'Reader’s Candle': {
+        label: '+1 XP and +1 gold on every claimed reading session',
+        type: 'balanced-session',
+        value: 1
+      },
+      'Gilded Bookmark': {
+        label: '+5% XP on claimed reading sessions',
+        type: 'percent-session-xp',
+        value: 5
+      },
+      'Lantern of Focus': {
+        label: '+5% gold on claimed reading sessions',
+        type: 'percent-session-gold',
+        value: 5
+      },
+      'Wanderer’s Satchel': {
+        label: '+1 gold on claimed sessions of 30+ minutes',
+        type: 'long-session-gold',
+        value: 1
+      },
+      'Moonlit Quill': {
+        label: '+10% XP on claimed reading sessions',
+        type: 'percent-session-xp',
+        value: 10
+      },
+      'Archivist’s Key': {
+        label: '+10% gold on claimed reading sessions',
+        type: 'percent-session-gold',
+        value: 10
+      },
+      'Chronicle Compass': {
+        label: '+5% critical-hit chance in reading encounters',
+        type: 'critical-chance',
+        value: 5
+      },
+      'Runeshelf Reliquary': {
+        label: '+15% XP on claimed reading sessions and +1 gold',
+        type: 'epic-xp-gold',
+        value: 15
+      },
+      'Starlit Codex': {
+        label: '+15% gold on claimed sessions',
+        type: 'percent-session-gold',
+        value: 15
+      },
+      'Dragonhide Journal': {
+        label: '+10% XP and +10% gold on claimed sessions',
+        type: 'percent-session-balanced',
+        value: 10
+      },
+      'Crown of the First Library': {
+        label: '+20% XP on claimed reading sessions',
+        type: 'percent-session-xp',
+        value: 20
+      },
+      'Everscript Grimoire': {
+        label: '+20% gold on claimed sessions',
+        type: 'percent-session-gold',
+        value: 20
+      },
+      'The Infinite Bookmark': {
+        label: '+15% XP and +15% gold on claimed sessions',
+        type: 'percent-session-balanced',
+        value: 15
+      }
+    };
+
+    return effects[name] || {
+      label: 'A permanent trophy from a completed book',
+      type: 'none',
+      value: 0
+    };
+  }
+
+  function equippedItem(value) {
+    var equippedId = String((value || {}).equippedItemId || '');
+
+    if (!equippedId) {
+      return null;
+    }
+
+    return (value.items || []).filter(function (item) {
+      return String(item.instanceId || item.id) === equippedId;
+    })[0] || null;
+  }
+
+  function saveEquipment(value) {
+    write(LOOT_KEY, value);
+    window.dispatchEvent(new Event('bookshelf-adventure-equipment-changed'));
   }
 
   function updateLedgerLoot(transaction, drop) {
@@ -142,6 +276,7 @@
     })) {
       value.items.unshift({
         id: 'loot-' + book.id,
+        instanceId: 'loot-' + book.id,
         bookId: book.id,
         bookTitle: book.title || 'Untitled',
         rarity: drop.rarity,
@@ -198,6 +333,15 @@
 
     page.dataset.lootRendering = 'true';
 
+    var oldInventoryCard = content.querySelector(
+      'details.adventure-inventory-card'
+    );
+
+    var inventoryWasOpen = !!(
+      oldInventoryCard &&
+      oldInventoryCard.open
+    );
+
     Array.prototype.forEach.call(
       content.querySelectorAll('.adventure-trophies-card,.adventure-inventory-card'),
       function (card) {
@@ -252,7 +396,9 @@
     }
 
     var inventory = document.createElement('section');
-    inventory.className = 'adventure-card adventure-inventory-card';
+    inventory.className =
+      'adventure-card adventure-inventory-card' +
+      (inventoryWasOpen ? ' adventure-inventory-restore-open' : '');
     inventory.innerHTML =
       '<span class="adventure-label">Loot Inventory ' +
       tooltipButton(
@@ -282,7 +428,13 @@
           'adventure-loot-item rarity-' +
           String(item.rarity || 'common').toLowerCase();
 
+        var isEquipped = String(value.equippedItemId || '') ===
+          String(item.instanceId || item.id);
+
+        var effect = artifactEffect(item);
+
         row.innerHTML =
+          '<div class="adventure-loot-item-copy">' +
           '<b>' +
           item.name +
           '</b><span>' +
@@ -290,15 +442,61 @@
           enhanced +
           ' · Earned from ' +
           item.bookTitle +
-          '</span>';
+          '</span><small>' +
+          effect.label +
+          '</small></div>' +
+          '<button type="button" class="adventure-loot-equip" ' +
+          'data-equip-loot="' + (item.instanceId || item.id) + '">' +
+          (isEquipped ? 'Equipped' : 'Equip') +
+          '</button>';
 
         itemList.appendChild(row);
       });
 
       inventory.appendChild(itemList);
     }
+    itemList.querySelectorAll('[data-equip-loot]').forEach(function (button) {
+      button.onclick = function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        var selectedId = String(button.dataset.equipLoot || '');
+        var current = data();
+
+        current.equippedItemId =
+          String(current.equippedItemId || '') === selectedId
+            ? ''
+            : selectedId;
+
+        saveEquipment(current);
+
+        itemList.querySelectorAll('[data-equip-loot]').forEach(function (control) {
+          var selected = control.dataset.equipLoot === current.equippedItemId;
+
+          control.textContent = selected ? 'Equipped' : 'Equip';
+          control.classList.toggle('is-equipped', selected);
+          control.setAttribute(
+            'aria-pressed',
+            selected ? 'true' : 'false'
+          );
+        });
+      };
+    });
 
     content.append(trophies, inventory);
+
+    if (inventoryWasOpen) {
+      setTimeout(function () {
+        var restored = content.querySelector(
+          'details.adventure-inventory-card'
+        );
+
+        if (restored) {
+          restored.open = true;
+        }
+      }, 0);
+    }
+
     page.dataset.lootRendering = '';
   }
 
@@ -320,14 +518,24 @@
       '.adventure-trophy-item b{font:15px Georgia,serif;color:var(--gold,#A8823C)}' +
       '.adventure-trophy-item span{margin-top:3px;color:var(--muted,#8A8378);font-size:11px}' +
       '.adventure-trophy-item em{align-self:center;color:var(--gold,#A8823C);font-size:12px;font-style:normal;white-space:nowrap}' +
-      '.adventure-loot-item{padding:10px 0;border-bottom:1px solid rgba(168,130,60,.15)}' +
-      '.adventure-loot-item b,.adventure-loot-item span{display:block}' +
+      '.adventure-loot-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid rgba(168,130,60,.15)}' +
+      '.adventure-loot-item-copy{min-width:0;flex:1}' +
+      '.adventure-loot-item-copy small{display:block;margin-top:4px;color:var(--gold,#A8823C);font-size:10px;line-height:1.35}' +
+      '.adventure-loot-equip{flex:0 0 auto;padding:7px 8px;border:1px solid rgba(168,130,60,.55);border-radius:3px;background:transparent;color:var(--gold,#A8823C);font:11px var(--font-body,-apple-system);cursor:pointer}' +
+      '.adventure-loot-equip.is-equipped{border-color:var(--gold,#A8823C);background:rgba(168,130,60,.17);color:var(--paper-light,#F6F1E4)}' +
+      '.adventure-loot-equip:active{transform:translateY(1px)}' +
+      '.adventure-loot-equip:focus-visible{outline:2px solid var(--gold,#A8823C);outline-offset:2px}' +
+      '.adventure-loot-item b,.adventure-loot-item span,.adventure-loot-item small{display:block}' +
       '.adventure-loot-item b{font:15px Georgia,serif}' +
-      '.adventure-loot-item span{margin-top:3px;color:var(--muted,#8A8378);font-size:11px}' +
+      '.adventure-loot-item span{margin-top:3px;color:var(--muted,#8A8378);font-size:11px}' + '.adventure-loot-item{display:flex;align-items:center;justify-content:space-between;gap:10px}' +
+      '.adventure-loot-item-copy{min-width:0;flex:1}' +
+      '.adventure-loot-item-copy small{display:block;margin-top:4px;color:var(--gold,#A8823C);font-size:10px;line-height:1.35}' +
+      '.adventure-loot-equip{flex:0 0 auto;padding:7px 8px;border:1px solid rgba(168,130,60,.55);border-radius:3px;background:transparent;color:var(--gold,#A8823C);font:11px var(--font-body,-apple-system);cursor:pointer}' +
+      '.adventure-loot-equip:active{transform:translateY(1px)}' +
       '.rarity-uncommon b{color:#79bd8d}' +
       '.rarity-rare b{color:#74a8e7}' +
       '.rarity-epic b{color:#c28ad9}' +
-      '.rarity-legendary b,.rarity-mythic b{color:var(--gold,#A8823C)}';
+      '.rarity-legendary b{color:var(--gold,#A8823C)}' + '.rarity-mythic b{color:#e55353}';
 
     document.head.appendChild(style);
 

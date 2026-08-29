@@ -4,6 +4,176 @@
   var LOG_KEY = 'bookshelf-reading-log-v1';
   var LOOT_KEY = 'bookshelf-adventure-loot-v1';
 
+  function relicInventory() {
+    var loot = read(LOOT_KEY, '{"relics":{}}');
+
+    if (!loot || typeof loot !== 'object') {
+      loot = {};
+    }
+
+    if (!loot.relics || typeof loot.relics !== 'object' || Array.isArray(loot.relics)) {
+      loot.relics = {};
+    }
+
+    return loot;
+  }
+
+  function relicGenre(genre) {
+    var value = String(genre || '').toLowerCase();
+
+    if (
+      value.indexOf('fantasy') !== -1 ||
+      value.indexOf('myth') !== -1 ||
+      value.indexOf('fairy') !== -1 ||
+      value.indexOf('magic') !== -1 ||
+      value.indexOf('adventure') !== -1
+    ) {
+      return { id: 'fantasy', label: 'Fantasy' };
+    }
+
+    if (
+      value.indexOf('science') !== -1 ||
+      value.indexOf('sci-fi') !== -1 ||
+      value.indexOf('science-fiction') !== -1 ||
+      value.indexOf('cyberpunk') !== -1 ||
+      value.indexOf('dystopian') !== -1 ||
+      value.indexOf('post-apocalyptic') !== -1 ||
+      value.indexOf('steampunk') !== -1 ||
+      value.indexOf('technology') !== -1
+    ) {
+      return { id: 'science-fiction', label: 'Science Fiction' };
+    }
+
+    if (
+      value.indexOf('mystery') !== -1 ||
+      value.indexOf('crime') !== -1 ||
+      value.indexOf('detective') !== -1 ||
+      value.indexOf('noir') !== -1 ||
+      value.indexOf('true crime') !== -1 ||
+      value.indexOf('legal') !== -1 ||
+      value.indexOf('investigation') !== -1
+    ) {
+      return { id: 'mystery', label: 'Mystery' };
+    }
+
+    if (
+      value.indexOf('horror') !== -1 ||
+      value.indexOf('gothic') !== -1 ||
+      value.indexOf('paranormal') !== -1 ||
+      value.indexOf('occult') !== -1 ||
+      value.indexOf('supernatural') !== -1
+    ) {
+      return { id: 'horror', label: 'Horror' };
+    }
+
+    if (
+      value.indexOf('romance') !== -1 ||
+      value.indexOf('romantic') !== -1 ||
+      value.indexOf('new adult') !== -1
+    ) {
+      return { id: 'romance', label: 'Romance' };
+    }
+
+    if (
+      value.indexOf('historical') !== -1 ||
+      value.indexOf('history') !== -1
+    ) {
+      return { id: 'historical', label: 'Historical' };
+    }
+
+    if (
+      value.indexOf('biography') !== -1 ||
+      value.indexOf('memoir') !== -1 ||
+      value.indexOf('autobiography') !== -1
+    ) {
+      return { id: 'biography', label: 'Biography' };
+    }
+
+    if (
+      value.indexOf('nonfiction') !== -1 ||
+      value.indexOf('non-fiction') !== -1
+    ) {
+      return { id: 'nonfiction', label: 'Nonfiction' };
+    }
+
+    if (
+      value.indexOf('thriller') !== -1 ||
+      value.indexOf('suspense') !== -1
+    ) {
+      return { id: 'thriller', label: 'Thriller' };
+    }
+
+    return { id: 'reading-realm', label: 'Reading Realm' };
+  }
+
+  function addRelic(genre, relicName) {
+    var name = String(relicName || '').trim();
+
+    if (!name || name === 'None') {
+      return;
+    }
+
+    var theme = relicGenre(genre);
+    var loot = relicInventory();
+
+    /*
+      Move existing flat stacks into a Legacy group exactly once.
+      Example:
+        { Map: 5, Tome: 1 }
+  
+      becomes:
+        {
+          legacy: {
+            label: 'Legacy Relics',
+            items: {
+              Map: 5,
+              Tome: 1
+            }
+          }
+        }
+    */
+    Object.keys(loot.relics).forEach(function (key) {
+      var value = loot.relics[key];
+
+      if (typeof value === 'number') {
+        if (!loot.relics.legacy) {
+          loot.relics.legacy = {
+            label: 'Legacy Relics',
+            items: {}
+          };
+        }
+
+        loot.relics.legacy.items[key] = Math.max(
+          0,
+          Math.floor(Number(loot.relics.legacy.items[key]) || 0)
+        ) + Math.max(0, Math.floor(Number(value) || 0));
+
+        delete loot.relics[key];
+      }
+    });
+
+    if (
+      !loot.relics[theme.id] ||
+      typeof loot.relics[theme.id] !== 'object' ||
+      Array.isArray(loot.relics[theme.id])
+    ) {
+      loot.relics[theme.id] = {
+        label: theme.label,
+        items: {}
+      };
+    }
+
+    loot.relics[theme.id].label = theme.label;
+    loot.relics[theme.id].items = loot.relics[theme.id].items || {};
+
+    loot.relics[theme.id].items[name] = Math.max(
+      0,
+      Math.floor(Number(loot.relics[theme.id].items[name]) || 0)
+    ) + 1;
+
+    write(LOOT_KEY, loot);
+  }
+
   function read(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key) || fallback); }
     catch (_) { return JSON.parse(fallback); }
@@ -15,6 +185,33 @@
 
   function books() {
     return read('bookshelf-data', '{"books":[]}').books || [];
+  }
+
+  function equippedArtifact() {
+    var loot = read(
+      LOOT_KEY,
+      '{"items":[],"equippedItemId":""}'
+    );
+
+    var equippedId = String((loot || {}).equippedItemId || '');
+    var items = Array.isArray((loot || {}).items) ? loot.items : [];
+
+    if (!equippedId) {
+      return null;
+    }
+
+    return items.filter(function (item) {
+      return item &&
+        String(item.instanceId || item.id || '') === equippedId;
+    })[0] || null;
+  }
+
+  function artifactCritBonus() {
+    var item = equippedArtifact();
+
+    return item && item.name === 'Chronicle Compass'
+      ? 5
+      : 0;
   }
 
   function theme(book) {
@@ -1802,6 +1999,125 @@
     return 'survives';
   }
 
+  function relicThemeForGenre(genre) {
+    var value = String(genre || '').toLowerCase();
+
+    if (
+      value.indexOf('fantasy') !== -1 ||
+      value.indexOf('myth') !== -1 ||
+      value.indexOf('fairy') !== -1 ||
+      value.indexOf('magic') !== -1 ||
+      value.indexOf('adventure') !== -1
+    ) {
+      return {
+        id: 'fantasy',
+        label: 'Fantasy'
+      };
+    }
+
+    if (
+      value.indexOf('science') !== -1 ||
+      value.indexOf('sci-fi') !== -1 ||
+      value.indexOf('science-fiction') !== -1 ||
+      value.indexOf('cyberpunk') !== -1 ||
+      value.indexOf('dystopian') !== -1 ||
+      value.indexOf('post-apocalyptic') !== -1 ||
+      value.indexOf('steampunk') !== -1 ||
+      value.indexOf('technology') !== -1
+    ) {
+      return {
+        id: 'science-fiction',
+        label: 'Science Fiction'
+      };
+    }
+
+    if (
+      value.indexOf('mystery') !== -1 ||
+      value.indexOf('crime') !== -1 ||
+      value.indexOf('detective') !== -1 ||
+      value.indexOf('noir') !== -1 ||
+      value.indexOf('true crime') !== -1 ||
+      value.indexOf('legal') !== -1 ||
+      value.indexOf('investigation') !== -1
+    ) {
+      return {
+        id: 'mystery',
+        label: 'Mystery'
+      };
+    }
+
+    if (
+      value.indexOf('horror') !== -1 ||
+      value.indexOf('gothic') !== -1 ||
+      value.indexOf('paranormal') !== -1 ||
+      value.indexOf('occult') !== -1 ||
+      value.indexOf('supernatural') !== -1
+    ) {
+      return {
+        id: 'horror',
+        label: 'Horror'
+      };
+    }
+
+    if (
+      value.indexOf('romance') !== -1 ||
+      value.indexOf('romantic') !== -1 ||
+      value.indexOf('new adult') !== -1 ||
+      value.indexOf('contemporary romance') !== -1
+    ) {
+      return {
+        id: 'romance',
+        label: 'Romance'
+      };
+    }
+
+    if (
+      value.indexOf('history') !== -1 ||
+      value.indexOf('historical') !== -1
+    ) {
+      return {
+        id: 'historical',
+        label: 'Historical'
+      };
+    }
+
+    if (
+      value.indexOf('biography') !== -1 ||
+      value.indexOf('memoir') !== -1 ||
+      value.indexOf('autobiography') !== -1
+    ) {
+      return {
+        id: 'biography',
+        label: 'Biography'
+      };
+    }
+
+    if (
+      value.indexOf('nonfiction') !== -1 ||
+      value.indexOf('non-fiction') !== -1
+    ) {
+      return {
+        id: 'nonfiction',
+        label: 'Nonfiction'
+      };
+    }
+
+    if (
+      value.indexOf('thriller') !== -1 ||
+      value.indexOf('suspense') !== -1
+    ) {
+      return {
+        id: 'thriller',
+        label: 'Thriller'
+      };
+    }
+
+    return {
+      id: 'reading-realm',
+      label: 'Reading Realm'
+    };
+  }
+
   function createBattleLog(session, reward) {
     var book = bookForSession(session);
     var sessionId = String(
@@ -1817,11 +2133,15 @@
     );
 
     var set = theme(book);
+    var relicTheme = relicThemeForGenre(book.genre);
     var durations = encounterDurations(minutes, sessionId);
     var className = classForBattleLog();
     var strength = battleStrength();
     var luck = battleLuck();
-    var critChance = battleCritChance(luck);
+    var critChance = Math.min(
+      25,
+      battleCritChance(luck) + artifactCritBonus()
+    );
     var encounters = [];
 
     for (var index = 0; index < durations.length; index += 1) {
@@ -1916,6 +2236,8 @@
         enemyName: enemyName,
         className: className || 'Reader',
         relic: relic,
+        relicTheme: relicTheme.id,
+        relicThemeLabel: relicTheme.label,
         damage: totalDamage,
         critical: encounterCritical,
         outcome: outcome,
@@ -2109,7 +2431,62 @@
     if (!session || !session.id || has(key)) return { ok: false };
 
     var reward = calculateSession(session);
-    if (!reward.minutes) return { ok: false };
+
+    if (!reward.minutes) {
+      return { ok: false };
+    }
+
+    var artifactResult = window.BookShelfArtifacts &&
+      typeof window.BookShelfArtifacts.applyToSessionReward === 'function'
+      ? window.BookShelfArtifacts.applyToSessionReward(reward)
+      : {
+        artifact: null,
+        effect: { label: '' },
+        xpBonus: 0,
+        goldBonus: 0,
+        critBonus: 0
+      };
+
+    reward.artifactItemId = artifactResult.artifact
+      ? String(
+        artifactResult.artifact.instanceId ||
+        artifactResult.artifact.id ||
+        ''
+      )
+      : '';
+
+    reward.artifactItemName = artifactResult.artifact
+      ? String(artifactResult.artifact.name || '')
+      : '';
+
+    reward.artifactItemRarity = artifactResult.artifact
+      ? String(artifactResult.artifact.rarity || 'Common')
+      : '';
+
+    reward.artifactBonusReason = artifactResult.effect
+      ? String(artifactResult.effect.label || '')
+      : '';
+
+    reward.artifactXPBonus = Math.max(
+      0,
+      Number(artifactResult.xpBonus) || 0
+    );
+
+    reward.artifactGoldBonus = Math.max(
+      0,
+      Number(artifactResult.goldBonus) || 0
+    );
+
+    reward.artifactCritBonus = Math.max(
+      0,
+      Number(artifactResult.critBonus) || 0
+    );
+
+    reward.xp = Math.max(0, Number(reward.xp) || 0) +
+      reward.artifactXPBonus;
+
+    reward.gold = Math.max(0, Number(reward.gold) || 0) +
+      reward.artifactGoldBonus;
 
     var enchantment = window.BookShelfEconomy &&
       typeof window.BookShelfEconomy.applyToReward === 'function'
@@ -2136,16 +2513,23 @@
 
     var state = game();
     var data = ledger();
+    var battleLog = createBattleLog(session, reward);
+
     state.xp += reward.xp;
     state.gold += reward.gold;
     state.processedSessions[session.id] = true;
+
+    (battleLog.encounters || []).forEach(function (encounter) {
+      addRelic(battleLog.genre, encounter.relic);
+    });
+
     data.transactions[key] = Object.assign({
       id: key,
       type: 'session',
       sourceId: session.id,
       status: 'claimed',
       createdAt: new Date().toISOString(),
-      battleLog: createBattleLog(session, reward)
+      battleLog: battleLog
     }, reward);
 
     write(GAME_KEY, state);

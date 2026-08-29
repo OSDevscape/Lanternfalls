@@ -102,6 +102,14 @@
         });
     }
 
+    function read(key, fallback) {
+        try {
+            return JSON.parse(localStorage.getItem(key) || fallback);
+        } catch (_) {
+            return JSON.parse(fallback);
+        }
+    }
+
     function economy() {
         return window.BookShelfEconomy || null;
     }
@@ -378,6 +386,79 @@
         var active = state.activeItem;
         var items = state.ownedItems;
 
+        var loot = read('bookshelf-adventure-loot-v1', '{"relics":{}}');
+
+        var relicGroups = loot &&
+            loot.relics &&
+            typeof loot.relics === 'object' &&
+            !Array.isArray(loot.relics)
+            ? Object.keys(loot.relics)
+                .map(function (groupId) {
+                    var group = loot.relics[groupId];
+
+                    if (
+                        !group ||
+                        typeof group !== 'object' ||
+                        Array.isArray(group) ||
+                        !group.items ||
+                        typeof group.items !== 'object' ||
+                        Array.isArray(group.items)
+                    ) {
+                        return null;
+                    }
+
+                    var items = Object.keys(group.items)
+                        .map(function (name) {
+                            return {
+                                name: name,
+                                quantity: Math.max(
+                                    0,
+                                    Math.floor(Number(group.items[name]) || 0)
+                                )
+                            };
+                        })
+                        .filter(function (relic) {
+                            return relic.quantity > 0;
+                        })
+                        .sort(function (first, second) {
+                            return first.name.localeCompare(second.name);
+                        });
+
+                    if (!items.length) {
+                        return null;
+                    }
+
+                    return {
+                        id: groupId,
+                        label: String(group.label || groupId),
+                        items: items
+                    };
+                })
+                .filter(function (group) {
+                    return !!group;
+                })
+            : [];
+
+        relicGroups.sort(function (first, second) {
+            /*
+              Keep newly earned themed groups first.
+              Reading Realm and Legacy stacks belong at the bottom because their
+              original drops did not preserve genre information.
+            */
+            var firstLegacy = first.id === 'legacy' || first.id === 'reading-realm';
+            var secondLegacy = second.id === 'legacy' || second.id === 'reading-realm';
+
+            if (firstLegacy !== secondLegacy) {
+                return firstLegacy ? 1 : -1;
+            }
+
+            return first.label.localeCompare(second.label);
+        });
+
+        var relicTypeCount = relicGroups.reduce(function (total, group) {
+            return total + group.items.length;
+        }, 0);
+
         var activeHtml = active
             ? (
                 '<section class="bookwyrm-inventory-active">' +
@@ -418,6 +499,59 @@
             }).join('')
             : '<p class="bookwyrm-inventory-none">Your inventory is empty. Visit the market to buy an enchantment.</p>';
 
+        var relicRows = relicGroups.length
+            ? relicGroups.map(function (group) {
+                var itemCount = group.items.length;
+
+                return (
+                    '<details class="bookwyrm-relic-group">' +
+                    '<summary class="bookwyrm-relic-group-summary">' +
+                    '<b>' + escape(group.label) + '</b>' +
+                    '<span>' + itemCount + ' type' +
+                    (itemCount === 1 ? '' : 's') +
+                    '</span>' +
+                    '<em aria-hidden="true">›</em>' +
+                    '</summary>' +
+
+                    '<div class="bookwyrm-relic-group-items">' +
+                    group.items.map(function (relic) {
+                        return (
+                            '<article class="bookwyrm-relic-row">' +
+                            '<span class="bookwyrm-relic-icon" aria-hidden="true">✦</span>' +
+                            '<b>' + escape(relic.name) + '</b>' +
+                            '<em>×' + relic.quantity + '</em>' +
+                            '</article>'
+                        );
+                    }).join('') +
+                    '</div>' +
+
+                    '</details>'
+                );
+            }).join('')
+            : '<p class="bookwyrm-relic-none">No relics recovered yet. Claim reading-session rewards to collect them.</p>';
+
+        var relicHtml =
+            '<details class="bookwyrm-relics-section">' +
+            '<summary class="bookwyrm-relics-heading">' +
+            '<div>' +
+            '<span class="adventure-label">Encounter Relics</span>' +
+            '<h3>Recovered Relics</h3>' +
+            '</div>' +
+            '<div class="bookwyrm-relics-summary-meta">' +
+            '<em>' + relicTypeCount + ' type' +
+            (relicTypeCount === 1 ? '' : 's') +
+            '</em>' +
+            '<span aria-hidden="true">›</span>' +
+            '</div>' +
+            '</summary>' +
+            '<div class="bookwyrm-relics-body">' +
+            '<p class="bookwyrm-relics-description">Stackable materials recovered from reading encounters.</p>' +
+            '<div class="bookwyrm-relic-list">' +
+            relicRows +
+            '</div>' +
+            '</div>' +
+            '</details>';
+
         bazaar.innerHTML =
             headerMarkup(Math.max(0, Number(api.game().gold) || 0)) +
             '<main class="bookwyrm-page-content">' +
@@ -430,6 +564,7 @@
             '<section class="bookwyrm-inventory-list">' +
             rows +
             '</section>' +
+            relicHtml +
             '</main>';
 
         bazaar.querySelectorAll('[data-bazaar-back]').forEach(function (button) {
@@ -743,7 +878,78 @@
             '.bookwyrm-effect-list{margin-top:2px;border-top:1px solid rgba(168,130,60,.2)}.bookwyrm-effect-row{display:flex;align-items:center;gap:11px;width:100%;padding:11px 0;border:0;border-bottom:1px solid rgba(168,130,60,.16);background:transparent;color:var(--paper-light,#F6F1E4);font:inherit;text-align:left;cursor:pointer}.bookwyrm-effect-copy{min-width:0;flex:1}.bookwyrm-effect-copy b,.bookwyrm-effect-copy small{display:block}.bookwyrm-effect-copy b{font:17px Georgia,serif}.bookwyrm-effect-copy small{margin-top:3px;color:var(--muted,#8A8378);font-size:10px;line-height:1.35}.bookwyrm-effect-row em{color:var(--gold,#A8823C);font-size:11px;font-style:normal;text-align:right;white-space:nowrap}.bookwyrm-effect-row.locked{opacity:.57}.bookwyrm-effect-row.unaffordable{opacity:.76}' +
             '.bazaar-art{display:grid;place-items:center;flex:0 0 48px;width:48px;height:48px;min-width:48px;max-width:48px;overflow:hidden;border:1px solid rgba(168,130,60,.48);border-radius:4px;background:#11161c}.bazaar-art-preview{width:72px;height:72px}.bazaar-art-potion img{display:block;max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;object-position:center}.bazaar-art-scroll{background:linear-gradient(135deg,#c9b17a,#80633b);color:#2c2012;box-shadow:inset 0 0 0 3px rgba(255,245,205,.25)}.bazaar-art-tome{background:linear-gradient(135deg,#542f44,#211a2f);color:#efcf78;box-shadow:inset 0 0 0 3px rgba(255,219,126,.14)}.bazaar-art-scroll span,.bazaar-art-tome span{font-size:19px;line-height:1}.bazaar-art-scroll b,.bazaar-art-tome b{margin-top:2px;font-size:8px;letter-spacing:.07em;text-transform:uppercase}.bazaar-art-preview span{font-size:26px}.bazaar-art-preview b{font-size:9px}' +
             '.bookwyrm-preview-overlay{position:fixed;z-index:1250;inset:0;display:grid;place-items:center;padding:18px;background:rgba(3,5,8,.78);backdrop-filter:blur(5px)}.bookwyrm-preview-card{position:relative;width:min(100%,480px);max-height:88vh;overflow:auto;padding:22px 18px calc(22px + env(safe-area-inset-bottom));border:1px solid var(--gold,#A8823C);border-radius:7px;background:var(--bg-elevated,#1B2129);color:var(--paper-light,#F6F1E4);box-shadow:0 18px 60px rgba(0,0,0,.55)}.bookwyrm-preview-close{position:absolute;top:9px;right:11px;border:0;background:transparent;color:var(--muted,#8A8378);font-size:27px;line-height:1;cursor:pointer}.bookwyrm-preview-hero{display:flex;align-items:center;gap:14px;padding-right:24px}.bookwyrm-preview-hero h2{margin:4px 0;font:23px Georgia,serif}.bookwyrm-preview-hero p{margin:6px 0 0;color:var(--muted,#8A8378);font-size:12px;line-height:1.4}.bookwyrm-preview-effect{margin-top:17px;padding:12px;border-left:3px solid var(--gold,#A8823C);background:rgba(0,0,0,.14)}.bookwyrm-preview-effect b,.bookwyrm-preview-effect span{display:block}.bookwyrm-preview-effect b{color:var(--gold,#A8823C);font:16px Georgia,serif}.bookwyrm-preview-effect span{margin-top:5px;color:var(--muted,#8A8378);font-size:11px}.bookwyrm-preview-rule{margin-top:14px;padding-top:13px;border-top:1px solid rgba(168,130,60,.2)}.bookwyrm-preview-rule b{font-size:12px;letter-spacing:.07em;text-transform:uppercase}.bookwyrm-preview-rule p,.bookwyrm-preview-status,.bookwyrm-preview-owned{margin:6px 0 0;color:var(--muted,#8A8378);font-size:12px;line-height:1.45}.bookwyrm-preview-owned{color:var(--gold,#A8823C)}.bookwyrm-preview-buy{width:100%;margin-top:18px;padding:12px;border:1px solid var(--gold,#A8823C);border-radius:3px;background:var(--accent,#8B3A3A);color:var(--paper-light,#F6F1E4);font:inherit;font-weight:bold;cursor:pointer}.bookwyrm-preview-buy:disabled{opacity:.45;cursor:not-allowed}' +
-            '.bookwyrm-inventory-card h2{margin:5px 0 15px;font:23px Georgia,serif}.bookwyrm-inventory-card h2 em{color:var(--muted,#8A8378);font:12px var(--font-body,-apple-system);font-style:normal}.bookwyrm-inventory-active{padding:12px;border:1px solid rgba(168,130,60,.32);border-radius:4px;background:rgba(0,0,0,.14)}.bookwyrm-inventory-active>div{display:flex;align-items:center;gap:10px;margin-top:8px}.bookwyrm-inventory-active p{margin:0}.bookwyrm-inventory-active p b,.bookwyrm-inventory-active p span{display:block}.bookwyrm-inventory-active p b{font:16px Georgia,serif}.bookwyrm-inventory-active p span{margin-top:3px;color:var(--gold,#A8823C);font-size:11px}.bookwyrm-inventory-active small{display:block;margin-top:8px;color:var(--muted,#8A8378);font-size:10px}.bookwyrm-inventory-empty p{margin:8px 0 0;color:var(--muted,#8A8378);font-size:12px;line-height:1.4}.bookwyrm-inventory-list{margin-top:14px;border-top:1px solid rgba(168,130,60,.2)}.bookwyrm-inventory-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid rgba(168,130,60,.15)}.bookwyrm-inventory-row>div{min-width:0;flex:1}.bookwyrm-inventory-row b,.bookwyrm-inventory-row span,.bookwyrm-inventory-row small{display:block}.bookwyrm-inventory-row b{font:15px Georgia,serif}.bookwyrm-inventory-row span{margin-top:3px;color:var(--muted,#8A8378);font-size:11px}.bookwyrm-inventory-row small{margin-top:3px;color:var(--gold,#A8823C);font-size:10px}.bookwyrm-inventory-row button{padding:8px 9px;border:1px solid var(--gold,#A8823C);border-radius:3px;background:var(--accent,#8B3A3A);color:var(--paper-light,#F6F1E4);font:inherit;font-size:11px;cursor:pointer}.bookwyrm-inventory-row button:disabled{opacity:.42;cursor:not-allowed}.bookwyrm-inventory-none{margin:16px 0 0;color:var(--muted,#8A8378);font-size:12px;text-align:center}';
+            '.bookwyrm-inventory-card h2{margin:5px 0 15px;font:23px Georgia,serif}.bookwyrm-inventory-card h2 em{color:var(--muted,#8A8378);font:12px var(--font-body,-apple-system);font-style:normal}.bookwyrm-inventory-active{padding:12px;border:1px solid rgba(168,130,60,.32);border-radius:4px;background:rgba(0,0,0,.14)}.bookwyrm-inventory-active>div{display:flex;align-items:center;gap:10px;margin-top:8px}.bookwyrm-inventory-active p{margin:0}.bookwyrm-inventory-active p b,.bookwyrm-inventory-active p span{display:block}.bookwyrm-inventory-active p b{font:16px Georgia,serif}.bookwyrm-inventory-active p span{margin-top:3px;color:var(--gold,#A8823C);font-size:11px}.bookwyrm-inventory-active small{display:block;margin-top:8px;color:var(--muted,#8A8378);font-size:10px}.bookwyrm-inventory-empty p{margin:8px 0 0;color:var(--muted,#8A8378);font-size:12px;line-height:1.4}.bookwyrm-inventory-list{margin-top:14px;border-top:1px solid rgba(168,130,60,.2)}.bookwyrm-inventory-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid rgba(168,130,60,.15)}.bookwyrm-inventory-row>div{min-width:0;flex:1}.bookwyrm-inventory-row b,.bookwyrm-inventory-row span,.bookwyrm-inventory-row small{display:block}.bookwyrm-inventory-row b{font:15px Georgia,serif}.bookwyrm-inventory-row span{margin-top:3px;color:var(--muted,#8A8378);font-size:11px}.bookwyrm-inventory-row small{margin-top:3px;color:var(--gold,#A8823C);font-size:10px}.bookwyrm-inventory-row button{padding:8px 9px;border:1px solid var(--gold,#A8823C);border-radius:3px;background:var(--accent,#8B3A3A);color:var(--paper-light,#F6F1E4);font:inherit;font-size:11px;cursor:pointer}.bookwyrm-inventory-row button:disabled{opacity:.42;cursor:not-allowed}.bookwyrm-inventory-none{margin:16px 0 0;color:var(--muted,#8A8378);font-size:12px;text-align:center}' + '.bookwyrm-relics-section{' +
+            'margin-top:18px;border:1px solid rgba(168,130,60,.32);border-radius:5px;background:rgba(0,0,0,.14)' +
+            '}' +
+            '.bookwyrm-relics-heading{' +
+            'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px;cursor:pointer;list-style:none' +
+            '}' +
+            '.bookwyrm-relics-heading::-webkit-details-marker{display:none}' +
+            '.bookwyrm-relics-heading>div:first-child{min-width:0}' +
+            '.bookwyrm-relics-heading h3{' +
+            'margin:4px 0 0;font:20px Georgia,serif;color:var(--paper-light,#F6F1E4)' +
+            '}' +
+            '.bookwyrm-relics-summary-meta{' +
+            'display:flex;align-items:center;gap:8px;color:var(--muted,#8A8378);white-space:nowrap' +
+            '}' +
+            '.bookwyrm-relics-summary-meta em{' +
+            'font-size:11px;font-style:normal' +
+            '}' +
+            '.bookwyrm-relics-summary-meta span{' +
+            'display:inline-block;color:var(--gold,#A8823C);font-size:22px;line-height:1;transition:transform .16s ease' +
+            '}' +
+            '.bookwyrm-relics-section[open] .bookwyrm-relics-summary-meta span{' +
+            'transform:rotate(90deg)' +
+            '}' +
+            '.bookwyrm-relics-body{' +
+            'padding:0 13px 13px;border-top:1px solid rgba(168,130,60,.18)' +
+            '}' +
+            '.bookwyrm-relics-description{' +
+            'margin:10px 0;color:var(--muted,#8A8378);font-size:12px;line-height:1.4' +
+            '}' +
+            '.bookwyrm-relic-list{' +
+            'border-top:1px solid rgba(168,130,60,.18)' +
+            '}' + '.bookwyrm-relic-group{' +
+            'border-bottom:1px solid rgba(168,130,60,.18)' +
+            '}' +
+            '.bookwyrm-relic-group:last-child{' +
+            'border-bottom:0' +
+            '}' +
+            '.bookwyrm-relic-group-summary{' +
+            'display:flex;align-items:center;gap:9px;padding:11px 0;cursor:pointer;list-style:none' +
+            '}' +
+            '.bookwyrm-relic-group-summary::-webkit-details-marker{' +
+            'display:none' +
+            '}' +
+            '.bookwyrm-relic-group-summary b{' +
+            'flex:1;color:var(--gold,#A8823C);font-size:11px;letter-spacing:.08em;text-transform:uppercase' +
+            '}' +
+            '.bookwyrm-relic-group-summary span{' +
+            'color:var(--muted,#8A8378);font-size:10px;white-space:nowrap' +
+            '}' +
+            '.bookwyrm-relic-group-summary em{' +
+            'display:inline-block;color:var(--gold,#A8823C);font-size:20px;font-style:normal;line-height:1;transition:transform .16s ease' +
+            '}' +
+            '.bookwyrm-relic-group[open] .bookwyrm-relic-group-summary em{' +
+            'transform:rotate(90deg)' +
+            '}' +
+            '.bookwyrm-relic-group-items{' +
+            'padding:0 0 5px;border-top:1px solid rgba(168,130,60,.12)' +
+            '}' +
+            '.bookwyrm-relic-row{' +
+            '.bookwyrm-relic-icon{' +
+            'display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;border:1px solid rgba(168,130,60,.48);border-radius:50%;color:var(--gold,#A8823C);font-size:13px' +
+            '}' +
+            '.bookwyrm-relic-row b{' +
+            'flex:1;color:var(--paper-light,#F6F1E4);font:15px Georgia,serif' +
+            '}' +
+            '.bookwyrm-relic-row em{' +
+            'color:var(--gold,#A8823C);font-size:14px;font-style:normal;font-weight:bold;white-space:nowrap' +
+            '}' +
+            '.bookwyrm-relic-none{' +
+            'margin:0;padding:12px 0;color:var(--muted,#8A8378);font-size:12px' +
+            '}'
+            ;
 
         document.head.appendChild(style);
 

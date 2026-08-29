@@ -4,7 +4,7 @@
 
   function installStyles() {
     var style = document.createElement('style');
-    style.textContent = '.tooltip-trigger,.adventure-tooltip-trigger,.adventure-progress-tooltip{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-left:4px;padding:0;border:1px solid currentColor;border-radius:50%;background:transparent;color:inherit;font:700 12px/1 sans-serif;vertical-align:middle;cursor:pointer}.tooltip-trigger:focus-visible,.adventure-tooltip-trigger:focus-visible,.adventure-progress-tooltip:focus-visible{outline:2px solid var(--gold,#d9a441);outline-offset:2px}.rq-tooltip{position:fixed;z-index:3000;max-width:min(280px,calc(100vw - 32px));padding:10px 12px;border:1px solid rgba(217,164,65,.65);border-radius:8px;background:#1a1b22;color:#f3eff5;box-shadow:0 8px 24px rgba(0,0,0,.35);font:13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;pointer-events:none}.rq-tooltip[hidden]{display:none!important}@media (prefers-color-scheme:light){.rq-tooltip{background:#fffdf8;color:#2a241e;box-shadow:0 8px 24px rgba(42,36,30,.18)}}';
+    style.textContent = '.tooltip-trigger,.adventure-tooltip-trigger,.adventure-progress-tooltip,.adventure-weekly-tooltip{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-left:4px;padding:0;border:1px solid currentColor;border-radius:50%;background:transparent;color:inherit;font:700 12px/1 sans-serif;vertical-align:middle;cursor:pointer}.tooltip-trigger:focus-visible,.adventure-tooltip-trigger:focus-visible,.adventure-progress-tooltip:focus-visible,.adventure-weekly-tooltip:focus-visible{outline:2px solid var(--gold,#d9a441);outline-offset:2px}.rq-tooltip{position:fixed;z-index:3000;max-width:min(280px,calc(100vw - 32px));padding:10px 12px;border:1px solid rgba(217,164,65,.65);border-radius:8px;background:#1a1b22;color:#f3eff5;box-shadow:0 8px 24px rgba(0,0,0,.35);font:13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;pointer-events:none}.rq-tooltip[hidden]{display:none!important}@media (prefers-color-scheme:light){.rq-tooltip{background:#fffdf8;color:#2a241e;box-shadow:0 8px 24px rgba(42,36,30,.18)}}';
     document.head.appendChild(style);
   }
 
@@ -73,11 +73,13 @@
         '.tooltip-trigger,' +
         '.adventure-tooltip-trigger,' +
         '.adventure-combat-tooltip,' +
+        '.adventure-combat-stat-tooltip,' +
         '.adventure-class-tooltip,' +
         '.adventure-loot-tooltip,' +
         '.adventure-progress-tooltip,' +
         '.adventure-relic-tooltip,' +
         '.adventure-quest-tooltip,' +
+        '.adventure-weekly-tooltip,' +
         '.reading-tooltip-trigger,' +
         '[data-tooltip-trigger]'
       );
@@ -97,11 +99,13 @@
         '.tooltip-trigger,' +
         '.adventure-tooltip-trigger,' +
         '.adventure-combat-tooltip,' +
+        '.adventure-combat-stat-tooltip,' +
         '.adventure-class-tooltip,' +
         '.adventure-loot-tooltip,' +
         '.adventure-progress-tooltip,' +
         '.adventure-relic-tooltip,' +
         '.adventure-quest-tooltip,' +
+        '.adventure-weekly-tooltip,' +
         '.reading-tooltip-trigger,' +
         '[data-tooltip-trigger]'
       );
