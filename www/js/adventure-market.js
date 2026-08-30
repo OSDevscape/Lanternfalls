@@ -564,7 +564,6 @@
             '<section class="bookwyrm-inventory-list">' +
             rows +
             '</section>' +
-            relicHtml +
             '</main>';
 
         bazaar.querySelectorAll('[data-bazaar-back]').forEach(function (button) {

@@ -318,83 +318,39 @@
   }
 
   function render() {
-    var page = document.getElementById('navPlaceholder');
+  var page = document.getElementById('navPlaceholder');
 
-    if (
-      !page ||
-      page.classList.contains('hidden') ||
-      !page.classList.contains('adventure-page') ||
-      page.dataset.lootRendering
-    ) return;
-
-    var content = page.querySelector('.adventure-content');
-
-    if (!content) return;
-
-    page.dataset.lootRendering = 'true';
-
-    var oldInventoryCard = content.querySelector(
-      'details.adventure-inventory-card'
-    );
-
-    var inventoryWasOpen = !!(
-      oldInventoryCard &&
-      oldInventoryCard.open
-    );
-
-    Array.prototype.forEach.call(
-      content.querySelectorAll('.adventure-trophies-card,.adventure-inventory-card'),
-      function (card) {
-        card.remove();
-      }
-    );
-
-    var value = data();
-
-    itemList.querySelectorAll('[data-equip-loot]').forEach(function (button) {
-      button.onclick = function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-
-        var selectedId = String(button.dataset.equipLoot || '');
-        var current = data();
-
-        current.equippedItemId =
-          String(current.equippedItemId || '') === selectedId
-            ? ''
-            : selectedId;
-
-        saveEquipment(current);
-
-        itemList.querySelectorAll('[data-equip-loot]').forEach(function (control) {
-          var selected = control.dataset.equipLoot === current.equippedItemId;
-
-          control.textContent = selected ? 'Equipped' : 'Equip';
-          control.classList.toggle('is-equipped', selected);
-          control.setAttribute(
-            'aria-pressed',
-            selected ? 'true' : 'false'
-          );
-        });
-      };
-    });
-
-    content.append(inventory);
-
-    if (inventoryWasOpen) {
-      setTimeout(function () {
-        var restored = content.querySelector(
-          'details.adventure-inventory-card'
-        );
-
-        if (restored) {
-          restored.open = true;
-        }
-      }, 0);
-    }
-
-    page.dataset.lootRendering = '';
+  if (
+    !page ||
+    page.classList.contains('hidden') ||
+    !page.classList.contains('adventure-page') ||
+    page.dataset.lootRendering
+  ) {
+    return;
   }
+
+  var content = page.querySelector('.adventure-content');
+
+  if (!content) {
+    return;
+  }
+
+  page.dataset.lootRendering = 'true';
+
+  Array.prototype.forEach.call(
+    content.querySelectorAll(
+      '.adventure-trophies-card,' +
+      '.adventure-inventory-card,' +
+      '.adventure-relics-card,' +
+      '.adventure-relic-inventory-card'
+    ),
+    function (card) {
+      card.remove();
+    }
+  );
+
+  page.dataset.lootRendering = '';
+}
 
   function install() {
     var page = document.getElementById('navPlaceholder');

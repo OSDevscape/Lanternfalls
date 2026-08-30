@@ -342,7 +342,7 @@
         return '<span>' +
           escape(boss.lootRarity || 'Loot') +
           ' · ' +
-          escape(boss.lootName || 'Reward added to Adventure inventory') +
+          escape(boss.lootName || 'Reward added to Collection') +
           '</span>';
       }).join('') +
       '</div>'

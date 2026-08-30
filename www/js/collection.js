@@ -102,17 +102,45 @@
         return document.getElementById('navPlaceholder');
     }
 
+    function number(value) {
+        return Math.max(0, Number(value) || 0);
+    }
+
     function raritySlug(value) {
         return String(value || 'Common')
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, '-');
     }
 
+    function hash(value) {
+        var result = 0;
+
+        String(value || '').split('').forEach(function (character) {
+            result = ((result << 5) - result) + character.charCodeAt(0);
+            result |= 0;
+        });
+
+        return Math.abs(result);
+    }
+
     function lootState() {
-        var value = read(LOOT_KEY, '{"items":[],"events":[]}');
+        var value = read(
+            LOOT_KEY,
+            '{"items":[],"events":[],"relics":{},"equippedItemId":""}'
+        );
+
+        if (!value || typeof value !== 'object') {
+            value = {};
+        }
 
         value.items = Array.isArray(value.items) ? value.items : [];
         value.events = Array.isArray(value.events) ? value.events : [];
+
+        value.relics = value.relics &&
+            typeof value.relics === 'object' &&
+            !Array.isArray(value.relics)
+            ? value.relics
+            : {};
 
         return value;
     }
@@ -122,6 +150,10 @@
             ARTIFACT_KEY,
             '{"version":1,"equippedId":"","equippedName":""}'
         );
+
+        if (!value || typeof value !== 'object') {
+            value = {};
+        }
 
         value.version = 1;
         value.equippedId = String(value.equippedId || '');
@@ -140,7 +172,7 @@
 
     function artifacts() {
         return lootState().items.filter(function (item) {
-            return !!ARTIFACT_EFFECTS[item.name];
+            return item && !!ARTIFACT_EFFECTS[item.name];
         });
     }
 
@@ -180,11 +212,6 @@
             };
         }
 
-        /*
-          Collection is the source of truth for the selected persistent artifact.
-          Do not call BookShelfArtifacts.equip() here because its current API may
-          expect a different object or identifier than the loot record uses.
-        */
         write(ARTIFACT_KEY, {
             version: 1,
             equippedId: itemId,
@@ -249,7 +276,7 @@
         });
 
         items.forEach(function (item) {
-            var rarity = String(item.rarity || 'Common');
+            var rarity = String((item || {}).rarity || 'Common');
 
             if (Object.prototype.hasOwnProperty.call(counts, rarity)) {
                 counts[rarity] += 1;
@@ -257,6 +284,66 @@
         });
 
         return counts;
+    }
+
+    function relicGroups(relics) {
+        var source = relics &&
+            typeof relics === 'object' &&
+            !Array.isArray(relics)
+            ? relics
+            : {};
+
+        return Object.keys(source).map(function (groupId) {
+            var group = source[groupId] || {};
+            var items = group.items &&
+                typeof group.items === 'object' &&
+                !Array.isArray(group.items)
+                ? group.items
+                : {};
+
+            var entries = Object.keys(items)
+                .map(function (name) {
+                    return {
+                        key: String(name || ''),
+                        name: String(name || 'Unknown relic'),
+                        quantity: number(items[name])
+                    };
+                })
+                .filter(function (entry) {
+                    return entry.name && entry.quantity > 0;
+                })
+                .sort(function (first, second) {
+                    return first.name.localeCompare(second.name);
+                });
+
+            return {
+                id: String(groupId || 'relics'),
+                label: String(group.label || groupId || 'Recovered Relics'),
+                entries: entries,
+                total: entries.reduce(function (total, entry) {
+                    return total + entry.quantity;
+                }, 0)
+            };
+        }).filter(function (group) {
+            return group.entries.length > 0;
+        }).sort(function (first, second) {
+            return first.label.localeCompare(second.label);
+        });
+    }
+
+    function relicSummary(groups) {
+        var total = 0;
+        var distinct = 0;
+
+        groups.forEach(function (group) {
+            total += number(group.total);
+            distinct += group.entries.length;
+        });
+
+        return {
+            total: total,
+            distinct: distinct
+        };
     }
 
     function equippedCardHtml(equipped) {
@@ -349,74 +436,6 @@
         );
     }
 
-    function trophyListHtml(events) {
-        if (!events.length) {
-            return (
-                '<p class="collection-empty">' +
-                'Claim a completed book reward to earn your first boss trophy.' +
-                '</p>'
-            );
-        }
-
-        return (
-            '<div class="collection-trophy-list">' +
-            events.slice(0, 20).map(function (event) {
-                var rarity = String(event.rarity || 'Common');
-                var enhanced = event.enhanced
-                    ? ' · Loot raised from ' +
-                    escape(event.naturalRarity || 'Common') +
-                    ' to ' +
-                    escape(rarity)
-                    : '';
-
-                return (
-                    '<article class="collection-trophy-item rarity-' +
-                    raritySlug(rarity) +
-                    '">' +
-
-                    '<span class="collection-trophy-star">★</span>' +
-
-                    '<div class="collection-trophy-copy">' +
-                    '<b>' + escape(event.title || 'Completed book') + '</b>' +
-
-                    '<span>' +
-                    escape(rarity) +
-                    ' · ' +
-                    escape(event.loot || 'Trophy claimed') +
-                    enhanced +
-                    '</span>' +
-
-                    '<small>' +
-                    'Defeated ' +
-                    escape(formatDate(event.earnedAt)) +
-                    ' · +' + (Number(event.xp) || 0) + ' XP' +
-                    '</small>' +
-                    '</div>' +
-
-                    '<em>+' + (Number(event.gold) || 0) + ' gold</em>' +
-
-                    '</article>'
-                );
-            }).join('') +
-            '</div>'
-        );
-    }
-
-    function number(value) {
-        return Math.max(0, Number(value) || 0);
-    }
-
-    function hash(value) {
-        var result = 0;
-
-        String(value || '').split('').forEach(function (character) {
-            result = ((result << 5) - result) + character.charCodeAt(0);
-            result |= 0;
-        });
-
-        return Math.abs(result);
-    }
-
     function trophyMetrics(bookId, event) {
         var game = read('bookshelf-adventure-progression-v1', '{}');
         var stats = game.stats || {};
@@ -424,7 +443,9 @@
         var luck = Math.max(10, number(stats.lck) || 10);
 
         var sessions = read('bookshelf-reading-log-v1', '[]').filter(function (session) {
-            return session && session.bookId === bookId && number(session.minutes);
+            return session &&
+                session.bookId === bookId &&
+                number(session.minutes);
         });
 
         var minutes = sessions.reduce(function (total, session) {
@@ -517,21 +538,17 @@
             );
         }
 
+        var bookData = read('bookshelf-data', '{"books":[]}');
+        var books = Array.isArray(bookData.books) ? bookData.books : [];
+
         return (
             '<div class="collection-trophy-list collection-trophy-detail-list">' +
             events.slice(0, 20).map(function (event) {
                 var stat = trophyMetrics(event.bookId, event);
                 var rarity = String(event.rarity || 'Common');
+                var boss = event.bossName || 'Defeated boss';
 
-                var boss = event.bossName || 'Book Boss';
-
-                /*
-                  If the boss system is available, regenerate the saved boss identity
-                  from the book record. This supports trophies that were earned before
-                  bossName was saved in the trophy event.
-                */
-                var bookData = read('bookshelf-data', '{"books":[]}');
-                var book = (bookData.books || []).filter(function (item) {
+                var book = books.filter(function (item) {
                     return item && item.id === event.bookId;
                 })[0];
 
@@ -586,24 +603,17 @@
                     '<details class="collection-trophy-detail rarity-' +
                     raritySlug(rarity) +
                     '">' +
-
                     '<summary class="collection-trophy-toggle">' +
                     '<span class="collection-trophy-toggle-title">' +
                     '<b>★ ' + escape(boss) + '</b>' +
-                    '<em>' +
-                    escape(rarity) +
-                    ' Boss' +
-                    '</em>' +
+                    '<em>' + escape(rarity) + ' Boss</em>' +
                     '</span>' +
-
                     '<strong>' +
                     '+' + stat.totalXP + ' XP' +
                     '<i>+' + stat.gold + ' gold</i>' +
                     '</strong>' +
                     '</summary>' +
-
                     '<div class="collection-trophy-detail-body">' +
-
                     '<div class="collection-trophy-stats">' +
                     '<div><b>' + stat.minutes + '</b><span>Minutes logged</span></div>' +
                     '<div><b>' + stat.sessions.length + '</b><span>Sessions logged</span></div>' +
@@ -612,31 +622,25 @@
                     '<div><b>' + stat.sessionXP + '</b><span>Reading XP</span></div>' +
                     '<div><b>+' + stat.bossXP + '</b><span>Boss XP</span></div>' +
                     '</div>' +
-
                     '<div class="collection-trophy-recap">' +
+                    '<p><b>Book:</b> ' + escape(bookTitle) + '</p>' +
+                    '<p><b>Rarity:</b> ' + escape(rarity) + '</p>' +
                     '<p><b>Rewards:</b> ' +
                     stat.totalXP + ' XP · ' +
                     stat.gold + ' gold · ' +
                     escape(event.loot || 'Trophy') +
                     '</p>' +
-                    '<p><b>Book:</b> ' +
-                    escape(bookTitle) +
-                    ' · <b>Rarity:</b> ' +
-                    escape(rarity) +
-                    '</p>' +
-
                     '<p><b>Defeated:</b> ' +
                     escape(formatDate(trophyDate(event, stat.sessions))) +
                     ' · Crit chance used: ' +
                     stat.critChance.toFixed(1) +
-                    '%</p>' +
+                    '%' +
+                    '</p>' +
                     '</div>' +
-
                     '<div class="collection-session-history">' +
                     '<b>Reading sessions</b>' +
                     '<ul>' + sessionsHtml + '</ul>' +
                     '</div>' +
-
                     '</div>' +
                     '</details>'
                 );
@@ -660,14 +664,65 @@
         );
     }
 
+    function relicListHtml(groups) {
+  if (!groups.length) {
+    return (
+      '<div class="collection-relic-empty">' +
+      '<b>No relics recovered yet</b>' +
+      '<span>' +
+      'Complete reading encounters to leave traces of your journeys in the Reading Realm.' +
+      '</span>' +
+      '</div>'
+    );
+  }
+
+  return (
+    '<div class="collection-relic-groups">' +
+    groups.map(function (group) {
+      return (
+        '<details class="collection-relic-group" ' +
+        'data-relic-group="' + escape(group.id) + '">' +
+
+        '<summary class="collection-relic-group-header">' +
+        '<span class="collection-relic-group-title">' +
+        '<b>' + escape(group.label) + '</b>' +
+        '<small>' +
+        group.entries.length + ' relic type' +
+        (group.entries.length === 1 ? '' : 's') +
+        '</small>' +
+        '</span>' +
+
+        '<em>' + group.total + ' recovered</em>' +
+        '</summary>' +
+
+        '<div class="collection-relic-list">' +
+        group.entries.map(function (entry) {
+          return (
+            '<article class="collection-relic-item">' +
+            '<span class="collection-relic-mark">✦</span>' +
+
+            '<div class="collection-relic-copy">' +
+            '<b>' + escape(entry.name) + '</b>' +
+            '<span>' +
+            escape(group.label) + ' encounter relic' +
+            '</span>' +
+            '</div>' +
+
+            '<em>×' + entry.quantity + '</em>' +
+            '</article>'
+          );
+        }).join('') +
+        '</div>' +
+
+        '</details>'
+      );
+    }).join('') +
+    '</div>'
+  );
+}
+
     function render() {
         var target = page();
-
-        var artifactCodexWasOpen = !!target &&
-            !!target.querySelector('.collection-artifact-details[open]');
-
-        var trophiesWereOpen = !!target &&
-            !!target.querySelector('.collection-trophy-details[open]');
 
         if (!target || target.classList.contains('hidden')) {
             return;
@@ -677,10 +732,24 @@
             return;
         }
 
+        var artifactCodexWasOpen = !!target.querySelector(
+            '.collection-artifact-details[open]'
+        );
+
+        var trophiesWereOpen = !!target.querySelector(
+            '.collection-boss-trophies-details[open]'
+        );
+
+        var relicsWereOpen = !!target.querySelector(
+            '.collection-relic-details[open]'
+        );
+
         var loot = lootState();
         var allArtifacts = artifacts();
         var equipped = equippedArtifact();
         var counts = rarityCounts(allArtifacts);
+        var groups = relicGroups(loot.relics);
+        var relics = relicSummary(groups);
 
         var discoveredTiers = RARITIES.filter(function (rarity) {
             return counts[rarity] > 0;
@@ -706,7 +775,6 @@
             discoveredTiers + ' of ' + RARITIES.length +
             ' rarity tiers found' +
             '</p>' +
-
             '<details class="collection-details collection-artifact-details" ' +
             (artifactCodexWasOpen ? 'open' : '') +
             '>' +
@@ -714,7 +782,6 @@
             '<span>View artifacts</span>' +
             '<em>' + allArtifacts.length + ' found</em>' +
             '</summary>' +
-
             '<div class="collection-collapsible-body">' +
             rarityProgressHtml(counts) +
             artifactListHtml(allArtifacts, equipped) +
@@ -728,27 +795,45 @@
             '<p class="collection-muted">' +
             'A permanent record of completed books whose rewards you claimed.' +
             '</p>' +
-
-            '<details class="collection-details collection-boss-trophies-details">' +
+            '<details class="collection-details collection-boss-trophies-details" ' +
+            (trophiesWereOpen ? 'open' : '') +
+            '>' +
             '<summary>' +
             '<span>View defeated bosses</span>' +
             '<em>' + loot.events.length + ' defeated</em>' +
             '</summary>' +
-
             '<div class="collection-collapsible-body">' +
             detailedTrophyListHtml(loot.events) +
             '</div>' +
             '</details>' +
             '</section>' +
 
-            '<section class="collection-card collection-relic-card">' +
+            '<section class="collection-card collection-collapsible-card collection-relic-card">' +
             '<span class="collection-label">Encounter Relics</span>' +
             '<h2>Recovered Relics</h2>' +
             '<p class="collection-muted">' +
-            'Relics recovered during reading encounters are collectible for now. ' +
-            'A future Bazaar update can give them uses such as trading, refining, or crafting.' +
+            'Permanent traces recovered during reading encounters. ' +
+            'Relics are cosmetic for now and may later be traded, refined, sold, or crafted at the Bazaar.' +
             '</p>' +
-            '<span class="collection-future-badge">Future feature</span>' +
+            '<details class="collection-details collection-relic-details" ' +
+            (relicsWereOpen ? 'open' : '') +
+            '>' +
+            '<summary>' +
+            '<span>View relics</span>' +
+            '<em>' + relics.total + ' recovered</em>' +
+            '</summary>' +
+            '<div class="collection-collapsible-body">' +
+            '<p class="collection-relic-summary">' +
+            relics.distinct + ' distinct relic stack' +
+            (relics.distinct === 1 ? '' : 's') +
+            ' across ' +
+            groups.length + ' collection' +
+            (groups.length === 1 ? '' : 's') +
+            '.' +
+            '</p>' +
+            relicListHtml(groups) +
+            '</div>' +
+            '</details>' +
             '</section>' +
 
             '</main>';
@@ -768,27 +853,6 @@
                 }
             };
         }
-
-        target.querySelectorAll('[data-artifact-equip]').forEach(function (button) {
-            button.onclick = function (event) {
-                event.preventDefault();
-
-                var wantedId = String(
-                    button.getAttribute('data-artifact-equip') || ''
-                );
-
-                var selected = allArtifacts.filter(function (artifact) {
-                    return artifactId(artifact) === wantedId;
-                })[0];
-
-                if (!selected) {
-                    return;
-                }
-
-                saveEquip(selected);
-                render();
-            };
-        });
 
         target.querySelectorAll('[data-artifact-equip]').forEach(function (button) {
             button.onclick = function (event) {
@@ -841,7 +905,26 @@
                 });
             });
         }
+                var relicDetails = target.querySelector(
+            '.collection-relic-details'
+        );
+
+        if (relicDetails) {
+            relicDetails.addEventListener('toggle', function () {
+                if (relicDetails.open) {
+                    return;
+                }
+
+                relicDetails.querySelectorAll(
+                    '.collection-relic-group[open]'
+                ).forEach(function (groupDetail) {
+                    groupDetail.removeAttribute('open');
+                });
+            });
+        }
     }
+
+    
 
     function installStyles() {
         if (document.getElementById('collectionPageStyles')) {
@@ -862,7 +945,7 @@
             'border-bottom:1px solid rgba(168,130,60,.24)}' +
 
             '.collection-header h1{' +
-            'margin:0;font:27px Georgia,serif}' +
+            'margin:0;color:var(--paper-light,#F6F1E4);font:27px Georgia,serif}' +
 
             '.collection-header p{' +
             'margin:4px 0 0;color:var(--muted,#8A8378);font-size:12px}' +
@@ -876,106 +959,99 @@
             'outline:2px solid var(--gold,#A8823C);outline-offset:2px}' +
 
             '.collection-content{' +
-            'flex:1;overflow:auto;padding:16px 20px 130px}' +
+            'flex:1;overflow:auto;padding:16px 20px 130px;' +
+            '-webkit-overflow-scrolling:touch;overscroll-behavior:contain}' +
 
             '.collection-card{' +
             'margin:0 0 13px;padding:16px;background:var(--bg-elevated,#1B2129);' +
             'border:1px solid rgba(168,130,60,.28);border-radius:5px}' +
 
             '.collection-card h2{' +
-            'margin:5px 0;font:21px Georgia,serif}' +
+            'margin:5px 0;color:var(--paper-light,#F6F1E4);font:21px Georgia,serif}' +
 
             '.collection-label{' +
             'display:block;color:var(--gold,#A8823C);font-size:11px;font-weight:700;' +
             'letter-spacing:.08em;text-transform:uppercase}' +
 
             '.collection-muted,.collection-empty{' +
-            'margin:7px 0 0;color:var(--muted,#8A8378);font-size:12px;line-height:1.45}' +
-
-            '.collection-empty{' +
-            'padding:13px 0 2px}' +
-
-            '.collection-equipped-card{' +
-            'border-color:rgba(168,130,60,.55);' +
-            'background:linear-gradient(135deg,rgba(168,130,60,.13),rgba(0,0,0,.14))}' +
+            'margin:7px 0 0;color:var(--muted,#8A8378);font-size:12px;line-height:1.5}' +
 
             '.collection-equipped-row{' +
-            'display:flex;align-items:center;gap:11px;margin-top:7px}' +
+            'display:flex;align-items:center;gap:11px;margin-top:12px}' +
 
             '.collection-artifact-mark{' +
-            'display:grid;place-items:center;flex:0 0 auto;width:36px;height:36px;' +
-            'border:1px solid currentColor;border-radius:4px;background:rgba(255,255,255,.03);' +
-            'color:var(--gold,#A8823C);font-size:18px}' +
-
-            '.collection-equipped-row h2{' +
-            'margin:0}' +
+            'display:inline-flex;align-items:center;justify-content:center;' +
+            'width:26px;height:26px;flex:0 0 26px;color:var(--gold,#A8823C);' +
+            'font-size:21px;line-height:1}' +
 
             '.collection-rarity{' +
-            'margin:3px 0 0;color:var(--muted,#8A8378);font-size:11px}' +
+            'margin:2px 0 0;color:var(--muted,#8A8378);font-size:12px}' +
 
             '.collection-effect{' +
-            'margin:12px 0 0;color:var(--paper-light,#F6F1E4);font-size:13px;line-height:1.4}' +
+            'margin:14px 0 0;color:var(--paper,#D7D0C4);font-size:13px;line-height:1.45}' +
 
             '.collection-secondary-button,.collection-equip-button{' +
-            'border:1px solid rgba(168,130,60,.58);border-radius:3px;background:transparent;' +
-            'color:var(--paper-light,#F6F1E4);font:600 12px inherit;cursor:pointer}' +
+            'min-height:34px;border:1px solid rgba(168,130,60,.6);border-radius:3px;' +
+            'background:transparent;color:var(--gold,#A8823C);font:600 11px inherit;cursor:pointer}' +
 
             '.collection-secondary-button{' +
-            'width:100%;margin-top:14px;padding:10px}' +
+            'width:100%;margin-top:14px;padding:9px 10px}' +
 
             '.collection-equip-button{' +
-            'align-self:center;padding:7px 10px}' +
+            'flex:0 0 auto;padding:8px 10px}' +
+
+            '.collection-secondary-button:active,.collection-equip-button:active{' +
+            'transform:translateY(1px)}' +
 
             '.collection-details{' +
-            'margin-top:14px;border-top:1px solid rgba(168,130,60,.20)}' +
+            'margin-top:14px;border-top:1px solid rgba(168,130,60,.18)}' +
 
-            '.collection-details summary{' +
-            'display:flex;align-items:center;justify-content:space-between;gap:10px;' +
-            'padding:12px 0 0;cursor:pointer;list-style:none;' +
-            'color:var(--paper-light,#F6F1E4);font:15px Georgia,serif}' +
+            '.collection-details > summary{' +
+            'display:flex;align-items:center;justify-content:space-between;gap:12px;' +
+            'padding:12px 0 0;color:var(--paper-light,#F6F1E4);cursor:pointer;' +
+            'list-style:none;font-size:13px;font-weight:700}' +
 
-            '.collection-details summary::-webkit-details-marker{' +
+            '.collection-details > summary::-webkit-details-marker{' +
             'display:none}' +
 
-            '.collection-details summary span{' +
-            'display:flex;align-items:center;gap:7px}' +
+            '.collection-details > summary:before{' +
+            'content:"▸";margin-right:8px;color:var(--gold,#A8823C);' +
+            'font-size:15px;transition:transform .15s ease}' +
 
-            '.collection-details summary span:before{' +
-            'content:"▸";color:var(--gold,#A8823C);font:17px sans-serif;' +
-            'transition:transform .15s ease}' +
-
-            '.collection-details[open] summary span:before{' +
+            '.collection-details[open] > summary:before{' +
             'transform:rotate(90deg)}' +
 
-            '.collection-details summary em{' +
-            'color:var(--muted,#8A8378);font:11px var(--font-body,-apple-system);' +
-            'font-style:normal;white-space:nowrap}' +
+            '.collection-details > summary span{' +
+            'flex:1}' +
+
+            '.collection-details > summary em{' +
+            'color:var(--muted,#8A8378);font-size:11px;font-style:normal;font-weight:400;' +
+            'white-space:nowrap}' +
 
             '.collection-collapsible-body{' +
-            'margin-top:12px}' +
+            'padding:14px 0 0}' +
 
             '.collection-rarity-progress{' +
-            'display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:14px 0 5px}' +
+            'display:grid;grid-template-columns:repeat(3,minmax(0,1fr));' +
+            'gap:8px;margin-bottom:13px}' +
 
-            '.collection-rarity-progress span{' +
-            'min-width:0;padding:8px 5px;border:1px solid rgba(168,130,60,.18);' +
+            '.collection-rarity-progress > span{' +
+            'display:flex;flex-direction:column;gap:2px;padding:9px 7px;' +
+            'background:rgba(0,0,0,.14);border:1px solid rgba(255,255,255,.05);' +
             'border-radius:3px;text-align:center}' +
 
-            '.collection-rarity-progress b,.collection-rarity-progress small{' +
-            'display:block}' +
-
             '.collection-rarity-progress b{' +
-            'font:17px Georgia,serif;color:var(--paper-light,#F6F1E4)}' +
+            'color:var(--paper-light,#F6F1E4);font:700 17px Georgia,serif}' +
 
             '.collection-rarity-progress small{' +
-            'margin-top:2px;color:var(--muted,#8A8378);font-size:9px}' +
+            'color:var(--muted,#8A8378);font-size:10px}' +
 
-            '.collection-artifact-list,.collection-trophy-list{' +
-            'margin-top:13px;border-top:1px solid rgba(168,130,60,.18)}' +
+            '.collection-artifact-list{' +
+            'border-top:1px solid rgba(168,130,60,.16)}' +
 
             '.collection-artifact-item{' +
-            'display:flex;align-items:center;gap:10px;padding:11px 0;' +
-            'border-bottom:1px solid rgba(168,130,60,.15)}' +
+            'display:flex;align-items:center;gap:9px;padding:12px 0;' +
+            'border-bottom:1px solid rgba(168,130,60,.14)}' +
 
             '.collection-item-copy{' +
             'min-width:0;flex:1}' +
@@ -984,163 +1060,79 @@
             'display:block}' +
 
             '.collection-item-copy b{' +
-            'font:16px Georgia,serif}' +
+            'color:var(--paper-light,#F6F1E4);font:16px Georgia,serif}' +
 
             '.collection-item-copy span{' +
-            'margin-top:3px;color:var(--paper-light,#F6F1E4);font-size:11px;line-height:1.35}' +
+            'margin-top:3px;color:var(--paper,#D7D0C4);font-size:11px;line-height:1.4}' +
 
             '.collection-item-copy small{' +
-            'margin-top:4px;color:var(--muted,#8A8378);font-size:10px;line-height:1.35}' +
+            'margin-top:4px;color:var(--muted,#8A8378);font-size:10px;line-height:1.4}' +
 
             '.collection-equipped-badge{' +
-            'align-self:center;color:var(--gold,#A8823C);font-size:10px;font-style:normal;' +
-            'white-space:nowrap}' +
+            'flex:0 0 auto;color:var(--gold,#A8823C);font-size:11px;font-style:normal;' +
+            'font-weight:700;white-space:nowrap}' +
 
-            '.collection-trophy-item{' +
-            'display:flex;align-items:center;gap:10px;padding:11px 0;' +
-            'border-bottom:1px solid rgba(168,130,60,.15)}' +
-
-            '.collection-trophy-star{' +
-            'display:grid;place-items:center;flex:0 0 auto;width:29px;height:29px;' +
-            'color:var(--gold,#A8823C);font-size:17px}' +
-
-            '.collection-trophy-copy{' +
-            'min-width:0;flex:1}' +
-
-            '.collection-trophy-copy b,' +
-            '.collection-trophy-copy span,' +
-            '.collection-trophy-copy small{' +
-            'display:block}' +
-
-            '.collection-trophy-copy b{' +
-            'font:15px Georgia,serif}' +
-
-            '.collection-trophy-copy span{' +
-            'margin-top:3px;color:var(--paper-light,#F6F1E4);font-size:10px;line-height:1.35}' +
-
-            '.collection-trophy-copy small{' +
-            'margin-top:4px;color:var(--muted,#8A8378);font-size:10px;line-height:1.35}' +
-
-            '.collection-trophy-item em{' +
-            'align-self:center;color:var(--gold,#A8823C);font-size:11px;font-style:normal;' +
-            'white-space:nowrap}' +
-
-            '.collection-future-badge{' +
-            'display:inline-block;margin-top:12px;padding:5px 7px;' +
-            'border:1px solid rgba(168,130,60,.32);border-radius:3px;' +
-            'color:var(--gold,#A8823C);font-size:10px;text-transform:uppercase;' +
-            'letter-spacing:.06em}' +
-
-            '.collection-artifact-item.rarity-common .collection-artifact-mark,' +
-            '.collection-artifact-item.rarity-common b,' +
-            '.collection-equipped-card.rarity-common .collection-artifact-mark,' +
-            '.collection-equipped-card.rarity-common h2,' +
-            '.collection-rarity-progress .rarity-common b{' +
-            'color:#d7d0c4}' +
-
-            '.collection-artifact-item.rarity-uncommon .collection-artifact-mark,' +
-            '.collection-artifact-item.rarity-uncommon b,' +
-            '.collection-equipped-card.rarity-uncommon .collection-artifact-mark,' +
-            '.collection-equipped-card.rarity-uncommon h2,' +
-            '.collection-rarity-progress .rarity-uncommon b{' +
-            'color:#79bd8d}' +
-
-            '.collection-artifact-item.rarity-rare .collection-artifact-mark,' +
-            '.collection-artifact-item.rarity-rare b,' +
-            '.collection-equipped-card.rarity-rare .collection-artifact-mark,' +
-            '.collection-equipped-card.rarity-rare h2,' +
-            '.collection-rarity-progress .rarity-rare b{' +
-            'color:#74a8e7}' +
-
-            '.collection-artifact-item.rarity-epic .collection-artifact-mark,' +
-            '.collection-artifact-item.rarity-epic b,' +
-            '.collection-equipped-card.rarity-epic .collection-artifact-mark,' +
-            '.collection-equipped-card.rarity-epic h2,' +
-            '.collection-rarity-progress .rarity-epic b{' +
-            'color:#c28ad9}' +
-
-            '.collection-artifact-item.rarity-legendary .collection-artifact-mark,' +
-            '.collection-artifact-item.rarity-legendary b,' +
-            '.collection-equipped-card.rarity-legendary .collection-artifact-mark,' +
-            '.collection-equipped-card.rarity-legendary h2,' +
-            '.collection-rarity-progress .rarity-legendary b{' +
-            'color:#d4a64f}' +
-
-            '.collection-artifact-item.rarity-mythic .collection-artifact-mark,' +
-            '.collection-artifact-item.rarity-mythic b,' +
-            '.collection-equipped-card.rarity-mythic .collection-artifact-mark,' +
-            '.collection-equipped-card.rarity-mythic h2,' +
-            '.collection-rarity-progress .rarity-mythic b{' +
-            'color:#e55353}' +
+            '.collection-trophy-detail-list{' +
+            'border-top:1px solid rgba(168,130,60,.16)}' +
 
             '.collection-trophy-detail{' +
-            'margin:0;border-bottom:1px solid rgba(168,130,60,.18)}' +
+            'border-bottom:1px solid rgba(168,130,60,.14)}' +
 
-            '.collection-trophy-detail:last-child{' +
-            'border-bottom:0}' +
+            '.collection-trophy-toggle{' +
+            'display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;' +
+            'align-items:center;padding:12px 0;cursor:pointer;list-style:none}' +
 
-            '.collection-trophy-detail summary{' +
-            'display:flex;align-items:center;justify-content:space-between;gap:10px;' +
-            'width:100%;padding:13px 0;border:0;background:transparent;' +
-            'color:var(--paper-light,#F6F1E4);cursor:pointer;list-style:none;' +
-            'text-align:left;touch-action:manipulation}' +
-
-            '.collection-trophy-detail summary::-webkit-details-marker{' +
+            '.collection-trophy-toggle::-webkit-details-marker{' +
             'display:none}' +
 
-            '.collection-trophy-toggle-title{' +
-            'display:block;min-width:0;flex:1}' +
+            '.collection-trophy-toggle:before{' +
+            'content:"▸";position:absolute;color:var(--gold,#A8823C);' +
+            'font-size:13px;transform:translateX(0);transition:transform .15s ease}' +
 
-            '.collection-trophy-toggle-title:before{' +
-            'content:"▸";display:inline-block;margin-right:7px;color:var(--gold,#A8823C);' +
-            'font:15px sans-serif;transition:transform .15s ease}' +
-
-            '.collection-trophy-detail[open] .collection-trophy-toggle-title:before{' +
+            '.collection-trophy-detail[open] > .collection-trophy-toggle:before{' +
             'transform:rotate(90deg)}' +
 
-            '.collection-trophy-toggle-title b,' +
-            '.collection-trophy-toggle-title em{' +
+            '.collection-trophy-toggle-title{' +
+            'display:block;min-width:0;padding-left:18px}' +
+
+            '.collection-trophy-toggle-title b,.collection-trophy-toggle-title em{' +
             'display:block}' +
 
             '.collection-trophy-toggle-title b{' +
-            'font:16px Georgia,serif;line-height:1.2}' +
+            'color:var(--paper-light,#F6F1E4);font:16px Georgia,serif}' +
 
             '.collection-trophy-toggle-title em{' +
-            'margin:5px 0 0 22px;color:var(--muted,#8A8378);' +
-            'font:10px var(--font-body,-apple-system);font-style:normal;line-height:1.35}' +
+            'margin-top:3px;color:var(--muted,#8A8378);font-size:10px;font-style:normal;' +
+            'letter-spacing:.04em;text-transform:uppercase}' +
 
             '.collection-trophy-toggle strong{' +
-            'flex:0 0 auto;color:var(--gold,#A8823C);font:13px Georgia,serif;' +
-            'line-height:1.35;text-align:right;white-space:nowrap}' +
+            'display:flex;flex-direction:column;align-items:flex-end;gap:3px;' +
+            'color:var(--gold,#A8823C);font:700 12px Georgia,serif;white-space:nowrap}' +
 
             '.collection-trophy-toggle strong i{' +
-            'display:block;margin-top:3px;color:var(--muted,#8A8378);' +
-            'font:10px var(--font-body,-apple-system);font-style:normal}' +
+            'color:var(--muted,#8A8378);font:400 10px inherit;font-style:normal}' +
 
             '.collection-trophy-detail-body{' +
-            'margin:0 0 14px;padding:13px 0 0;' +
-            'border-top:1px solid rgba(168,130,60,.16)}' +
+            'padding:0 0 13px}' +
 
             '.collection-trophy-stats{' +
-            'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 0 14px}' +
+            'display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;' +
+            'padding:10px;background:rgba(0,0,0,.13);border:1px solid rgba(168,130,60,.13)}' +
 
             '.collection-trophy-stats div{' +
-            'min-width:0;padding:10px 5px;background:rgba(0,0,0,.14);' +
-            'border:1px solid rgba(168,130,60,.12);border-radius:3px;text-align:center}' +
+            'min-width:0;text-align:center}' +
 
-            '.collection-trophy-stats b,' +
-            '.collection-trophy-stats span{' +
+            '.collection-trophy-stats b,.collection-trophy-stats span{' +
             'display:block}' +
 
             '.collection-trophy-stats b{' +
             'color:var(--paper-light,#F6F1E4);font:16px Georgia,serif}' +
 
             '.collection-trophy-stats span{' +
-            'margin-top:4px;color:var(--muted,#8A8378);font-size:9px;line-height:1.2}' +
+            'margin-top:3px;color:var(--muted,#8A8378);font-size:9px;line-height:1.2}' +
 
             '.collection-trophy-recap{' +
-            'margin:0;padding:11px 0;border-top:1px solid rgba(168,130,60,.14);' +
-            'color:var(--muted,#8A8378);font-size:11px;line-height:1.45}' +
+            'margin-top:11px;color:var(--paper,#D7D0C4);font-size:11px;line-height:1.5}' +
 
             '.collection-trophy-recap p{' +
             'margin:5px 0}' +
@@ -1149,28 +1141,155 @@
             'color:var(--gold,#A8823C)}' +
 
             '.collection-session-history{' +
-            'margin-top:10px;padding:11px 0 0;border-top:1px solid rgba(168,130,60,.14);' +
-            'font-size:11px}' +
+            'margin-top:12px;padding-top:10px;border-top:1px solid rgba(168,130,60,.16)}' +
 
-            '.collection-session-history>b{' +
-            'display:block;color:var(--gold,#A8823C);font-weight:700}' +
+            '.collection-session-history > b{' +
+            'display:block;margin-bottom:7px;color:var(--gold,#A8823C);font-size:10px;' +
+            'letter-spacing:.08em;text-transform:uppercase}' +
 
             '.collection-session-history ul{' +
-            'margin:8px 0 0;padding:0 14px 0 0;box-sizing:border-box;' +
-            'max-height:130px;overflow-x:hidden;overflow-y:auto;list-style:none;' +
-            'border-top:1px solid rgba(168,130,60,.12);' +
-            '-webkit-overflow-scrolling:touch;overscroll-behavior:contain;' +
-            'scrollbar-gutter:stable;touch-action:pan-y}' +
+            'max-height:130px;margin:0;padding:0;overflow-y:auto;overflow-x:hidden;' +
+            'list-style:none;touch-action:pan-y;overscroll-behavior:contain;' +
+            '-webkit-overflow-scrolling:touch}' +
 
             '.collection-session-history li{' +
-            'display:flex;justify-content:space-between;gap:12px;padding:7px 0;' +
-            'border-bottom:1px solid rgba(168,130,60,.12)}' +
+            'display:flex;justify-content:space-between;gap:10px;padding:7px 1px;' +
+            'border-bottom:1px solid rgba(168,130,60,.12);color:var(--muted,#8A8378);' +
+            'font-size:11px}' +
 
-            '.collection-session-history li span{' +
-            'flex:0 0 auto;color:var(--muted,#8A8378);padding-right:2px}' +
+            '.collection-session-history li:last-child{' +
+            'border-bottom:0}' +
 
             '.collection-session-history li b{' +
-            'color:var(--paper-light,#F6F1E4);font-weight:normal}' +
+            'color:var(--paper,#D7D0C4);font-weight:600;white-space:nowrap}' +
+
+            '.collection-relic-summary{' +
+            'margin:0 0 12px;color:var(--muted,#8A8378);font-size:11px;line-height:1.45}' +
+
+            '.collection-relic-empty{' +
+            'display:flex;flex-direction:column;gap:5px;padding:15px 0 3px;' +
+            'color:var(--muted,#8A8378);font-size:12px;line-height:1.45}' +
+
+            '.collection-relic-empty b{' +
+            'color:var(--paper-light,#F6F1E4);font:16px Georgia,serif}' +
+
+                        '.collection-relic-groups{' +
+            'display:flex;flex-direction:column;gap:10px}' +
+
+            '.collection-relic-group{' +
+            'margin:0;border:1px solid rgba(168,130,60,.16);' +
+            'background:rgba(0,0,0,.11)}' +
+
+            '.collection-relic-group > summary{' +
+            'display:flex;align-items:center;justify-content:space-between;gap:12px;' +
+            'padding:10px;cursor:pointer;list-style:none}' +
+
+            '.collection-relic-group > summary::-webkit-details-marker{' +
+            'display:none}' +
+
+            '.collection-relic-group > summary:before{' +
+            'content:"▸";flex:0 0 auto;color:var(--gold,#A8823C);font-size:13px;' +
+            'transition:transform .15s ease}' +
+
+            '.collection-relic-group[open] > summary:before{' +
+            'transform:rotate(90deg)}' +
+
+            '.collection-relic-group-title{' +
+            'display:block;min-width:0;flex:1}' +
+
+            '.collection-relic-group-title b,' +
+            '.collection-relic-group-title small{' +
+            'display:block}' +
+
+            '.collection-relic-group-title b{' +
+            'color:var(--paper-light,#F6F1E4);font:15px Georgia,serif}' +
+
+            '.collection-relic-group-title small{' +
+            'margin-top:3px;color:var(--muted,#8A8378);font-size:10px}' +
+
+            '.collection-relic-group-header > em{' +
+            'flex:0 0 auto;color:var(--gold,#A8823C);font-size:10px;font-style:normal;' +
+            'white-space:nowrap}' +
+
+            '.collection-relic-list{' +
+            'padding:0 10px 2px;border-top:1px solid rgba(168,130,60,.16)}' +
+
+            '.collection-relic-item{' +
+            'display:flex;align-items:center;gap:9px;padding:10px 0;' +
+            'border-bottom:1px solid rgba(168,130,60,.12)}' +
+
+            '.collection-relic-item:last-child{' +
+            'border-bottom:0}' +
+
+            '.collection-relic-mark{' +
+            'display:inline-flex;align-items:center;justify-content:center;' +
+            'width:20px;height:20px;flex:0 0 20px;color:var(--gold,#A8823C);font-size:14px}' +
+
+            '.collection-relic-copy{' +
+            'min-width:0;flex:1}' +
+
+            '.collection-relic-copy b,' +
+            '.collection-relic-copy span{' +
+            'display:block}' +
+
+            '.collection-relic-copy b{' +
+            'color:var(--paper,#D7D0C4);font:14px Georgia,serif}' +
+
+            '.collection-relic-copy span{' +
+            'margin-top:2px;color:var(--muted,#8A8378);font-size:10px}' +
+
+            '.collection-relic-item > em{' +
+            'min-width:34px;padding:4px 6px;color:var(--gold,#A8823C);' +
+            'border:1px solid rgba(168,130,60,.34);background:rgba(168,130,60,.08);' +
+            'font-size:11px;font-style:normal;text-align:center}' +
+
+            '.collection-equipped-card.rarity-common .collection-artifact-mark,' +
+            '.collection-artifact-item.rarity-common .collection-artifact-mark{' +
+            'color:#d7d0c4}' +
+
+            '.collection-equipped-card.rarity-common h2,' +
+            '.collection-artifact-item.rarity-common .collection-item-copy b{' +
+            'color:#d7d0c4}' +
+
+            '.collection-equipped-card.rarity-uncommon .collection-artifact-mark,' +
+            '.collection-artifact-item.rarity-uncommon .collection-artifact-mark{' +
+            'color:#79bd8d}' +
+
+            '.collection-equipped-card.rarity-uncommon h2,' +
+            '.collection-artifact-item.rarity-uncommon .collection-item-copy b{' +
+            'color:#79bd8d}' +
+
+            '.collection-equipped-card.rarity-rare .collection-artifact-mark,' +
+            '.collection-artifact-item.rarity-rare .collection-artifact-mark{' +
+            'color:#74a8e7}' +
+
+            '.collection-equipped-card.rarity-rare h2,' +
+            '.collection-artifact-item.rarity-rare .collection-item-copy b{' +
+            'color:#74a8e7}' +
+
+            '.collection-equipped-card.rarity-epic .collection-artifact-mark,' +
+            '.collection-artifact-item.rarity-epic .collection-artifact-mark{' +
+            'color:#c28ad9}' +
+
+            '.collection-equipped-card.rarity-epic h2,' +
+            '.collection-artifact-item.rarity-epic .collection-item-copy b{' +
+            'color:#c28ad9}' +
+
+            '.collection-equipped-card.rarity-legendary .collection-artifact-mark,' +
+            '.collection-artifact-item.rarity-legendary .collection-artifact-mark{' +
+            'color:#d4a64f}' +
+
+            '.collection-equipped-card.rarity-legendary h2,' +
+            '.collection-artifact-item.rarity-legendary .collection-item-copy b{' +
+            'color:#d4a64f}' +
+
+            '.collection-equipped-card.rarity-mythic .collection-artifact-mark,' +
+            '.collection-artifact-item.rarity-mythic .collection-artifact-mark{' +
+            'color:#e55353}' +
+
+            '.collection-equipped-card.rarity-mythic h2,' +
+            '.collection-artifact-item.rarity-mythic .collection-item-copy b{' +
+            'color:#e55353}' +
 
             '.collection-trophy-detail.rarity-common .collection-trophy-toggle-title b{' +
             'color:#d7d0c4}' +
@@ -1188,37 +1307,46 @@
             'color:#d4a64f}' +
 
             '.collection-trophy-detail.rarity-mythic .collection-trophy-toggle-title b{' +
-            'color:#e55353}';
+            'color:#e55353}' +
+
+            '@media (max-width:360px){' +
+            '.collection-content{padding-left:14px;padding-right:14px}' +
+            '.collection-header{padding-left:14px;padding-right:14px}' +
+            '.collection-trophy-stats{grid-template-columns:repeat(2,minmax(0,1fr))}' +
+            '}';
 
         document.head.appendChild(style);
     }
 
     function install() {
-        var target = page();
-
-        if (!target || target.dataset.collectionReady) {
-            return;
-        }
-
-        target.dataset.collectionReady = 'true';
-
         installStyles();
 
         window.addEventListener('bookshelf-navigation-changed', function (event) {
             if (event.detail && event.detail.page === 'collection') {
+                setTimeout(render, 0);
+            }
+        });
+
+        window.addEventListener('bookshelf-adventure-artifact-changed', function () {
+            if (page() && page().classList.contains('collection-page')) {
                 render();
             }
         });
 
-        window.addEventListener('bookshelf-adventure-artifact-changed', render);
-        window.addEventListener('bookshelf-adventure-completion-claimed', render);
-        window.addEventListener('bookshelf-adventure-claim-complete', render);
-    }
+        window.addEventListener('storage', function (event) {
+            if (
+                event.key === LOOT_KEY ||
+                event.key === ARTIFACT_KEY
+            ) {
+                if (page() && page().classList.contains('collection-page')) {
+                    render();
+                }
+            }
+        });
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', install);
-    } else {
-        install();
+        if (page() && page().classList.contains('collection-page')) {
+            render();
+        }
     }
 
     window.BookShelfCollection = {
@@ -1226,6 +1354,15 @@
         artifacts: artifacts,
         equipped: equippedArtifact,
         equip: saveEquip,
-        unequip: saveUnequip
+        unequip: saveUnequip,
+        relicGroups: function () {
+            return relicGroups(lootState().relics);
+        }
     };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', install);
+    } else {
+        install();
+    }
 })();
