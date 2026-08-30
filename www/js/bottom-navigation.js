@@ -26,7 +26,8 @@
       '<button type="button" data-page="achievements"><i>⚔</i>Adventure</button>' +
       '<button type="button" data-page="realm"><i>✦</i>Realm</button>' +
       '<button type="button" class="hidden" data-page="profile">Profile</button>' +
-      '<button type="button" class="hidden" data-page="character">Character</button>';
+      '<button type="button" class="hidden" data-page="character">Character</button>' +
+      '<button type="button" class="hidden" data-page="collection">Collection</button>';
     document.body.appendChild(nav);
 
     var placeholder = document.createElement('section');
@@ -101,14 +102,16 @@
         achievements: 'Adventure',
         realm: 'Realm',
         profile: 'Profile',
-        character: 'Character'
+        character: 'Character',
+        collection: 'Collection'
       };
 
       var loading = {
         achievements: 'Loading your adventure...',
         realm: 'Loading your realm...',
         profile: 'Loading your profile...',
-        character: 'Loading your character...'
+        character: 'Loading your character...',
+        collection: 'Loading your collection...'
       };
 
       showPlaceholder(labels[page] || 'ReadQuest', loading[page] || 'Loading...', page + '-page');

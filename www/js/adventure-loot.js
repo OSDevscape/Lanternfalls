@@ -351,110 +351,6 @@
 
     var value = data();
 
-    var trophies = document.createElement('section');
-    trophies.className = 'adventure-card adventure-trophies-card';
-    trophies.innerHTML =
-      '<span class="adventure-label">Boss Trophies ' +
-      tooltipButton(
-        'Boss Trophies are permanent records of completed books whose completion rewards you claimed. Each trophy preserves that book’s boss-defeat reward history.',
-        'About Boss Trophies'
-      ) +
-      '</span><h2>Defeated Bosses</h2>';
-
-    if (!value.events.length) {
-      trophies.innerHTML +=
-        '<p class="adventure-muted">Claim a completed book’s reward to earn your first boss trophy.</p>';
-    } else {
-      var trophyList = document.createElement('div');
-      trophyList.className = 'adventure-trophy-list';
-
-      value.events.slice(0, 5).forEach(function (event) {
-        var enhanced = event.enhanced
-          ? ' · Wonders raised loot from ' +
-          event.naturalRarity +
-          ' to ' +
-          event.rarity
-          : '';
-        var row = document.createElement('div');
-
-        row.className = 'adventure-trophy-item';
-        row.innerHTML =
-          '<div><b>★ ' +
-          event.title +
-          '</b><span>Boss defeated · +' +
-          event.xp +
-          ' XP' +
-          enhanced +
-          '</span></div><em>+' +
-          event.gold +
-          ' gold</em>';
-
-        trophyList.appendChild(row);
-      });
-
-      trophies.appendChild(trophyList);
-    }
-
-    var inventory = document.createElement('section');
-    inventory.className =
-      'adventure-card adventure-inventory-card' +
-      (inventoryWasOpen ? ' adventure-inventory-restore-open' : '');
-    inventory.innerHTML =
-      '<span class="adventure-label">Loot Inventory ' +
-      tooltipButton(
-        'Loot Inventory contains collectible cosmetic items earned by claiming completed-book rewards. Wonders enchantments guarantee a minimum rarity floor for the next completion loot drop.',
-        'About Loot Inventory'
-      ) +
-      '</span><h2>Collected Items</h2>';
-
-    if (!value.items.length) {
-      inventory.innerHTML +=
-        '<p class="adventure-muted">Claim completed-book rewards to earn cosmetic trophies and collectible items.</p>';
-    } else {
-      var itemList = document.createElement('div');
-      itemList.className = 'adventure-loot-list';
-
-      value.items.slice(0, 8).forEach(function (item) {
-        var enhanced = item.enhanced
-          ? ' · Wonders raised this from ' +
-          item.naturalRarity +
-          ' to ' +
-          item.rarity
-          : '';
-
-        var row = document.createElement('div');
-
-        row.className =
-          'adventure-loot-item rarity-' +
-          String(item.rarity || 'common').toLowerCase();
-
-        var isEquipped = String(value.equippedItemId || '') ===
-          String(item.instanceId || item.id);
-
-        var effect = artifactEffect(item);
-
-        row.innerHTML =
-          '<div class="adventure-loot-item-copy">' +
-          '<b>' +
-          item.name +
-          '</b><span>' +
-          item.rarity +
-          enhanced +
-          ' · Earned from ' +
-          item.bookTitle +
-          '</span><small>' +
-          effect.label +
-          '</small></div>' +
-          '<button type="button" class="adventure-loot-equip" ' +
-          'data-equip-loot="' + (item.instanceId || item.id) + '">' +
-          (isEquipped ? 'Equipped' : 'Equip') +
-          '</button>';
-
-        itemList.appendChild(row);
-      });
-
-      inventory.appendChild(itemList);
-    }
     itemList.querySelectorAll('[data-equip-loot]').forEach(function (button) {
       button.onclick = function (event) {
         event.preventDefault();
@@ -483,7 +379,7 @@
       };
     });
 
-    content.append(trophies, inventory);
+    content.append(inventory);
 
     if (inventoryWasOpen) {
       setTimeout(function () {

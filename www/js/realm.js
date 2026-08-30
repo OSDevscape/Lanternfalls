@@ -16,51 +16,52 @@
 
     target.innerHTML =
       '<header class="realm-header">' +
-        '<div><h1>Realm</h1><p>Your reader’s wider world.</p></div>' +
-        '<button type="button" class="reading-settings-button realm-settings-button" data-realm-open="profile" aria-label="Open Profile" data-tooltip="Open your reader profile, settings, and reading-time log.">Settings</button>' +
+      '<div><h1>Realm</h1><p>Your reader’s wider world.</p></div>' +
+      '<button type="button" class="reading-settings-button realm-settings-button" data-realm-open="profile" aria-label="Open Profile" data-tooltip="Open your reader profile, settings, and reading-time log.">Settings</button>' +
       '</header>' +
       '<main class="realm-content">' +
-        '<section class="realm-intro">' +
-          '<span class="adventure-label">ReadQuest Realm</span>' +
-          '<h2>Shape your legend</h2>' +
-          '<p>Visit your character, prepare enchantments, and discover what lies ahead.</p>' +
-        '</section>' +
+      '<section class="realm-intro">' +
+      '<span class="adventure-label">ReadQuest Realm</span>' +
+      '<h2>Shape your legend</h2>' +
+      '<p>Visit your character, prepare enchantments, and discover what lies ahead.</p>' +
+      '</section>' +
 
-        '<button type="button" class="realm-destination realm-destination-active" data-realm-open="character">' +
-          '<span>♙</span>' +
-          '<div><b>Character</b><small>Class, level, gold, stats, and achievements.</small></div>' +
-          '<em>›</em>' +
-        '</button>' +
+      '<button type="button" class="realm-destination realm-destination-active" data-realm-open="character">' +
+      '<span>♙</span>' +
+      '<div><b>Character</b><small>Class, level, gold, stats, and achievements.</small></div>' +
+      '<em>›</em>' +
+      '</button>' +
 
-        '<button type="button" class="realm-destination realm-destination-active" data-realm-bazaar>' +
-          '<span>✦</span>' +
-          '<div><b>The Bookwyrm Bazaar</b><small>Buy, store, and activate reading enchantments.</small></div>' +
-          '<em>›</em>' +
-        '</button>' +
+      '<button type="button" class="realm-destination realm-destination-active" data-realm-bazaar>' +
+      '<span>✦</span>' +
+      '<div><b>The Bookwyrm Bazaar</b><small>Buy, store, and activate reading enchantments.</small></div>' +
+      '<em>›</em>' +
+      '</button>' +
 
-        '<button type="button" class="realm-destination" disabled>' +
-          '<span>⚔</span>' +
-          '<div><b>Equipment</b><small>Weapons, armor, and trinkets for future expeditions.</small></div>' +
-          '<em>Coming soon</em>' +
-        '</button>' +
+      '<button type="button" class="realm-destination" disabled>' +
+      '<span>⚔</span>' +
+      '<div><b>Equipment</b><small>Weapons, armor, and trinkets for future expeditions.</small></div>' +
+      '<em>Coming soon</em>' +
+      '</button>' +
 
-        '<button type="button" class="realm-destination" disabled>' +
-          '<span>▣</span>' +
-          '<div><b>Collection</b><small>Organize your trophies, relics, and rare finds.</small></div>' +
-          '<em>Coming soon</em>' +
-        '</button>' +
+      '<button type="button" class="realm-destination realm-destination-active" ' +
+      'data-realm-open="collection">' +
+      '<span>▣</span>' +
+      '<div><b>Collection</b><small>Equip artifacts and review trophies, relics, and rare finds.</small></div>' +
+      '<em>›</em>' +
+      '</button>' +
 
-        '<button type="button" class="realm-destination" disabled>' +
-          '<span>⌘</span>' +
-          '<div><b>World Map</b><small>Explore new regions in a future release.</small></div>' +
-          '<em>Future</em>' +
-        '</button>' +
+      '<button type="button" class="realm-destination" disabled>' +
+      '<span>⌘</span>' +
+      '<div><b>World Map</b><small>Explore new regions in a future release.</small></div>' +
+      '<em>Future</em>' +
+      '</button>' +
 
-        '<button type="button" class="realm-destination" disabled>' +
-          '<span>♜</span>' +
-          '<div><b>Dungeon Party</b><small>Build a party for future cooperative adventures.</small></div>' +
-          '<em>Future</em>' +
-        '</button>' +
+      '<button type="button" class="realm-destination" disabled>' +
+      '<span>♜</span>' +
+      '<div><b>Dungeon Party</b><small>Build a party for future cooperative adventures.</small></div>' +
+      '<em>Future</em>' +
+      '</button>' +
       '</main>';
 
     target.querySelectorAll('[data-realm-open]').forEach(function (button) {
