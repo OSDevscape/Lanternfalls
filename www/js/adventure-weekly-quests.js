@@ -67,64 +67,65 @@
 
             '</article>'
         );
-        function showRewardPopup(result) {
-            var old = document.getElementById('weeklyQuestRewardOverlay');
+    }
 
-            if (old) {
-                old.remove();
-            }
+    function showRewardPopup(result) {
+        var old = document.getElementById('weeklyQuestRewardOverlay');
 
-            var quest = result.quest || {};
-            var xp = Math.max(0, Number(result.xp) || 0);
-            var gold = Math.max(0, Number(result.gold) || 0);
-
-            var overlay = document.createElement('section');
-
-            overlay.id = 'weeklyQuestRewardOverlay';
-            overlay.setAttribute('role', 'dialog');
-            overlay.setAttribute('aria-modal', 'true');
-            overlay.setAttribute(
-                'aria-label',
-                'Weekly quest reward for ' + (quest.title || 'completed quest')
-            );
-
-            overlay.innerHTML =
-                '<div class="weekly-quest-reward-card">' +
-                '<span class="adventure-label">Weekly Quest Claimed</span>' +
-                '<h2>Quest Complete</h2>' +
-                '<p class="weekly-quest-reward-title">' +
-                escape(quest.title || 'Weekly Quest') +
-                '</p>' +
-                '<p class="weekly-quest-reward-detail">' +
-                escape(quest.detail || 'Your weekly reading goal is complete.') +
-                '</p>' +
-                '<div class="weekly-quest-reward-totals">' +
-                '<b>+' + xp + ' XP</b>' +
-                '<b>+' + gold + ' gold</b>' +
-                '</div>' +
-                '<button type="button" class="weekly-quest-reward-continue">' +
-                'Continue Adventure' +
-                '</button>' +
-                '</div>';
-
-            var continueButton = overlay.querySelector(
-                '.weekly-quest-reward-continue'
-            );
-
-            continueButton.onclick = function (event) {
-                event.preventDefault();
-                event.stopPropagation();
-                overlay.remove();
-            };
-
-            overlay.onclick = function (event) {
-                if (event.target === overlay) {
-                    overlay.remove();
-                }
-            };
-
-            document.body.appendChild(overlay);
+        if (old) {
+            old.remove();
         }
+
+        var quest = result.quest || {};
+        var xp = Math.max(0, Number(result.xp) || 0);
+        var gold = Math.max(0, Number(result.gold) || 0);
+
+        var overlay = document.createElement('section');
+
+        overlay.id = 'weeklyQuestRewardOverlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute(
+            'aria-label',
+            'Weekly quest reward for ' + (quest.title || 'completed quest')
+        );
+
+        overlay.innerHTML =
+            '<div class="weekly-quest-reward-card">' +
+            '<span class="adventure-label">Weekly Quest Claimed</span>' +
+            '<h2>Quest Complete</h2>' +
+            '<p class="weekly-quest-reward-title">' +
+            escape(quest.title || 'Weekly Quest') +
+            '</p>' +
+            '<p class="weekly-quest-reward-detail">' +
+            escape(quest.detail || 'Your weekly reading goal is complete.') +
+            '</p>' +
+            '<div class="weekly-quest-reward-totals">' +
+            '<b>+' + xp + ' XP</b>' +
+            '<b>+' + gold + ' gold</b>' +
+            '</div>' +
+            '<button type="button" class="weekly-quest-reward-continue">' +
+            'Continue Adventure' +
+            '</button>' +
+            '</div>';
+
+        var continueButton = overlay.querySelector(
+            '.weekly-quest-reward-continue'
+        );
+
+        continueButton.onclick = function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            overlay.remove();
+        };
+
+        overlay.onclick = function (event) {
+            if (event.target === overlay) {
+                overlay.remove();
+            }
+        };
+
+        document.body.appendChild(overlay);
     }
 
     function render() {
