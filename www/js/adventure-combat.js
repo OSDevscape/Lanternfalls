@@ -170,11 +170,13 @@
 
   function getBooks() {
     try {
-      return Promise.resolve(
-        JSON.parse(localStorage.getItem('bookshelf-data') || '{"books":[]}').books || []
+      var saved = JSON.parse(
+        localStorage.getItem('bookshelf-data') || '{"books":[]}'
       );
+
+      return Array.isArray(saved.books) ? saved.books : [];
     } catch (_) {
-      return Promise.resolve([]);
+      return [];
     }
   }
 
@@ -196,7 +198,7 @@
 
     mount.innerHTML = '';
 
-    var books = await getBooks();
+    var books = getBooks();
     if (!page.classList.contains('adventure-page')) return;
 
     var active = books.filter(function (book) { return book.status === 'reading'; })[0];
