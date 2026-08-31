@@ -1,42 +1,112 @@
 (function () {
   function currentQuestCard(content) {
-    return Array.prototype.filter.call(content.querySelectorAll('.adventure-card'), function (card) {
-      return ((card.querySelector('.adventure-label') || {}).textContent || '').trim() === 'Current Reading Quest';
-    })[0] || null;
+    return Array.prototype.filter.call(
+      content.querySelectorAll('.adventure-card'),
+      function (card) {
+        var label = card.querySelector('.adventure-label');
+
+        return !!(
+          label &&
+          label.textContent.replace(/\s+/g, ' ').trim() ===
+            'Current Reading Quest'
+        );
+      }
+    )[0] || null;
   }
 
   function merge() {
     var page = document.getElementById('navPlaceholder');
-    if (!page || !page.classList.contains('adventure-page')) return;
+
+    if (
+      !page ||
+      page.classList.contains('hidden') ||
+      !page.classList.contains('adventure-page')
+    ) {
+      return;
+    }
+
     var content = page.querySelector('.adventure-content');
-    if (!content) return;
 
-    var quest = currentQuestCard(content);
-    if (quest) quest.remove();
+    if (!content) {
+      return;
+    }
 
+    /*
+      The Book Boss is added asynchronously by adventure-combat.js.
+      Leave the normal Current Reading Quest card alone until its
+      full replacement actually exists.
+    */
     var boss = content.querySelector('.adventure-combat-card');
-    if (!boss) return;
+
+    if (!boss) {
+      return;
+    }
+
+    /*
+      Once the combat card has arrived, remove only the old standalone
+      current-quest card. It is never inside an .adventure-grid.
+    */
+    var quest = currentQuestCard(content);
+
+    if (quest) {
+      quest.remove();
+    }
 
     var label = boss.querySelector('.adventure-boss-top .adventure-label');
-    var bookTitle = boss.querySelector('.adventure-boss-top .adventure-muted');
-    if (label) label.textContent = 'Current Reading Quest · Book Boss';
-    if (bookTitle) bookTitle.classList.add('adventure-boss-book-title');
+    var bookTitle = boss.querySelector(
+      '.adventure-boss-top .adventure-muted'
+    );
+
+    if (label) {
+      label.textContent = 'Current Reading Quest · Book Boss';
+    }
+
+    if (bookTitle) {
+      bookTitle.classList.add('adventure-boss-book-title');
+    }
   }
 
   function install() {
     var page = document.getElementById('navPlaceholder');
-    if (!page || page.dataset.adventureBossQuestMergeReady) return;
+
+    if (!page || page.dataset.adventureBossQuestMergeReady) {
+      return;
+    }
+
     page.dataset.adventureBossQuestMergeReady = 'true';
 
     var style = document.createElement('style');
-    style.textContent = '.adventure-combat-card .adventure-boss-book-title{margin-top:5px;color:var(--paper-light,#F6F1E4);font:15px Georgia,serif}.adventure-combat-card .adventure-boss-book-title:before{content:"Reading: ";color:var(--muted,#8A8378);font:11px var(--font-body,-apple-system)}';
+
+    style.textContent =
+      '.adventure-combat-card .adventure-boss-book-title{' +
+        'margin-top:5px;' +
+        'color:var(--paper-light,#F6F1E4);' +
+        'font:15px Georgia,serif' +
+      '}' +
+      '.adventure-combat-card .adventure-boss-book-title:before{' +
+        'content:"Reading: ";' +
+        'color:var(--muted,#8A8378);' +
+        'font:11px var(--font-body,-apple-system)' +
+      '}';
+
     document.head.appendChild(style);
 
-    new MutationObserver(function () { setTimeout(merge, 0); }).observe(page, { childList:true, subtree:true });
+    new MutationObserver(function () {
+      setTimeout(merge, 0);
+    }).observe(page, {
+      childList: true,
+      subtree: true
+    });
+
     window.addEventListener('bookshelf-reading-log-changed', merge);
+    window.addEventListener('bookshelf-adventure-class-changed', merge);
+
     merge();
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install);
-  else install();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', install);
+  } else {
+    install();
+  }
 })();

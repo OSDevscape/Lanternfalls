@@ -13,6 +13,135 @@
     return '<button type="button" class="adventure-combat-tooltip" data-tooltip="' + message + '" aria-label="' + label + '" aria-expanded="false">ⓘ</button>';
   }
 
+  function escape(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
+      return {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[character];
+    });
+  }
+
+  function rewardText(xp, gold, crit) {
+    var parts = [];
+
+    if (Math.max(0, Number(xp) || 0)) {
+      parts.push('+' + (Number(xp) || 0) + ' XP');
+    }
+
+    if (Math.max(0, Number(gold) || 0)) {
+      parts.push('+' + (Number(gold) || 0) + ' gold');
+    }
+
+    if (Math.max(0, Number(crit) || 0)) {
+      parts.push('+' + (Number(crit) || 0) + '% crit chance');
+    }
+
+    return parts.join(' · ');
+  }
+
+  function artifactPreview() {
+    if (
+      !window.BookShelfArtifacts ||
+      typeof window.BookShelfArtifacts.equipped !== 'function' ||
+      typeof window.BookShelfArtifacts.effectFor !== 'function'
+    ) {
+      return null;
+    }
+
+    var item = window.BookShelfArtifacts.equipped();
+    var effect = window.BookShelfArtifacts.effectFor(item);
+
+    if (!item || !effect || effect.type === 'none') {
+      return null;
+    }
+
+    return {
+      name: String(item.name || 'Equipped artifact'),
+      rarity: String(item.rarity || 'Common'),
+      label: String(effect.label || 'Artifact effect applied'),
+      type: String(effect.type || ''),
+      value: Math.max(0, Number(effect.value) || 0)
+    };
+  }
+
+  function modifierRowsHtml(reward, artifact) {
+    var rows = [];
+
+    if (reward && reward.perkState === 'triggered') {
+      var classAmount = rewardText(
+        reward.xpBonus,
+        reward.goldBonus,
+        0
+      );
+
+      if (classAmount) {
+        rows.push(
+          '<p class="adventure-combat-modifier is-class">' +
+          '<b>' +
+          escape(reward.classBonusReason || 'Class bonus') +
+          '</b>' +
+          '<span>' + escape(classAmount) + '</span>' +
+          '</p>'
+        );
+      }
+    }
+
+    if (reward && reward.bazaarApplied) {
+      var bazaarAmount = rewardText(
+        reward.bazaarXPBonus,
+        reward.bazaarGoldBonus,
+        0
+      );
+
+      if (bazaarAmount) {
+        rows.push(
+          '<p class="adventure-combat-modifier is-bazaar">' +
+          '<b>' +
+          escape(reward.bazaarItemName || 'Bazaar enchantment') +
+          '</b>' +
+          '<span>' + escape(bazaarAmount) + '</span>' +
+          '</p>'
+        );
+      }
+    }
+
+    if (artifact) {
+      var artifactAmount = '';
+
+      if (artifact.type === 'critical-chance') {
+        artifactAmount = rewardText(0, 0, artifact.value);
+      } else if (reward) {
+        artifactAmount = rewardText(
+          reward.artifactXPBonus,
+          reward.artifactGoldBonus,
+          reward.artifactCritBonus
+        );
+      }
+
+      rows.push(
+        '<p class="adventure-combat-modifier is-artifact rarity-' +
+        escape(artifact.rarity.toLowerCase()) +
+        '">' +
+        '<b>' + escape(artifact.name) + '</b>' +
+        '<span>' +
+        escape(artifact.label) +
+        (artifactAmount ? ' · ' + escape(artifactAmount) : '') +
+        '</span>' +
+        '</p>'
+      );
+    }
+
+    return rows.length
+      ? '<div class="adventure-combat-modifiers">' +
+      rows.join('') +
+      '</div>'
+      : '';
+  }
+
   function hash(value) {
     var number = 0;
     String(value || '').split('').forEach(function (character) {
@@ -40,8 +169,13 @@
   }
 
   function getBooks() {
-    try { return window.BookStorage.loadBooks(); }
-    catch (_) { return Promise.resolve([]); }
+    try {
+      return Promise.resolve(
+        JSON.parse(localStorage.getItem('bookshelf-data') || '{"books":[]}').books || []
+      );
+    } catch (_) {
+      return Promise.resolve([]);
+    }
   }
 
   function latestSession(sessions) {
@@ -87,20 +221,105 @@
     var combat = '';
 
     if (latest) {
-      var reward = window.BookShelfRewards ? window.BookShelfRewards.calculateSession(latest) : { xp: minutes(latest) * 10, gold: Math.max(1, Math.floor(minutes(latest) / 2)), bonus: '' };
-      var baseDamage = Math.floor(minutes(latest) * (1 + strength / 500));
-      var critical = (hash(latest.id) % 10000) < Math.round(critChance * 100);
-      var damage = critical ? Math.floor(baseDamage * 1.5) : baseDamage;
-      var rewardNote = reward.bonus ? ' · ' + reward.bonus : '';
-      combat = '<div class="adventure-combat-result"><span>' + (critical ? '✦ Critical Hit' : '⚔ Combat Result') + ' ' + tooltipButton(critical ? 'A critical hit deals 1.5 times the normal display damage. Its chance is based on Luck and is capped at 25%.' : 'Display damage is based on the latest session’s minutes and your Strength. It adds flavor to the reading quest and does not change your recorded minutes.', 'About combat result') + '</span><strong data-tooltip="This is display damage from your latest linked reading session. Base damage equals session minutes adjusted by Strength; a critical hit multiplies it by 1.5." tabindex="0">' + damage + ' damage</strong><p>' + minutes(latest) + ' minutes · +' + reward.xp + ' XP · +' + reward.gold + ' gold' + rewardNote + ' ' + tooltipButton('Session rewards are calculated from logged minutes: 10 XP per minute and at least 1 gold per 2 minutes, plus any eligible class bonus. XP and gold are added only after you claim pending rewards.', 'About session rewards') + '</p></div>';
+      var reward = window.BookShelfRewards
+        ? window.BookShelfRewards.calculateSession(latest)
+        : {
+          xp: minutes(latest) * 10,
+          gold: Math.max(1, Math.floor(minutes(latest) / 2)),
+          xpBonus: 0,
+          goldBonus: 0,
+          artifactXPBonus: 0,
+          artifactGoldBonus: 0,
+          artifactCritBonus: 0,
+          perkState: 'none',
+          bazaarApplied: false
+        };
+
+      var artifact = artifactPreview();
+
+      /*
+        Chronicle Compass changes live combat chance.
+        The reward transaction separately carries artifactCritBonus for
+        the reward-popup modifier row.
+      */
+      var combatArtifactCrit = artifact &&
+        artifact.type === 'critical-chance'
+        ? artifact.value
+        : 0;
+
+      var actualCritChance = Math.min(
+        100,
+        critChance + combatArtifactCrit
+      );
+
+      var baseDamage = Math.floor(
+        minutes(latest) * (1 + strength / 500)
+      );
+
+      var critical = (hash(latest.id) % 10000) <
+        Math.round(actualCritChance * 100);
+
+      var damage = critical
+        ? Math.floor(baseDamage * 1.5)
+        : baseDamage;
+
+      var modifiers = modifierRowsHtml(reward, artifact);
+
+      combat =
+        '<div class="adventure-combat-result">' +
+        '<span>' +
+        (critical ? '✦ Critical Hit' : '⚔ Combat Result') +
+        ' ' +
+        tooltipButton(
+          critical
+            ? 'A critical hit deals 1.5 times the normal display damage. Its chance is based on Luck and can be increased by equipped artifacts such as Chronicle Compass.'
+            : 'Display damage is based on the latest session’s minutes and your Strength. It adds flavor to the reading quest and does not change your recorded minutes.',
+          'About combat result'
+        ) +
+        '</span>' +
+
+        '<strong data-tooltip="This is display damage from your latest linked reading session. Base damage equals session minutes adjusted by Strength; a critical hit multiplies it by 1.5." tabindex="0">' +
+        damage + ' damage' +
+        '</strong>' +
+
+        '<p>' +
+        minutes(latest) + ' minutes · +' +
+        (Number(reward.xp) || 0) + ' XP · +' +
+        (Number(reward.gold) || 0) + ' gold ' +
+        tooltipButton(
+          'Session rewards are calculated from logged minutes, class bonuses, active Bazaar enchantments, and an equipped artifact. Nothing is awarded until the pending reward is claimed.',
+          'About session rewards'
+        ) +
+        '</p>' +
+
+        modifiers +
+        '</div>';
     } else {
       combat = '<p class="adventure-muted">Log time for this book to create your first combat result.</p>';
     }
 
     card.innerHTML =
-      '<div class="adventure-boss-top"><div><span class="adventure-label">Book Boss ' + tooltipButton('A themed reading-quest opponent based on the active book’s genre. It represents your progress, not a separate task you can fail.', 'About Book Boss') + '</span><h2>' + boss.boss + '</h2><p class="adventure-muted">' + active.title + '</p></div><b>⚔</b></div>' +
+      '<div class="adventure-boss-top"><div><span class="adventure-label">Current Reading Quest · Book Boss' + tooltipButton('A themed reading-quest opponent based on the active book’s genre. It represents your progress, not a separate task you can fail.', 'About Book Boss') + '</span><h2>' + boss.boss + '</h2><p class="adventure-muted">' + active.title + '</p></div><b>⚔</b></div>' +
       '<div class="adventure-boss-meta"><span data-tooltip="The boss region is chosen from the active book’s genre." tabindex="0">' + boss.region + '</span><span data-tooltip="Momentum is the total reading or listening time logged while this book is linked to a session." tabindex="0">' + totalMinutes + ' minutes of momentum</span></div>' +
-      '<div class="adventure-combat-stats"><span data-tooltip="Strength slightly increases display damage from your latest session." tabindex="0">STR ' + strength + '</span><span data-tooltip="Luck increases critical-hit chance. Critical chance starts at 5% and is capped at 25%." tabindex="0">LCK ' + luck + ' · ' + critDisplay + '% crit</span></div>' +
+      '<div class="adventure-combat-stats">' +
+      '<span data-tooltip="Strength slightly increases display damage from your latest session." tabindex="0">' +
+      'STR ' + strength +
+      '</span>' +
+
+      '<span data-tooltip="Luck increases critical-hit chance. Chronicle Compass adds its equipped artifact bonus to the final critical chance used in reading encounters." tabindex="0">' +
+      'LCK ' + luck + ' · ' +
+      Math.min(
+        100,
+        critChance + (
+          artifactPreview() &&
+            artifactPreview().type === 'critical-chance'
+            ? artifactPreview().value
+            : 0
+        )
+      ).toFixed(1).replace(/\\.0$/, '') +
+      '% crit' +
+      '</span>' +
+      '</div>' +
       combat +
       '<button type="button" class="adventure-combat-log" aria-label="Log time against this boss">Log Time Against Boss</button>';
 
@@ -120,7 +339,123 @@
     page.dataset.adventureCombatReady = 'true';
 
     var style = document.createElement('style');
-    style.textContent = '.adventure-combat-card{border-color:rgba(168,130,60,.52)}.adventure-boss-top{display:flex;justify-content:space-between;gap:12px}.adventure-boss-top h2{margin-bottom:3px}.adventure-boss-top>b{color:var(--gold,#A8823C);font-size:31px}.adventure-combat-tooltip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:4px;padding:0;border:1px solid currentColor;border-radius:50%;background:transparent;color:inherit;font:700 10px/1 sans-serif;vertical-align:middle;cursor:pointer}.adventure-combat-tooltip:focus-visible,.adventure-combat-result strong:focus-visible,.adventure-boss-meta [tabindex]:focus-visible,.adventure-combat-stats [tabindex]:focus-visible{outline:2px solid var(--gold,#A8823C);outline-offset:2px}.adventure-boss-meta{display:flex;justify-content:space-between;gap:10px;margin-top:12px;padding:9px 0;border-top:1px solid rgba(168,130,60,.18);border-bottom:1px solid rgba(168,130,60,.18);color:var(--muted,#8A8378);font-size:11px}.adventure-boss-meta [tabindex],.adventure-combat-stats [tabindex]{cursor:help}.adventure-combat-stats{display:flex;justify-content:space-between;gap:10px;margin-top:9px;color:var(--gold,#A8823C);font-size:11px}.adventure-combat-result{margin-top:12px;padding:12px;border-left:3px solid var(--gold,#A8823C);background:rgba(0,0,0,.13)}.adventure-combat-result span,.adventure-combat-result strong{display:block}.adventure-combat-result span{color:var(--gold,#A8823C);font-size:11px;text-transform:uppercase}.adventure-combat-result strong{margin-top:4px;font:22px Georgia,serif;cursor:help}.adventure-combat-result p{margin:4px 0 0;color:var(--muted,#8A8378);font-size:12px}.adventure-combat-log{width:100%;margin-top:13px;padding:11px;border:1px solid var(--gold,#A8823C);border-radius:3px;background:var(--accent,#8B3A3A);color:var(--paper-light,#F6F1E4)}';
+    style.textContent =
+      '.adventure-combat-card{' +
+      'border-color:rgba(168,130,60,.52)}' +
+
+      '.adventure-boss-top{' +
+      'display:flex;justify-content:space-between;gap:12px}' +
+
+      '.adventure-boss-top h2{' +
+      'margin-bottom:3px}' +
+
+      '.adventure-boss-top>b{' +
+      'color:var(--gold,#A8823C);font-size:31px}' +
+
+      '.adventure-combat-tooltip{' +
+      'display:inline-flex;align-items:center;justify-content:center;' +
+      'width:15px;height:15px;margin-left:4px;padding:0;' +
+      'border:1px solid currentColor;border-radius:50%;background:transparent;' +
+      'color:inherit;font:700 10px/1 sans-serif;vertical-align:middle;cursor:pointer}' +
+
+      '.adventure-combat-tooltip:focus-visible,' +
+      '.adventure-combat-result strong:focus-visible,' +
+      '.adventure-boss-meta [tabindex]:focus-visible,' +
+      '.adventure-combat-stats [tabindex]:focus-visible{' +
+      'outline:2px solid var(--gold,#A8823C);outline-offset:2px}' +
+
+      '.adventure-boss-meta{' +
+      'display:flex;justify-content:space-between;gap:10px;margin-top:12px;' +
+      'padding:9px 0;border-top:1px solid rgba(168,130,60,.18);' +
+      'border-bottom:1px solid rgba(168,130,60,.18);' +
+      'color:var(--muted,#8A8378);font-size:11px}' +
+
+      '.adventure-boss-meta [tabindex],' +
+      '.adventure-combat-stats [tabindex]{' +
+      'cursor:help}' +
+
+      '.adventure-combat-stats{' +
+      'display:flex;justify-content:space-between;gap:10px;margin-top:9px;' +
+      'color:var(--gold,#A8823C);font-size:11px}' +
+
+      '.adventure-combat-result{' +
+      'margin-top:12px;padding:12px;' +
+      'border-left:3px solid var(--gold,#A8823C);' +
+      'background:rgba(0,0,0,.13)}' +
+
+      '.adventure-combat-result>span,' +
+      '.adventure-combat-result>strong{' +
+      'display:block}' +
+
+      '.adventure-combat-result>span{' +
+      'color:var(--gold,#A8823C);font-size:11px;text-transform:uppercase}' +
+
+      '.adventure-combat-result>strong{' +
+      'margin-top:4px;font:22px Georgia,serif;cursor:help}' +
+
+      '.adventure-combat-result>p{' +
+      'margin:4px 0 0;color:var(--muted,#8A8378);font-size:12px}' +
+
+      '.adventure-combat-modifiers{' +
+      'margin-top:11px;padding-top:10px;' +
+      'border-top:1px solid rgba(168,130,60,.18)}' +
+
+      '.adventure-combat-modifier{' +
+      'margin:8px 0;color:var(--muted,#8A8378);font-size:11px;line-height:1.4}' +
+
+      '.adventure-combat-modifier b,' +
+      '.adventure-combat-modifier span{' +
+      'display:block}' +
+
+      '.adventure-combat-modifier b{' +
+      'color:var(--paper-light,#F6F1E4);font:600 12px Georgia,serif}' +
+
+      '.adventure-combat-modifier span{' +
+      'margin-top:2px;color:var(--muted,#8A8378)}' +
+
+      '.adventure-combat-modifier.is-bazaar b{' +
+      'color:var(--gold,#A8823C)}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-common b{' +
+      'color:#d7d0c4}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-common span{' +
+      'color:#b8b0a3}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-uncommon b{' +
+      'color:#79bd8d}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-uncommon span{' +
+      'color:#b7d9bf}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-rare b{' +
+      'color:#74a8e7}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-rare span{' +
+      'color:#b7d1ef}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-epic b{' +
+      'color:#c28ad9}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-epic span{' +
+      'color:#dfc1ec}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-legendary b{' +
+      'color:#d4a64f}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-legendary span{' +
+      'color:#f0d99d}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-mythic b{' +
+      'color:#e55353}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-mythic span{' +
+      'color:#ffb3b3}' +
+
+      '.adventure-combat-log{' +
+      'width:100%;margin-top:13px;padding:11px;' +
+      'border:1px solid var(--gold,#A8823C);border-radius:3px;' +
+      'background:var(--accent,#8B3A3A);color:var(--paper-light,#F6F1E4)}';
     document.head.appendChild(style);
 
     new MutationObserver(function () { setTimeout(render, 0); }).observe(page, { childList: true });

@@ -66,11 +66,6 @@
         longest: 0
       };
 
-    /*
-      Weekly quest markup is intentionally disabled in this recovery version.
-      The multiple-quest backend remains installed; this prevents a UI error
-      from blocking the entire Adventure page.
-    */
     var questHtml = '';
 
     page.className = 'adventure-page';
@@ -81,32 +76,18 @@
       '</header>' +
 
       '<main class="adventure-content">' +
-        '<section class="adventure-card">' +
-          '<span class="adventure-label">' +
-            tooltip(
-              'Current Reading Quest',
-              'Your current Reading book becomes the active quest. Log time to build its reading history and later earn completion rewards.',
-              'About Current Reading Quest'
-            ) +
-          '</span>' +
-          '<h2>' +
-            (reading ? reading.title : 'Choose your next book') +
-          '</h2>' +
-          '<p class="adventure-muted">' +
-            (reading
-              ? 'Log time to build momentum against this book’s boss.'
-              : 'Mark a book as Reading to begin an adventure.') +
-          '</p>' +
-        '</section>' +
 
         '<section class="adventure-card">' +
           '<span class="adventure-label">Rewards Ready</span>' +
           '<h2>Claim your progress</h2>' +
-          '<p class="adventure-muted">Claim completed reading sessions and boss rewards to add their XP and gold.</p>' +
+          '<p class="adventure-muted">' +
+            'Claim completed reading sessions and boss rewards to add their XP and gold.' +
+          '</p>' +
           '<div id="adventureRewardsMount"></div>' +
         '</section>' +
 
         '<section class="adventure-grid">' +
+
           '<section class="adventure-card">' +
             '<span class="adventure-label">' +
               tooltip(
@@ -130,9 +111,11 @@
             '<h2>' + finished + '</h2>' +
             '<p class="adventure-muted">books finished</p>' +
           '</section>' +
+
         '</section>' +
 
         '<section class="adventure-grid">' +
+
           '<section class="adventure-card">' +
             '<span class="adventure-label">' +
               tooltip(
@@ -149,16 +132,18 @@
             '<span class="adventure-label">' +
               tooltip(
                 'Longest Streak',
-                'Your highest number of consecutive days that each met the minimum of 10 logged reading or listening minutes.',
+                'Your highest number of consecutive days on which you logged at least 10 minutes of reading or listening time.',
                 'About Longest Streak'
               ) +
             '</span>' +
             '<h2>' + (Number(streak.longest) || 0) + '</h2>' +
             '<p class="adventure-muted">days achieved</p>' +
           '</section>' +
+
         '</section>' +
 
         questHtml +
+
       '</main>';
   }
 
