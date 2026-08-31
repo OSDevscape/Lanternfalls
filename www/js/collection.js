@@ -99,7 +99,8 @@
     }
 
     function page() {
-        return document.getElementById('navPlaceholder');
+        return document.getElementById('readQuestCollectionPanel') ||
+            document.getElementById('navPlaceholder');
     }
 
     function number(value) {
@@ -665,61 +666,61 @@
     }
 
     function relicListHtml(groups) {
-  if (!groups.length) {
-    return (
-      '<div class="collection-relic-empty">' +
-      '<b>No relics recovered yet</b>' +
-      '<span>' +
-      'Complete reading encounters to leave traces of your journeys in the Reading Realm.' +
-      '</span>' +
-      '</div>'
-    );
-  }
+        if (!groups.length) {
+            return (
+                '<div class="collection-relic-empty">' +
+                '<b>No relics recovered yet</b>' +
+                '<span>' +
+                'Complete reading encounters to leave traces of your journeys in the Reading Realm.' +
+                '</span>' +
+                '</div>'
+            );
+        }
 
-  return (
-    '<div class="collection-relic-groups">' +
-    groups.map(function (group) {
-      return (
-        '<details class="collection-relic-group" ' +
-        'data-relic-group="' + escape(group.id) + '">' +
+        return (
+            '<div class="collection-relic-groups">' +
+            groups.map(function (group) {
+                return (
+                    '<details class="collection-relic-group" ' +
+                    'data-relic-group="' + escape(group.id) + '">' +
 
-        '<summary class="collection-relic-group-header">' +
-        '<span class="collection-relic-group-title">' +
-        '<b>' + escape(group.label) + '</b>' +
-        '<small>' +
-        group.entries.length + ' relic type' +
-        (group.entries.length === 1 ? '' : 's') +
-        '</small>' +
-        '</span>' +
+                    '<summary class="collection-relic-group-header">' +
+                    '<span class="collection-relic-group-title">' +
+                    '<b>' + escape(group.label) + '</b>' +
+                    '<small>' +
+                    group.entries.length + ' relic type' +
+                    (group.entries.length === 1 ? '' : 's') +
+                    '</small>' +
+                    '</span>' +
 
-        '<em>' + group.total + ' recovered</em>' +
-        '</summary>' +
+                    '<em>' + group.total + ' recovered</em>' +
+                    '</summary>' +
 
-        '<div class="collection-relic-list">' +
-        group.entries.map(function (entry) {
-          return (
-            '<article class="collection-relic-item">' +
-            '<span class="collection-relic-mark">✦</span>' +
+                    '<div class="collection-relic-list">' +
+                    group.entries.map(function (entry) {
+                        return (
+                            '<article class="collection-relic-item">' +
+                            '<span class="collection-relic-mark">✦</span>' +
 
-            '<div class="collection-relic-copy">' +
-            '<b>' + escape(entry.name) + '</b>' +
-            '<span>' +
-            escape(group.label) + ' encounter relic' +
-            '</span>' +
-            '</div>' +
+                            '<div class="collection-relic-copy">' +
+                            '<b>' + escape(entry.name) + '</b>' +
+                            '<span>' +
+                            escape(group.label) + ' encounter relic' +
+                            '</span>' +
+                            '</div>' +
 
-            '<em>×' + entry.quantity + '</em>' +
-            '</article>'
-          );
-        }).join('') +
-        '</div>' +
+                            '<em>×' + entry.quantity + '</em>' +
+                            '</article>'
+                        );
+                    }).join('') +
+                    '</div>' +
 
-        '</details>'
-      );
-    }).join('') +
-    '</div>'
-  );
-}
+                    '</details>'
+                );
+            }).join('') +
+            '</div>'
+        );
+    }
 
     function render() {
         var target = page();
@@ -837,6 +838,15 @@
             '</section>' +
 
             '</main>';
+        target.classList.remove('collection-slide-in');
+
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                if (target.classList.contains('collection-page')) {
+                    target.classList.add('collection-slide-in');
+                }
+            });
+        });
 
         var backButton = target.querySelector('[data-collection-back]');
 
@@ -905,7 +915,7 @@
                 });
             });
         }
-                var relicDetails = target.querySelector(
+        var relicDetails = target.querySelector(
             '.collection-relic-details'
         );
 
@@ -924,7 +934,7 @@
         }
     }
 
-    
+
 
     function installStyles() {
         if (document.getElementById('collectionPageStyles')) {
@@ -938,7 +948,13 @@
         style.textContent =
             '#navPlaceholder.collection-page{' +
             'display:flex;flex-direction:column;padding:0;overflow:hidden;' +
-            'background:var(--bg,#14181C)}' +
+            'background:var(--bg,#14181C);' +
+            'transform:translateX(100%);' +
+            'transition:transform .60s cubic-bezier(.22,.61,.36,1);' +
+            'will-change:transform}' +
+
+            '#navPlaceholder.collection-page.collection-slide-in{' +
+            'transform:translateX(0)}' +
 
             '.collection-header{' +
             'display:flex;align-items:center;gap:14px;padding:20px;' +
@@ -951,8 +967,14 @@
             'margin:4px 0 0;color:var(--muted,#8A8378);font-size:12px}' +
 
             '.collection-back{' +
-            'flex:0 0 auto;padding:7px 0;border:0;background:transparent;' +
-            'color:var(--gold,#A8823C);font:600 12px inherit;cursor:pointer}' +
+            'flex:0 0 auto;min-height:34px;padding:8px 10px;' +
+            'border:1px solid rgba(168,130,60,.55);border-radius:4px;' +
+            'background:rgba(0,0,0,.18);color:var(--accent,#8B3A3A);' +
+            'font:inherit;font-size:11px;font-weight:bold;cursor:pointer;' +
+            'white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}' +
+
+            '.collection-back:active{' +
+            'transform:translateY(1px);background:rgba(168,130,60,.18)}' +
 
             '.collection-back:focus-visible,.collection-equip-button:focus-visible,' +
             '.collection-secondary-button:focus-visible{' +
@@ -1042,6 +1064,23 @@
 
             '.collection-rarity-progress b{' +
             'color:var(--paper-light,#F6F1E4);font:700 17px Georgia,serif}' +
+            '.collection-rarity-progress .rarity-common b{' +
+            'color:#d7d0c4}' +
+
+            '.collection-rarity-progress .rarity-uncommon b{' +
+            'color:#79bd8d}' +
+
+            '.collection-rarity-progress .rarity-rare b{' +
+            'color:#74a8e7}' +
+
+            '.collection-rarity-progress .rarity-epic b{' +
+            'color:#c28ad9}' +
+
+            '.collection-rarity-progress .rarity-legendary b{' +
+            'color:#d4a64f}' +
+
+            '.collection-rarity-progress .rarity-mythic b{' +
+            'color:#e55353}' +
 
             '.collection-rarity-progress small{' +
             'color:var(--muted,#8A8378);font-size:10px}' +
@@ -1173,7 +1212,7 @@
             '.collection-relic-empty b{' +
             'color:var(--paper-light,#F6F1E4);font:16px Georgia,serif}' +
 
-                        '.collection-relic-groups{' +
+            '.collection-relic-groups{' +
             'display:flex;flex-direction:column;gap:10px}' +
 
             '.collection-relic-group{' +
