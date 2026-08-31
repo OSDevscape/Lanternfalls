@@ -158,9 +158,9 @@
         value: 5
       },
       'Wanderer’s Satchel': {
-        label: '+1 gold on claimed sessions of 30+ minutes',
-        type: 'long-session-gold',
-        value: 1
+        label: '+10% gold on claimed reading sessions',
+        type: 'percent-session-gold',
+        value: 10
       },
       'Moonlit Quill': {
         label: '+10% XP on claimed reading sessions',
@@ -318,39 +318,39 @@
   }
 
   function render() {
-  var page = document.getElementById('navPlaceholder');
+    var page = document.getElementById('navPlaceholder');
 
-  if (
-    !page ||
-    page.classList.contains('hidden') ||
-    !page.classList.contains('adventure-page') ||
-    page.dataset.lootRendering
-  ) {
-    return;
-  }
-
-  var content = page.querySelector('.adventure-content');
-
-  if (!content) {
-    return;
-  }
-
-  page.dataset.lootRendering = 'true';
-
-  Array.prototype.forEach.call(
-    content.querySelectorAll(
-      '.adventure-trophies-card,' +
-      '.adventure-inventory-card,' +
-      '.adventure-relics-card,' +
-      '.adventure-relic-inventory-card'
-    ),
-    function (card) {
-      card.remove();
+    if (
+      !page ||
+      page.classList.contains('hidden') ||
+      !page.classList.contains('adventure-page') ||
+      page.dataset.lootRendering
+    ) {
+      return;
     }
-  );
 
-  page.dataset.lootRendering = '';
-}
+    var content = page.querySelector('.adventure-content');
+
+    if (!content) {
+      return;
+    }
+
+    page.dataset.lootRendering = 'true';
+
+    Array.prototype.forEach.call(
+      content.querySelectorAll(
+        '.adventure-trophies-card,' +
+        '.adventure-inventory-card,' +
+        '.adventure-relics-card,' +
+        '.adventure-relic-inventory-card'
+      ),
+      function (card) {
+        card.remove();
+      }
+    );
+
+    page.dataset.lootRendering = '';
+  }
 
   function install() {
     var page = document.getElementById('navPlaceholder');

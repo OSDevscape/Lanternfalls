@@ -72,77 +72,88 @@
 
     page.innerHTML =
       '<header class="adventure-header">' +
-        '<div><h1>Adventure</h1><p>Read minutes. Become legendary.</p></div>' +
+      '<div><h1>Adventure</h1><p>Read minutes. Become legendary.</p></div>' +
       '</header>' +
 
       '<main class="adventure-content">' +
+      '<section id="adventureBossMount" class="adventure-boss-mount">' +
+      '<section class="adventure-card adventure-boss-skeleton" aria-hidden="true">' +
+      '<span class="adventure-label">Current Reading Quest · Book Boss</span>' +
+      '<div class="adventure-skeleton-title"></div>' +
+      '<div class="adventure-skeleton-book"></div>' +
+      '<div class="adventure-skeleton-meta"></div>' +
+      '<div class="adventure-skeleton-stats"></div>' +
+      '<div class="adventure-skeleton-result"></div>' +
+      '<div class="adventure-skeleton-button"></div>' +
+      '</section>' +
+      '</section>' +
 
-        '<section class="adventure-card">' +
-          '<span class="adventure-label">Rewards Ready</span>' +
-          '<h2>Claim your progress</h2>' +
-          '<p class="adventure-muted">' +
-            'Claim completed reading sessions and boss rewards to add their XP and gold.' +
-          '</p>' +
-          '<div id="adventureRewardsMount"></div>' +
-        '</section>' +
+      '<section class="adventure-card">' +
+      '<span class="adventure-label">Rewards Ready</span>' +
+      '<h2>Claim your progress</h2>' +
+      '<p class="adventure-muted">' +
+      'Claim completed reading sessions and boss rewards to add their XP and gold.' +
+      '</p>' +
+      '<div id="adventureRewardsMount"></div>' +
+      '</section>' +
 
-        '<section class="adventure-grid">' +
+      '<section class="adventure-grid">' +
 
-          '<section class="adventure-card">' +
-            '<span class="adventure-label">' +
-              tooltip(
-                'Reading Time',
-                'Total minutes recorded across reading and listening sessions. Logging time does not award XP or gold until rewards are claimed.',
-                'About Reading Time'
-              ) +
-            '</span>' +
-            '<h2>' + minutes + '</h2>' +
-            '<p class="adventure-muted">minutes recorded</p>' +
-          '</section>' +
+      '<section class="adventure-card">' +
+      '<span class="adventure-label">' +
+      tooltip(
+        'Reading Time',
+        'Total minutes recorded across reading and listening sessions. Logging time does not award XP or gold until rewards are claimed.',
+        'About Reading Time'
+      ) +
+      '</span>' +
+      '<h2>' + minutes + '</h2>' +
+      '<p class="adventure-muted">minutes recorded</p>' +
+      '</section>' +
 
-          '<section class="adventure-card">' +
-            '<span class="adventure-label">' +
-              tooltip(
-                'Completed',
-                'The number of books marked Finished in your library.',
-                'About Completed Books'
-              ) +
-            '</span>' +
-            '<h2>' + finished + '</h2>' +
-            '<p class="adventure-muted">books finished</p>' +
-          '</section>' +
+      '<section class="adventure-card">' +
+      '<span class="adventure-label">' +
+      tooltip(
+        'Completed',
+        'The number of books marked Finished in your library.',
+        'About Completed Books'
+      ) +
+      '</span>' +
+      '<h2>' + finished + '</h2>' +
+      '<p class="adventure-muted">books finished</p>' +
+      '</section>' +
 
-        '</section>' +
+      '</section>' +
 
-        '<section class="adventure-grid">' +
+      '<section class="adventure-grid">' +
 
-          '<section class="adventure-card">' +
-            '<span class="adventure-label">' +
-              tooltip(
-                'Reading Streak',
-                'Your current streak is the number of consecutive days on which you log at least 10 minutes of reading or listening time.',
-                'About Reading Streak'
-              ) +
-            '</span>' +
-            '<h2>' + (Number(streak.current) || 0) + '</h2>' +
-            '<p class="adventure-muted">current days</p>' +
-          '</section>' +
+      '<section class="adventure-card">' +
+      '<span class="adventure-label">' +
+      tooltip(
+        'Reading Streak',
+        'Your current streak is the number of consecutive days on which you log at least 10 minutes of reading or listening time.',
+        'About Reading Streak'
+      ) +
+      '</span>' +
+      '<h2>' + (Number(streak.current) || 0) + '</h2>' +
+      '<p class="adventure-muted">current days</p>' +
+      '</section>' +
 
-          '<section class="adventure-card">' +
-            '<span class="adventure-label">' +
-              tooltip(
-                'Longest Streak',
-                'Your highest number of consecutive days on which you logged at least 10 minutes of reading or listening time.',
-                'About Longest Streak'
-              ) +
-            '</span>' +
-            '<h2>' + (Number(streak.longest) || 0) + '</h2>' +
-            '<p class="adventure-muted">days achieved</p>' +
-          '</section>' +
+      '<section class="adventure-card">' +
+      '<span class="adventure-label">' +
+      tooltip(
+        'Longest Streak',
+        'Your highest number of consecutive days on which you logged at least 10 minutes of reading or listening time.',
+        'About Longest Streak'
+      ) +
+      '</span>' +
+      '<h2>' + (Number(streak.longest) || 0) + '</h2>' +
+      '<p class="adventure-muted">days achieved</p>' +
+      '</section>' +
 
-        '</section>' +
+      '</section>' +
 
-        questHtml +
+      questHtml +
 
       '</main>';
   }
@@ -175,7 +186,47 @@
       '.adventure-muted{margin:7px 0 0;color:var(--muted,#8A8378);font-size:13px;line-height:1.4}' +
       '.adventure-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}' +
       '.adventure-grid .adventure-card{min-width:0}' +
-      '.adventure-grid h2{font-size:26px}' +
+      '.adventure-grid h2{font-size:26px}' + '.adventure-boss-mount{min-height:310px}' +
+
+      '.adventure-boss-skeleton{' +
+      'min-height:254px;' +
+      'overflow:hidden;' +
+      'pointer-events:none}' +
+
+      '.adventure-skeleton-title,' +
+      '.adventure-skeleton-book,' +
+      '.adventure-skeleton-meta,' +
+      '.adventure-skeleton-stats,' +
+      '.adventure-skeleton-result,' +
+      '.adventure-skeleton-button{' +
+      'display:block;' +
+      'border-radius:3px;' +
+      'background:linear-gradient(90deg,rgba(246,241,228,.07),rgba(246,241,228,.15),rgba(246,241,228,.07));' +
+      'background-size:220% 100%;' +
+      'animation:adventure-skeleton-shimmer 1.15s ease-in-out infinite}' +
+
+      '.adventure-skeleton-title{' +
+      'width:62%;height:25px;margin:9px 0 8px}' +
+
+      '.adventure-skeleton-book{' +
+      'width:46%;height:14px;margin-bottom:15px}' +
+
+      '.adventure-skeleton-meta{' +
+      'height:30px;margin-bottom:10px;border-top:1px solid rgba(168,130,60,.18);border-bottom:1px solid rgba(168,130,60,.18)}' +
+
+      '.adventure-skeleton-stats{' +
+      'width:100%;height:14px;margin-bottom:13px}' +
+
+      '.adventure-skeleton-result{' +
+      'height:53px;margin-bottom:13px;border-left:3px solid rgba(168,130,60,.45)}' +
+
+      '.adventure-skeleton-button{' +
+      'height:39px;width:100%}' +
+
+      '@keyframes adventure-skeleton-shimmer{' +
+      '0%{background-position:100% 0}' +
+      '100%{background-position:-120% 0}' +
+      '}' +
       '.hidden{display:none!important}';
 
     document.head.appendChild(style);

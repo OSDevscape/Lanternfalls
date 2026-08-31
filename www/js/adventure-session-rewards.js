@@ -237,10 +237,14 @@
         (Number(item.artifactCritBonus) || 0)
       )
     ) {
+      var artifactXPBonus = Number(item.artifactXPBonus) || 0;
+      var artifactGoldBonus = Number(item.artifactGoldBonus) || 0;
+      var artifactCritBonus = Number(item.artifactCritBonus) || 0;
+
       var artifactReward = rewardText(
-        item.artifactXPBonus,
-        item.artifactGoldBonus,
-        item.artifactCritBonus
+        artifactXPBonus,
+        artifactGoldBonus,
+        0
       );
 
       var artifactDescription = String(

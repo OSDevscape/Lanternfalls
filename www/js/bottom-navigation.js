@@ -207,9 +207,30 @@
       return true;
     }
 
+    function closeCollectionOverlay() {
+      var collection = window.BookShelfCollectionOverlay;
+
+      if (
+        !collection ||
+        typeof collection.isOpen !== 'function' ||
+        !collection.isOpen()
+      ) {
+        return false;
+      }
+
+      if (typeof collection.back === 'function') {
+        collection.back();
+      } else if (typeof collection.close === 'function') {
+        collection.close();
+      }
+
+      return true;
+    }
+
     function handleBackButton() {
       if (closeBookDetails()) return;
       if (closeBookwyrmBazaar()) return;
+      if (closeCollectionOverlay()) return;
       if (closeBossVictory()) return;
       if (closeFormView()) return;
       if (closeStatusPage()) return;

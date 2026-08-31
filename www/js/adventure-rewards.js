@@ -2138,10 +2138,68 @@
     var className = classForBattleLog();
     var strength = battleStrength();
     var luck = battleLuck();
+
+    var baseCritChance = Math.min(25, battleCritChance(luck));
+    var artifactCritBonus = 0;
+    var artifactItemName = '';
+    var artifactItemRarity = '';
+
+    if (
+      window.BookShelfArtifacts &&
+      typeof window.BookShelfArtifacts.equipped === 'function' &&
+      typeof window.BookShelfArtifacts.effectFor === 'function'
+    ) {
+      var equippedArtifact = window.BookShelfArtifacts.equipped();
+      var artifactEffect = window.BookShelfArtifacts.effectFor(equippedArtifact);
+
+      if (
+        equippedArtifact &&
+        artifactEffect &&
+        artifactEffect.type === 'critical-chance'
+      ) {
+        artifactCritBonus = Math.max(
+          0,
+          Number(artifactEffect.value) || 0
+        );
+
+        artifactItemName = String(equippedArtifact.name || '');
+        artifactItemRarity = String(equippedArtifact.rarity || 'Common');
+      }
+    }
+
     var critChance = Math.min(
-      25,
-      battleCritChance(luck) + artifactCritBonus()
+      100,
+      baseCritChance + artifactCritBonus
     );
+
+    if (
+      window.BookShelfArtifacts &&
+      typeof window.BookShelfArtifacts.equipped === 'function' &&
+      typeof window.BookShelfArtifacts.effectFor === 'function'
+    ) {
+      var equippedArtifact = window.BookShelfArtifacts.equipped();
+      var artifactEffect = window.BookShelfArtifacts.effectFor(equippedArtifact);
+
+      if (
+        equippedArtifact &&
+        artifactEffect &&
+        artifactEffect.type === 'critical-chance'
+      ) {
+        artifactCritBonus = Math.max(
+          0,
+          Number(artifactEffect.value) || 0
+        );
+
+        artifactItemName = String(equippedArtifact.name || '');
+        artifactItemRarity = String(equippedArtifact.rarity || 'Common');
+      }
+    }
+
+    var critChance = Math.min(
+      100,
+      baseCritChance + artifactCritBonus
+    );
+
     var encounters = [];
 
     for (var index = 0; index < durations.length; index += 1) {
@@ -2254,10 +2312,17 @@
       version: 3,
       sessionId: sessionId,
       bookId: book.id || '',
-      bookTitle: book.title || (session || {}).bookTitle || 'Reading session',
+      bookTitle: book.title || session.bookTitle || 'Reading session',
       genre: book.genre || '',
       minutes: minutes,
       encounterCount: encounters.length,
+
+      baseCritChance: baseCritChance,
+      artifactCritBonus: artifactCritBonus,
+      criticalChanceUsed: critChance,
+      artifactItemName: artifactItemName,
+      artifactItemRarity: artifactItemRarity,
+
       encounters: encounters
     };
   }

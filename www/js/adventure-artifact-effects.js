@@ -10,17 +10,25 @@
   }
 
   function equippedArtifact() {
-    var loot = read(
-      LOOT_KEY,
-      '{"items":[],"equippedItemId":""}'
+    var selection = read(
+      'bookshelf-adventure-artifacts-v1',
+      '{"version":1,"equippedId":"","equippedName":""}'
     );
 
-    var equippedId = String((loot || {}).equippedItemId || '');
-    var items = Array.isArray((loot || {}).items) ? loot.items : [];
+    var equippedId = String((selection || {}).equippedId || '');
 
     if (!equippedId) {
       return null;
     }
+
+    var loot = read(
+      LOOT_KEY,
+      '{"items":[]}'
+    );
+
+    var items = Array.isArray((loot || {}).items)
+      ? loot.items
+      : [];
 
     return items.filter(function (item) {
       return item &&
@@ -58,9 +66,9 @@
         value: 5
       },
       'Wanderer’s Satchel': {
-        label: '+1 gold on claimed sessions of 30+ minutes',
-        type: 'long-session-gold',
-        value: 1
+        label: '+10% gold on claimed reading sessions',
+        type: 'percent-session-gold',
+        value: 10
       },
       'Moonlit Quill': {
         label: '+10% XP on claimed reading sessions',
@@ -73,9 +81,9 @@
         value: 10
       },
       'Chronicle Compass': {
-        label: '+5% critical-hit chance in reading encounters',
+        label: '+8% critical-hit chance in reading encounters',
         type: 'critical-chance',
-        value: 5
+        value: 8
       },
       'Runeshelf Reliquary': {
         label: '+15% XP on claimed sessions and +1 gold',
@@ -217,8 +225,6 @@
     reward.artifactGoldBonus = applied.goldBonus;
     reward.artifactCritBonus = applied.critBonus;
 
-    reward.xpBonus = Math.max(0, Number(reward.xpBonus) || 0) + applied.xpBonus;
-    reward.goldBonus = Math.max(0, Number(reward.goldBonus) || 0) + applied.goldBonus;
     reward.xp = Math.max(0, Number(reward.xp) || 0) + applied.xpBonus;
     reward.gold = Math.max(0, Number(reward.gold) || 0) + applied.goldBonus;
 
@@ -249,51 +255,8 @@
     return true;
   }
 
-  function installCritHook() {
-    if (
-      !window.BookShelfRewards ||
-      window.BookShelfRewards.__artifactCritInstalled
-    ) {
-      return false;
-    }
-
-    var originalCreateBattleLog = window.BookShelfRewards.createBattleLog;
-
-    if (typeof originalCreateBattleLog !== 'function') {
-      return false;
-    }
-
-    window.BookShelfRewards.createBattleLog = function (session, reward) {
-      var artifact = equippedArtifact();
-      var effect = effectFor(artifact);
-      var extraCritChance = effect.type === 'critical-chance'
-        ? Math.max(0, Number(effect.value) || 0)
-        : 0;
-
-      /*
-        The actual battle-log generator gets its critical chance internally.
-        We preserve its output and annotate the resulting encounter log with
-        the equipped artifact rather than altering random combat outcomes here.
-      */
-      var battleLog = originalCreateBattleLog(session, reward);
-
-      if (battleLog && extraCritChance) {
-        battleLog.artifactCritBonus = extraCritChance;
-        battleLog.artifactItemName = artifact.name;
-      }
-
-      return battleLog;
-    };
-
-    window.BookShelfRewards.__artifactCritInstalled = true;
-    return true;
-  }
-
   function install() {
-    var installedRewards = installRewardHook();
-    var installedCrit = installCritHook();
-
-    if (!installedRewards || !installedCrit) {
+    if (!installRewardHook()) {
       setTimeout(install, 100);
     }
   }

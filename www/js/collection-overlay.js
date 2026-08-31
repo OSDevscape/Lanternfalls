@@ -1,18 +1,20 @@
 (function () {
   var PANEL_ID = 'readQuestCollectionPanel';
-  var REALM_ID = 'readQuestCollectionRealmBackdrop';
   var TRANSITION_MS = 260;
+  var closeTimer = null;
 
   function panel() {
     return document.getElementById(PANEL_ID);
   }
 
-  function realmBackdrop() {
-    return document.getElementById(REALM_ID);
-  }
-
   function placeholder() {
     return document.getElementById('navPlaceholder');
+  }
+
+  function realmTab() {
+    return document.querySelector(
+      '#bottomNavigation [data-page="realm"]'
+    );
   }
 
   function isOpen() {
@@ -42,112 +44,39 @@
     return target;
   }
 
-  function ensureRealmBackdrop() {
-    var target = realmBackdrop();
-
-    if (target) {
-      return target;
-    }
-
-    target = document.createElement('section');
-    target.id = REALM_ID;
-    target.className = 'readquest-collection-realm-backdrop hidden';
-    target.setAttribute('aria-label', 'Realm');
-
-    document.body.appendChild(target);
-
-    return target;
-  }
-
-  function captureRealm() {
-    var source = placeholder();
-    var backdrop = ensureRealmBackdrop();
-
-    /*
-      The Collection button is pressed while Realm is visible in
-      #navPlaceholder. Preserve that exact already-rendered Realm markup
-      before normal navigation replaces the placeholder with Collection.
-    */
-    if (
-      source &&
-      source.classList.contains('realm-page') &&
-      !source.classList.contains('hidden')
-    ) {
-      backdrop.className = 'readquest-collection-realm-backdrop realm-page';
-      backdrop.innerHTML = source.innerHTML;
-      backdrop.classList.remove('hidden');
-    }
-  }
-
-  function showRealmBehindCollection() {
-    var backdrop = ensureRealmBackdrop();
-    var routePlaceholder = placeholder();
-
-    /*
-      Keep the actual shared navigation placeholder hidden. The retained Realm
-      backdrop is now the visual page below Collection during its exit.
-    */
-    if (routePlaceholder) {
-      routePlaceholder.className = 'hidden';
-      routePlaceholder.innerHTML = '';
-    }
-
-    if (backdrop.innerHTML) {
-      backdrop.classList.remove('hidden');
-    }
-  }
-
-  function hideRealmBackdrop() {
-    var backdrop = realmBackdrop();
-
-    if (!backdrop) {
-      return;
-    }
-
-    backdrop.classList.add('hidden');
-    backdrop.innerHTML = '';
-    backdrop.className = 'readquest-collection-realm-backdrop hidden';
-  }
-
   function renderCollection() {
-    var target = ensurePanel();
-
     if (
       window.BookShelfCollection &&
       typeof window.BookShelfCollection.render === 'function'
     ) {
       window.BookShelfCollection.render();
     }
-
-    return target;
   }
 
   function open() {
     var target = ensurePanel();
     var routePlaceholder = placeholder();
 
-    /*
-      This runs when the Collection destination is chosen from Realm. Capture
-      Realm first, while it is still present beneath the new Collection route.
-    */
-    captureRealm();
-
-    if (routePlaceholder) {
-      routePlaceholder.classList.add('hidden');
+    if (closeTimer) {
+      clearTimeout(closeTimer);
+      closeTimer = null;
     }
 
-    target.classList.add('hidden');
-    target.classList.remove('is-open');
-    target.classList.remove('collection-page');
+    /*
+      Keep Realm in the shared placeholder underneath. Collection is a visual
+      overlay, not an independently routed page.
+    */
+    if (routePlaceholder) {
+      routePlaceholder.classList.remove('hidden');
+    }
 
-    target.classList.remove('hidden');
-    target.classList.add('collection-page');
-    target.classList.add('collection-preparing');
+    target.className =
+      'readquest-collection-panel collection-page collection-preparing';
 
     renderCollection();
 
     /*
-      Commit translateX(100%) without a transition before beginning the entry.
+      Commit the full right-edge start position before enabling the slide.
     */
     void target.offsetWidth;
 
@@ -161,51 +90,40 @@
     });
   }
 
-  function close(options) {
-    options = options || {};
-
+  function close() {
     var target = panel();
 
     if (!target || target.classList.contains('hidden')) {
       return false;
     }
 
-    /*
-      Realm must be visible below Collection before .is-open is removed.
-      No bottom-navigation tab is clicked here, so Adventure never receives
-      a transient navigation/render cycle.
-    */
-    if (options.returnToRealm) {
-      showRealmBehindCollection();
+    if (closeTimer) {
+      clearTimeout(closeTimer);
+      closeTimer = null;
     }
 
     target.classList.remove('is-open');
 
-    setTimeout(function () {
-      if (!target.classList.contains('is-open')) {
-        target.classList.add('hidden');
-        target.innerHTML = '';
+    closeTimer = setTimeout(function () {
+      closeTimer = null;
+
+      if (target.classList.contains('is-open')) {
+        return;
       }
 
-      /*
-        Once the outgoing panel is gone, restore real Realm navigation only
-        if Collection was closed via its Realm button. This occurs after the
-        visible transition, so it cannot cause a flash behind the panel.
-      */
-      if (options.returnToRealm) {
-        hideRealmBackdrop();
-
-        var realmTab = document.querySelector(
-          '#bottomNavigation [data-page="realm"]'
-        );
-
-        if (realmTab) {
-          realmTab.click();
-        }
-      }
+      target.className = 'readquest-collection-panel hidden';
+      target.innerHTML = '';
     }, TRANSITION_MS);
 
     return true;
+  }
+
+  /*
+    Bazaar's native Back handler asks its panel to go back one layer.
+    Collection has only one layer, so Back simply closes it to Realm.
+  */
+  function back() {
+    return close();
   }
 
   function installStyles() {
@@ -218,38 +136,37 @@
     style.id = 'readQuestCollectionOverlayStyles';
 
     style.textContent =
-      '#' + REALM_ID + '{' +
-      'position:fixed;z-index:84;inset:0;' +
-      'display:flex;flex-direction:column;overflow:hidden;' +
-      'background:var(--bg,#14181C);color:var(--paper-light,#F6F1E4)}' +
-
-      '#' + REALM_ID + '.hidden{' +
-      'display:none!important}' +
-
       '#' + PANEL_ID + '{' +
-      'position:fixed;z-index:1100;inset:0;' +
-      'display:flex;flex-direction:column;overflow:hidden;' +
-      'background:var(--bg,#14181C);color:var(--paper-light,#F6F1E4);' +
-      'transform:translateX(100%);' +
-      'transition:transform .26s ease;' +
-      'will-change:transform}' +
-
-      '#' + PANEL_ID + '.collection-preparing{' +
-      'transition:none!important;' +
-      'transform:translateX(100%)!important}' +
+        'position:fixed;z-index:1100;inset:0;' +
+        'display:flex;flex-direction:column;overflow:hidden;' +
+        'background:var(--bg,#14181C);' +
+        'color:var(--paper-light,#F6F1E4);' +
+        'transform:translateX(100%);' +
+        'transition:transform .26s ease;' +
+        'will-change:transform' +
+      '}' +
 
       '#' + PANEL_ID + '.hidden{' +
-      'display:none!important}' +
+        'display:none!important' +
+      '}' +
+
+      '#' + PANEL_ID + '.collection-preparing{' +
+        'transition:none!important;' +
+        'transform:translateX(100%)!important' +
+      '}' +
 
       '#' + PANEL_ID + '.is-open{' +
-      'transform:translateX(0)}' +
+        'transform:translateX(0)' +
+      '}' +
 
       '#' + PANEL_ID + '.collection-page{' +
-      'padding:0!important;' +
-      'background:var(--bg,#14181C)!important}' +
+        'padding:0!important;' +
+        'background:var(--bg,#14181C)!important' +
+      '}' +
 
       '#' + PANEL_ID + '.collection-page .collection-content{' +
-      'flex:1}';
+        'flex:1' +
+      '}';
 
     document.head.appendChild(style);
   }
@@ -257,40 +174,30 @@
   function install() {
     installStyles();
     ensurePanel();
-    ensureRealmBackdrop();
 
     /*
-      Capture Realm during the click phase, before bottom-navigation handles
-      the hidden Collection route and replaces #navPlaceholder.
+      Realm's Collection button normally calls the hidden route button.
+      Intercept it so Collection is never added to bottom-navigation history.
     */
     document.addEventListener('click', function (event) {
-      var destination = event.target.closest('[data-realm-open="collection"]');
+      var destination = event.target.closest(
+        '[data-realm-open="collection"]'
+      );
 
-      if (destination) {
-        captureRealm();
-      }
-    }, true);
-
-    window.addEventListener('bookshelf-navigation-changed', function (event) {
-      var current = event.detail && event.detail.page;
-
-      if (current === 'collection') {
-        open();
+      if (!destination) {
         return;
       }
 
-      /*
-        If the person navigates away with a bottom-nav tab while Collection is
-        open, let its exit animation run but do not force a Realm restore.
-      */
-      if (isOpen()) {
-        close({ returnToRealm: false });
-      }
-    });
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      open();
+    }, true);
 
     /*
-      Replace Collection's original back-button behavior. It previously clicks
-      the Realm tab immediately; we take control in capture phase instead.
+      Collection's visible back button uses the same close path as Android
+      native Back. Realm stays mounted below the sliding panel.
     */
     document.addEventListener('click', function (event) {
       var button = event.target.closest('[data-collection-back]');
@@ -303,13 +210,14 @@
       event.stopPropagation();
       event.stopImmediatePropagation();
 
-      close({ returnToRealm: true });
+      back();
     }, true);
   }
 
   window.BookShelfCollectionOverlay = {
     open: open,
     close: close,
+    back: back,
     isOpen: isOpen
   };
 

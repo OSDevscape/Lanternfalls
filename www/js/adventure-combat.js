@@ -188,10 +188,13 @@
     var page = document.getElementById('navPlaceholder');
     if (!page || page.classList.contains('hidden') || !page.classList.contains('adventure-page')) return;
     var content = page.querySelector('.adventure-content');
-    if (!content) return;
+    var mount = page.querySelector('#adventureBossMount');
 
-    var old = content.querySelector('.adventure-combat-card');
-    if (old) old.remove();
+    if (!content || !mount) {
+      return;
+    }
+
+    mount.innerHTML = '';
 
     var books = await getBooks();
     if (!page.classList.contains('adventure-page')) return;
@@ -202,7 +205,7 @@
 
     if (!active) {
       card.innerHTML = '<span class="adventure-label">Book Boss ' + tooltipButton('Each book marked Reading receives a themed Book Boss. Mark a book as Reading to begin its reading quest.', 'About Book Boss') + '</span><h2>No active dungeon</h2><p class="adventure-muted">Mark a book as Reading to summon its boss and begin earning combat moments.</p>';
-      content.appendChild(card);
+      mount.appendChild(card);
       return;
     }
 
@@ -323,9 +326,7 @@
       combat +
       '<button type="button" class="adventure-combat-log" aria-label="Log time against this boss">Log Time Against Boss</button>';
 
-    var progression = content.querySelector('.adventure-progression-card');
-    if (progression && progression.nextSibling) content.insertBefore(card, progression.nextSibling);
-    else content.insertBefore(card, content.firstChild);
+    mount.appendChild(card);
 
     card.querySelector('.adventure-combat-log').onclick = function () {
       var profileButton = document.querySelector('#bottomNavigation [data-page="profile"]');
