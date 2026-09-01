@@ -83,7 +83,24 @@
   }
 
   function day(value) {
-    var date = new Date(value || Date.now());
+    var date;
+
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return value;
+    }
+
+    if (
+      typeof value === 'number' ||
+      (typeof value === 'string' && /^\d{10,}$/.test(value))
+    ) {
+      date = new Date(Number(value));
+    } else {
+      date = new Date(value || Date.now());
+    }
+
+    if (isNaN(date.getTime())) {
+      date = new Date();
+    }
 
     return date.getFullYear() + '-' +
       String(date.getMonth() + 1).padStart(2, '0') + '-' +
