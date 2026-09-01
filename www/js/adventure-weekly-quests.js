@@ -18,6 +18,60 @@
             'aria-expanded="false">ⓘ</button>';
     }
 
+    function weeklyQuestFireworks(overlay) {
+        var colors = [
+            '#ffd369',
+            '#ff7a18',
+            '#ff4d6d',
+            '#9c6bff',
+            '#25c8ff',
+            '#a9e34b'
+        ];
+
+        for (var burst = 0; burst < 5; burst += 1) {            setTimeout(function (burstNumber) {
+                return function () {
+                    if (!overlay || !overlay.isConnected) {
+                        return;
+                    }
+
+                    var centerX = 24 + ((burstNumber * 19) % 55);
+                    var centerY = 23 + ((burstNumber * 17) % 36);
+
+                    for (var pixelNumber = 0; pixelNumber < 24; pixelNumber += 1) {
+                        var angle = Math.PI * 2 * pixelNumber / 24;
+                        var distance = 34 + Math.random() * 76;
+
+                        var pixel = document.createElement('i');
+
+                        pixel.className = 'weekly-quest-firework';
+                        pixel.style.left = centerX + '%';
+                        pixel.style.top = centerY + '%';
+                        pixel.style.setProperty(
+                            '--dx',
+                            Math.cos(angle) * distance + 'px'
+                        );
+                        pixel.style.setProperty(
+                            '--dy',
+                            Math.sin(angle) * distance + 'px'
+                        );
+                        pixel.style.setProperty(
+                            '--firework-color',
+                            colors[(pixelNumber + burstNumber) % colors.length]
+                        );
+
+                        overlay.appendChild(pixel);
+
+                        setTimeout(function (item) {
+                            return function () {
+                                item.remove();
+                            };
+                        }(pixel), 950);
+                    }
+                };
+            }(burst), burst * 190);
+        }
+    }
+
     function questRow(quest) {
         var progress = Math.max(0, Number(quest.progress) || 0);
         var target = Math.max(1, Number(quest.target) || 1);
@@ -126,6 +180,7 @@
         };
 
         document.body.appendChild(overlay);
+        weeklyQuestFireworks(overlay);
     }
 
     function render() {
@@ -299,6 +354,29 @@
             '.weekly-quest-reward-totals{display:flex;justify-content:center;gap:22px;margin:20px 0;padding:14px;border-top:1px solid rgba(212,166,79,.25);border-bottom:1px solid rgba(212,166,79,.25)}' +
             '.weekly-quest-reward-totals b{color:#d4a64f;font:20px Georgia,serif}' +
             '.weekly-quest-reward-continue{width:100%;padding:11px;border:1px solid #d4a64f;border-radius:3px;background:#7c3134;color:#f6f1e4;font:inherit;font-weight:bold;cursor:pointer}' +
+            '.weekly-quest-reward-continue:focus-visible{outline:2px solid #f5d58f;outline-offset:2px}' +
+
+            '.weekly-quest-firework{' +
+            'position:absolute;z-index:3;' +
+            'width:7px;height:7px;' +
+            'background:var(--firework-color);' +
+            'box-shadow:0 0 12px var(--firework-color);' +
+            'pointer-events:none;' +
+            'animation:weekly-quest-firework-pop .9s steps(8,end) forwards' +
+            '}' +
+
+            '@keyframes weekly-quest-firework-pop{' +
+            '0%{opacity:1;transform:translate(-50%,-50%) scale(1)}' +
+            '70%{opacity:1}' +
+            '100%{' +
+            'opacity:0;' +
+            'transform:translate(' +
+            'calc(-50% + var(--dx)),' +
+            'calc(-50% + var(--dy))' +
+            ') scale(0)' +
+            '}' +
+            '}' +
+
             '.weekly-quest-reward-continue:focus-visible{outline:2px solid #f5d58f;outline-offset:2px}';
 
         document.head.appendChild(style);
