@@ -150,3 +150,19 @@
 .isbn-extra input {
     font-family: var(--font-body) !important
 }
+
+.goodreads-import {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(168, 130, 60, 0.28);
+}
+
+.goodreads-import h3 {
+  margin: 0 0 8px;
+  color: #A8823C;
+  font: 16px Georgia, serif;
+}
+
+.goodreads-import-error {
+  color: #e59a9a !important;
+}
