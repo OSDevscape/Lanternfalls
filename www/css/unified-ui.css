@@ -163,6 +163,29 @@
   font: 16px Georgia, serif;
 }
 
+.goodreads-import-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.goodreads-import-actions button {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid #A8823C;
+  border-radius: 3px;
+  background: #1B2129;
+  color: #F6F1E4;
+  text-align: left;
+  cursor: pointer;
+}
+
+#goodreadsImportStatus {
+  margin: 10px 0 0;
+  color: #8A8378;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 .goodreads-import-error {
   color: #e59a9a !important;
 }

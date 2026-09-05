@@ -49,7 +49,7 @@
     return Math.max(0, Math.min(5, Math.round(rating)));
   }
 
-  function parseDate(value) {
+  function parseOptionalDate(value) {
     var source = text(value);
 
     if (!source) {
@@ -206,6 +206,7 @@
   function mapRow(row) {
     var isbn13 = normalizeIsbn(rowValue(row, 'ISBN13'));
     var isbn = isbn13 || normalizeIsbn(rowValue(row, 'ISBN'));
+    var dateAdded = parseOptionalDate(rowValue(row, 'Date Added'));
 
     return {
       id: window.BookStorage.generateId(),
@@ -221,15 +222,18 @@
       tags: parseShelves(rowValue(row, 'Bookshelves')),
       publisher: rowValue(row, 'Publisher'),
       publicationYear: rowValue(row, 'Year Published'),
-      originalPublicationYear: rowValue(row, 'Original Publication Year'),
-      dateRead: parseDate(rowValue(row, 'Date Read')),
-      goodreadsAverageRating: rowValue(row, 'Average Rating'),
+      originalPublicationYear: rowValue(
+        row,
+        'Original Publication Year'
+      ),
       pageCount: rowValue(row, 'Number of Pages'),
+      dateRead: parseOptionalDate(rowValue(row, 'Date Read')),
+      goodreadsAverageRating: rowValue(row, 'Average Rating'),
       notes: joinNotes(
         rowValue(row, 'My Review'),
         rowValue(row, 'Private Notes')
       ),
-      dateAdded: parseDate(rowValue(row, 'Date Added')) || new Date().toISOString(),
+      dateAdded: dateAdded || new Date().toISOString(),
       goodreadsId: rowValue(row, 'Book Id'),
       source: 'goodreads',
       importedAt: new Date().toISOString()
@@ -275,9 +279,12 @@
       'isbn',
       'publisher',
       'publicationYear',
+      'originalPublicationYear',
       'pageCount',
       'format',
-      'goodreadsId'
+      'goodreadsId',
+      'goodreadsAverageRating',
+      'dateRead'
     ].forEach(function (field) {
       if (!result[field] && imported[field]) {
         result[field] = imported[field];
@@ -301,39 +308,77 @@
     return result;
   }
 
-  function buildImportPlan(existingBooks, rows) {
-    var plan = {
-      books: existingBooks.slice(),
-      added: 0,
-      matched: 0,
-      invalid: 0
-    };
+  function uniqueImportedBooks(rows) {
+    var books = [];
+    var duplicates = 0;
 
     rows.forEach(function (row) {
-      var importedBook = mapRow(row);
+      var book = mapRow(row);
 
-      if (!importedBook.title) {
-        plan.invalid += 1;
+      if (!book.title) {
         return;
       }
 
-      var existingBook = findMatch(plan.books, importedBook);
-
-      if (existingBook) {
-        var index = plan.books.findIndex(function (book) {
-          return book.id === existingBook.id;
-        });
-
-        plan.books[index] = enrichBook(existingBook, importedBook);
-        plan.matched += 1;
+      if (findMatch(books, book)) {
+        duplicates += 1;
         return;
       }
 
-      plan.books.push(importedBook);
-      plan.added += 1;
+      books.push(book);
     });
 
-    return plan;
+    return {
+      books: books,
+      duplicates: duplicates
+    };
+  }
+
+  function buildPlan(existingBooks, rows, mode) {
+    var result = {
+      books: [],
+      added: 0,
+      matched: 0,
+      skipped: 0,
+      duplicates: 0
+    };
+
+    var imported = uniqueImportedBooks(rows);
+    result.duplicates = imported.duplicates;
+
+    if (mode === 'replace') {
+      result.books = imported.books;
+      result.added = imported.books.length;
+      result.skipped = rows.length - imported.books.length - imported.duplicates;
+
+      return result;
+    }
+
+    result.books = existingBooks.slice();
+
+    imported.books.forEach(function (book) {
+      var match = findMatch(result.books, book);
+
+      if (!match) {
+        result.books.push(book);
+        result.added += 1;
+        return;
+      }
+
+      if (mode === 'merge') {
+        var index = result.books.findIndex(function (item) {
+          return item.id === match.id;
+        });
+
+        result.books[index] = enrichBook(match, book);
+        result.matched += 1;
+      } else {
+        result.skipped += 1;
+      }
+    });
+
+    result.skipped += rows.length - imported.books.length - imported.duplicates;
+
+    return result;
   }
 
   function setStatus(message, isError) {
@@ -347,6 +392,62 @@
     status.classList.toggle('goodreads-import-error', !!isError);
   }
 
+  function actionLabel(mode) {
+    if (mode === 'merge') {
+      return 'restore and merge';
+    }
+
+    if (mode === 'replace') {
+      return 'restore and replace';
+    }
+
+    return 'import';
+  }
+
+  function confirmationMessage(mode, plan) {
+    var base;
+
+    if (mode === 'replace') {
+      base =
+        'Replace this device\'s current ReadQuest book library with ' +
+        plan.added + ' book' +
+        (plan.added === 1 ? '' : 's') +
+        ' from the selected Goodreads CSV?';
+    } else if (mode === 'merge') {
+      base =
+        'Merge Goodreads into this device\'s library?\n\n' +
+        plan.added + ' new book' +
+        (plan.added === 1 ? '' : 's') +
+        ' will be added and ' +
+        plan.matched + ' matching book' +
+        (plan.matched === 1 ? '' : 's') +
+        ' will be enriched with missing Goodreads data.';
+    } else {
+      base =
+        'Import ' +
+        plan.added + ' new book' +
+        (plan.added === 1 ? '' : 's') +
+        '? ' +
+        plan.skipped + ' matching or invalid row' +
+        (plan.skipped === 1 ? '' : 's') +
+        ' will be skipped.';
+    }
+
+    if (mode === 'replace') {
+      base +=
+        '\n\nThis replaces only the book list. It does not restore ' +
+        'ReadQuest RPG progress, settings, reading sessions, or Google Drive data.' +
+        '\n\nExport a ReadQuest JSON backup first if you may want to undo this.';
+    }
+
+    return base;
+  }
+
+  function chooseFile(input, mode) {
+    input.dataset.mode = mode;
+    input.click();
+  }
+
   function install() {
     var menu = document.querySelector('#menuSheet .menu-card');
 
@@ -355,30 +456,45 @@
     }
 
     var box = document.createElement('section');
+
     box.id = 'goodreadsImport';
     box.className = 'goodreads-import';
 
     box.innerHTML =
       '<h3>Goodreads Import</h3>' +
-      '<button id="goodreadsImportBtn" class="menu-action" type="button">' +
-      'Import Goodreads CSV' +
-      '</button>' +
+      '<div class="goodreads-import-actions">' +
+        '<button type="button" data-goodreads-action="import">' +
+          'Import Goodreads CSV' +
+        '</button>' +
+        '<button type="button" data-goodreads-action="merge">' +
+          'Restore and Merge from Goodreads' +
+        '</button>' +
+        '<button type="button" data-goodreads-action="replace">' +
+          'Restore and Replace from Goodreads' +
+        '</button>' +
+      '</div>' +
       '<input id="goodreadsImportFile" type="file" accept=".csv,text/csv" class="hidden">' +
-      '<p id="goodreadsImportStatus" class="menu-hint">' +
-      'Import a Goodreads library CSV. This does not change your Google Drive backup.' +
+      '<p id="goodreadsImportStatus">' +
+        'Choose a Goodreads library CSV. Import adds only new books; Merge enriches matches; Replace replaces the book list only.' +
       '</p>';
 
     menu.appendChild(box);
 
-    var button = document.getElementById('goodreadsImportBtn');
     var input = document.getElementById('goodreadsImportFile');
 
-    button.addEventListener('click', function () {
-      input.click();
+    box.addEventListener('click', function (event) {
+      var button = event.target.closest('[data-goodreads-action]');
+
+      if (!button) {
+        return;
+      }
+
+      chooseFile(input, button.dataset.goodreadsAction);
     });
 
     input.addEventListener('change', function () {
       var file = input.files && input.files[0];
+      var mode = input.dataset.mode || 'import';
 
       if (!file) {
         return;
@@ -407,38 +523,33 @@
           }
 
           var currentBooks = await window.BookStorage.loadBooks();
-          var plan = buildImportPlan(currentBooks, rows);
+          var plan = buildPlan(currentBooks, rows, mode);
 
-          var message =
-            'Import ' +
-            plan.added + ' new book' +
-            (plan.added === 1 ? '' : 's') +
-            ', enrich ' +
-            plan.matched + ' matching book' +
-            (plan.matched === 1 ? '' : 's') +
-            ', and skip ' +
-            plan.invalid + ' row' +
-            (plan.invalid === 1 ? '' : 's') +
-            ' with no title?\n\n' +
-            'This does not change your Google Drive backup.';
+          if (!plan.books.length && mode === 'replace') {
+            throw new Error(
+              'The selected Goodreads CSV has no valid titled books, so nothing was replaced.'
+            );
+          }
 
-          if (!window.confirm(message)) {
-            setStatus('Goodreads import cancelled.');
+          if (!window.confirm(confirmationMessage(mode, plan))) {
+            setStatus('Goodreads ' + actionLabel(mode) + ' cancelled.');
             return;
           }
+
+          setStatus('Saving Goodreads library...');
 
           await window.BookStorage.saveBooks(plan.books);
 
           setStatus(
-            'Goodreads import complete: ' +
+            'Goodreads ' + actionLabel(mode) + ' complete: ' +
             plan.added + ' added, ' +
             plan.matched + ' matched, ' +
-            plan.invalid + ' skipped. Reloading library...'
+            plan.skipped + ' skipped. Reloading ReadQuest...'
           );
 
           setTimeout(function () {
             window.location.reload();
-          }, 650);
+          }, 700);
         } catch (error) {
           console.error(error);
 
@@ -450,6 +561,7 @@
           );
         } finally {
           input.value = '';
+          input.dataset.mode = '';
         }
       };
 
@@ -460,7 +572,7 @@
   window.GoodreadsImport = {
     parseCsv: parseCsv,
     mapRow: mapRow,
-    buildImportPlan: buildImportPlan
+    buildPlan: buildPlan
   };
 
   if (document.readyState === 'loading') {
