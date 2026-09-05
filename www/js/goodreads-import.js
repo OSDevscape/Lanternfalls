@@ -50,11 +50,17 @@
   }
 
   function parseDate(value) {
-    var timestamp = Date.parse(text(value));
+    var source = text(value);
+
+    if (!source) {
+      return '';
+    }
+
+    var timestamp = Date.parse(source);
 
     return Number.isFinite(timestamp)
       ? new Date(timestamp).toISOString()
-      : new Date().toISOString();
+      : '';
   }
 
   function mapStatus(value) {
@@ -94,7 +100,7 @@
   function parseShelves(value) {
     return uniqueStrings(
       text(value)
-        .split(',')
+        .split(/[,\s]+/)
         .map(function (shelf) {
           return text(shelf);
         })
@@ -206,18 +212,24 @@
       title: rowValue(row, 'Title'),
       author: rowValue(row, 'Author'),
       isbn: isbn,
-      status: mapStatus(rowValue(row, 'Exclusive Shelf')),
+      status: mapStatus(
+        rowValue(row, 'Exclusive Shelf') ||
+        rowValue(row, 'Shelves')
+      ),
       rating: parseRating(rowValue(row, 'My Rating')),
       format: mapFormat(rowValue(row, 'Binding')),
       tags: parseShelves(rowValue(row, 'Bookshelves')),
       publisher: rowValue(row, 'Publisher'),
       publicationYear: rowValue(row, 'Year Published'),
+      originalPublicationYear: rowValue(row, 'Original Publication Year'),
+      dateRead: parseDate(rowValue(row, 'Date Read')),
+      goodreadsAverageRating: rowValue(row, 'Average Rating'),
       pageCount: rowValue(row, 'Number of Pages'),
       notes: joinNotes(
         rowValue(row, 'My Review'),
         rowValue(row, 'Private Notes')
       ),
-      dateAdded: parseDate(rowValue(row, 'Date Added')),
+      dateAdded: parseDate(rowValue(row, 'Date Added')) || new Date().toISOString(),
       goodreadsId: rowValue(row, 'Book Id'),
       source: 'goodreads',
       importedAt: new Date().toISOString()
@@ -336,12 +348,30 @@
   }
 
   function install() {
-    var button = document.getElementById('goodreadsImportBtn');
-    var input = document.getElementById('goodreadsImportFile');
+    var menu = document.querySelector('#menuSheet .menu-card');
 
-    if (!button || !input || !window.BookStorage) {
+    if (!menu || document.getElementById('goodreadsImport')) {
       return;
     }
+
+    var box = document.createElement('section');
+    box.id = 'goodreadsImport';
+    box.className = 'goodreads-import';
+
+    box.innerHTML =
+      '<h3>Goodreads Import</h3>' +
+      '<button id="goodreadsImportBtn" class="menu-action" type="button">' +
+      'Import Goodreads CSV' +
+      '</button>' +
+      '<input id="goodreadsImportFile" type="file" accept=".csv,text/csv" class="hidden">' +
+      '<p id="goodreadsImportStatus" class="menu-hint">' +
+      'Import a Goodreads library CSV. This does not change your Google Drive backup.' +
+      '</p>';
+
+    menu.appendChild(box);
+
+    var button = document.getElementById('goodreadsImportBtn');
+    var input = document.getElementById('goodreadsImportFile');
 
     button.addEventListener('click', function () {
       input.click();
