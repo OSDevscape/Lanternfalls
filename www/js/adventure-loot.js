@@ -173,9 +173,9 @@
         value: 10
       },
       'Chronicle Compass': {
-        label: '+5% critical-hit chance in reading encounters',
+        label: '+8% critical-hit chance in reading encounters',
         type: 'critical-chance',
-        value: 5
+        value: 8
       },
       'Runeshelf Reliquary': {
         label: '+15% XP on claimed reading sessions and +1 gold',
@@ -183,12 +183,12 @@
         value: 15
       },
       'Starlit Codex': {
-        label: '+15% gold on claimed sessions',
+        label: '+15% gold on claimed reading sessions',
         type: 'percent-session-gold',
         value: 15
       },
       'Dragonhide Journal': {
-        label: '+10% XP and +10% gold on claimed sessions',
+        label: '+10% XP and +10% gold on claimed reading sessions',
         type: 'percent-session-balanced',
         value: 10
       },
@@ -198,14 +198,14 @@
         value: 20
       },
       'Everscript Grimoire': {
-        label: '+20% gold on claimed sessions',
+        label: '+20% gold on claimed reading sessions',
         type: 'percent-session-gold',
         value: 20
       },
       'The Infinite Bookmark': {
-        label: '+15% XP and +15% gold on claimed sessions',
+        label: '+35% XP and +35% gold on claimed reading sessions',
         type: 'percent-session-balanced',
-        value: 15
+        value: 35
       }
     };
 

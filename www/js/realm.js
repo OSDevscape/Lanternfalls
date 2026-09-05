@@ -17,7 +17,7 @@
     target.innerHTML =
       '<header class="realm-header">' +
       '<div><h1>Realm</h1><p>Your reader’s wider world.</p></div>' +
-      '<button type="button" class="reading-settings-button realm-settings-button" data-realm-open="profile" aria-label="Open Profile" data-tooltip="Open your reader profile, settings, and reading-time log.">Settings</button>' +
+      '<button type="button" class="reading-settings-button realm-settings-button" data-realm-settings aria-label="Open Settings" data-tooltip="Open reader profile settings.">Settings</button>' +
       '</header>' +
       '<main class="realm-content">' +
       '<section class="realm-intro">' +
@@ -69,6 +69,19 @@
         openRoute(button.dataset.realmOpen);
       };
     });
+
+    var settingsButton = target.querySelector('[data-realm-settings]');
+
+    if (settingsButton) {
+      settingsButton.onclick = function () {
+        if (
+          window.ReadQuestReaderProfile &&
+          typeof window.ReadQuestReaderProfile.openSettings === 'function'
+        ) {
+          window.ReadQuestReaderProfile.openSettings();
+        }
+      };
+    }
 
     var bazaarButton = target.querySelector('[data-realm-bazaar]');
 

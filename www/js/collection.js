@@ -22,7 +22,7 @@
         },
         'Reader’s Candle': {
             scope: 'session',
-            label: '+2% critical-hit chance'
+            label: '+1 XP and +1 gold on every claimed reading session'
         },
         'Gilded Bookmark': {
             scope: 'session',
@@ -66,7 +66,7 @@
         },
         'Everscript Grimoire': {
             scope: 'completion',
-            label: 'Raises the minimum boss-loot rarity to Rare'
+            label: '+20% gold on claimed reading sessions'
         },
         'The Infinite Bookmark': {
             scope: 'all',

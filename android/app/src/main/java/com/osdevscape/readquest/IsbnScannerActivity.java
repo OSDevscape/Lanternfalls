@@ -37,14 +37,16 @@ public class IsbnScannerActivity extends AppCompatActivity {
 
     public static final String EXTRA_ISBN = "isbn";
 
-    private PreviewView cameraPreview;
-    private TextView scanStatusText;
-    private Button torchButton;
-    private ExecutorService cameraExecutor;
-    private BarcodeScanner barcodeScanner;
-    private Camera camera;
-    private boolean scanComplete = false;
-    private boolean torchEnabled = false;
+private PreviewView cameraPreview;
+private TextView scanStatusText;
+private Button torchButton;
+
+private ExecutorService cameraExecutor;
+private BarcodeScanner barcodeScanner;
+private Camera camera;
+
+private boolean scanComplete = false;
+private boolean torchEnabled = false;
 
     private final ActivityResultLauncher<String> cameraPermissionLauncher =
             registerForActivityResult(

@@ -162,12 +162,7 @@
       return;
     }
 
-    var card = Array.prototype.slice.call(
-      dashboard.querySelectorAll('.dash-card')
-    ).filter(function (item) {
-      var heading = item.querySelector('h2');
-      return heading && heading.textContent.trim() === 'Series';
-    })[0];
+    var card = document.getElementById('dashboardSeriesBody');
 
     if (!card) {
       return;

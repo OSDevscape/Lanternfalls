@@ -86,19 +86,19 @@
         value: 8
       },
       'Runeshelf Reliquary': {
-        label: '+15% XP on claimed sessions and +1 gold',
+        label: '+15% XP on claimed reading sessions and +1 gold',
         type: 'epic-xp-gold',
         value: 15
       },
       'Starlit Codex': {
-        label: '+15% gold on claimed sessions',
+        label: '+15% gold on claimed reading sessions',
         type: 'percent-session-gold',
         value: 15
       },
       'Dragonhide Journal': {
-        label: '+10% XP and +10% gold on claimed sessions',
+        label: '+20% XP and +20% gold on claimed reading sessions',
         type: 'percent-session-balanced',
-        value: 10
+        value: 20
       },
       'Crown of the First Library': {
         label: '+20% XP on claimed reading sessions',
@@ -106,14 +106,14 @@
         value: 20
       },
       'Everscript Grimoire': {
-        label: '+20% gold on claimed sessions',
+        label: '+20% gold on claimed reading sessions',
         type: 'percent-session-gold',
         value: 20
       },
       'The Infinite Bookmark': {
-        label: '+15% XP and +15% gold on claimed sessions',
+        label: '+35% XP and +35% gold on claimed sessions',
         type: 'percent-session-balanced',
-        value: 15
+        value: 35
       }
     };
 
