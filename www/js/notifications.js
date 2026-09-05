@@ -118,10 +118,8 @@
       notifications: [{ id: REMINDER_ID }]
     });
 
-    if (
-      typeof notifications.getDeliveredNotifications === 'function' &&
-      typeof notifications.removeDeliveredNotifications === 'function'
-    ) {
+    if (typeof notifications.getDeliveredNotifications === 'function' &&
+      typeof notifications.removeDeliveredNotifications === 'function') {
       var delivered = await notifications.getDeliveredNotifications();
 
       var matches = (delivered.notifications || [])
