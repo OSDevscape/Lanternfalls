@@ -122,8 +122,5 @@ It treats reading like an adventure. Your library becomes a world, your sessions
 
 ## Screenshots
 
-> Replace these stubs with actual screenshots once you export them.
-
-### Library
 
 ```md
