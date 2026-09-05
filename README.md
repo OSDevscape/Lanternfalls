@@ -41,6 +41,7 @@
       alt="Join the ReadQuest Discord"
     />
   </a>
+  <br>
   <a href="https://top.gg/discord/servers/877985802158972928">
     <img
       src="https://top.gg/api/v1/widgets/large/877985802158972928"
