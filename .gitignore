@@ -8,13 +8,4 @@
 # Java / JVM crash reports
 hs_err_pid*.log
 replay_pid*.log
-
-
-# Gradle / Android generated state
-.gradle/
-**/.gradle/
-**/build/
-*.lock
-
-# Local editor settings
-.vscode/
+node_modules
