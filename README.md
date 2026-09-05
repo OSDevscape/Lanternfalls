@@ -18,7 +18,7 @@
   <img src="https://img.shields.io/badge/offline--first-yes-6C63FF?style=for-the-badge" alt="Offline-first badge" />
   <img src="https://img.shields.io/badge/status-active%20development-B7791F?style=for-the-badge" alt="Active development badge" />
 </p>
-<br>
+
 <p align="center">
   <img src="https://img.shields.io/badge/metadata-Google%20Books%20%2B%20Open%20Library-8A5CF6?style=flat-square" alt="Metadata providers badge" />
   <img src="https://img.shields.io/badge/import-Goodreads%20CSV-553B08?style=flat-square&logo=goodreads&logoColor=white" alt="Goodreads CSV import badge" />
