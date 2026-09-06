@@ -309,3 +309,14 @@
 .library-transfer-panel .menu-hint {
   margin: 2px 0 0;
 }
+
+.app-title .title-subtitle {
+  display: inline-block;
+  margin-left: 2px;
+  color: var(--gold, #A8823C);
+  font-size: 0.58em;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
