@@ -28,7 +28,7 @@
             android:layout_height="42dp"
             android:background="#8B3A3A"
             android:gravity="center"
-            android:text="RQ"
+            android:text="LF"
             android:textColor="#F6F1E4"
             android:textSize="15sp"
             android:textStyle="bold" />

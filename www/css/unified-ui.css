@@ -189,3 +189,123 @@
 .goodreads-import-error {
   color: #e59a9a !important;
 }
+
+.library-transfer-card {
+  margin-top: 14px;
+  border: 1px solid rgba(168, 130, 60, 0.38);
+  border-radius: 5px;
+  overflow: hidden;
+  background: rgba(27, 33, 41, 0.52);
+}
+
+.library-transfer-parent-toggle,
+.library-transfer-toggle {
+  position: relative;
+  display: grid;
+  width: 100%;
+  gap: 3px;
+  padding: 14px 42px 14px 14px;
+  border: 0;
+  background: transparent;
+  color: #F6F1E4;
+  text-align: left;
+  cursor: pointer;
+}
+
+.library-transfer-parent-toggle {
+  background: rgba(168, 130, 60, 0.1);
+}
+
+.library-transfer-parent-title,
+.library-transfer-title {
+  font: 16px Georgia, serif;
+  color: #F6F1E4;
+}
+
+.library-transfer-parent-title {
+  color: #D8AF61;
+  font-size: 17px;
+}
+
+.library-transfer-parent-summary,
+.library-transfer-summary {
+  color: #8A8378;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.library-transfer-parent-chevron,
+.library-transfer-chevron {
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  color: #D8AF61;
+  font-size: 26px;
+  line-height: 1;
+  transform: translateY(-50%);
+  transition: transform 0.18s ease;
+}
+
+.library-transfer-parent-toggle[aria-expanded="true"]
+.library-transfer-parent-chevron,
+.library-transfer-toggle[aria-expanded="true"]
+.library-transfer-chevron {
+  transform: translateY(-50%) rotate(90deg);
+}
+
+.library-transfer-parent-panel {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.library-transfer-child {
+  overflow: hidden;
+  border: 1px solid rgba(168, 130, 60, 0.24);
+  border-radius: 4px;
+  background: #1B2129;
+}
+
+.library-transfer-toggle {
+  border-bottom: 1px solid transparent;
+}
+
+.library-transfer-toggle[aria-expanded="true"] {
+  border-bottom-color: rgba(168, 130, 60, 0.2);
+}
+
+.library-transfer-panel {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px 12px;
+}
+
+.library-transfer-panel.hidden,
+.library-transfer-parent-panel.hidden {
+  display: none !important;
+}
+
+.library-transfer-panel .menu-action,
+.library-transfer-panel #googleDriveSync button,
+.library-transfer-panel #goodreadsImport button {
+  width: 100%;
+  margin: 0;
+}
+
+.library-transfer-panel #googleDriveSync,
+.library-transfer-panel #goodreadsImport {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.library-transfer-panel #googleDriveSync h3,
+.library-transfer-panel #goodreadsImport h3 {
+  display: none;
+}
+
+.library-transfer-panel #googleDriveStatus,
+.library-transfer-panel #goodreadsImportStatus,
+.library-transfer-panel .menu-hint {
+  margin: 2px 0 0;
+}
