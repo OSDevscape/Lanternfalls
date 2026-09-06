@@ -2,7 +2,8 @@
 (function () {
   var CLIENT_ID = '593940582784-crga2h0rme3mk5qvehik0iv6elbp2f8n.apps.googleusercontent.com';
   var DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
-  var BACKUP_NAME = 'bookshelf-sync.json';
+  var BACKUP_NAME = 'lanternfalls-sync.json';
+  var LEGACY_BACKUP_NAME = 'bookshelf-sync.json';
   var initialized = false;
 
   function readJson(key, fallback) {
@@ -58,14 +59,31 @@
   }
 
   async function backupFile(token) {
-    var query = encodeURIComponent("name = '" + BACKUP_NAME + "' and trashed = false");
+    var names = [BACKUP_NAME, LEGACY_BACKUP_NAME];
+    var query = encodeURIComponent(
+      '(' +
+      names.map(function (name) {
+        return "name = '" + name + "'";
+      }).join(' or ') +
+      ') and trashed = false'
+    );
+
     var response = await drive(
-      'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=' + query + '&fields=files(id,name,modifiedTime)',
+      'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=' +
+      query +
+      '&fields=files(id,name,modifiedTime)',
       { method: 'GET' },
       token
     );
+
     var data = await response.json();
-    return (data.files || [])[0] || null;
+    var files = data.files || [];
+
+    files.sort(function (a, b) {
+      return new Date(b.modifiedTime) - new Date(a.modifiedTime);
+    });
+
+    return files[0] || null;
   }
 
   function settings() {
@@ -115,7 +133,7 @@
 
   async function downloadBackup(token) {
     var file = await backupFile(token);
-    if (!file) throw new Error('No BookShelf backup was found in Google Drive yet. Back up a device first.');
+    if (!file) throw new Error('No Lanternfalls  backup was found in Google Drive yet. Back up a device first.');
     var response = await drive(
       'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(file.id) + '?alt=media',
       { method: 'GET' },
@@ -123,7 +141,7 @@
     );
     var data = await response.json();
     if (!data || data.format !== 'bookshelf-drive-sync' || !Array.isArray(data.books)) {
-      throw new Error('The Google Drive backup is not a valid BookShelf sync file.');
+      throw new Error('The Google Drive backup is not a valid Lanternfalls sync file.');
     }
     return data;
   }
@@ -168,7 +186,7 @@
     await window.BookStorage.saveBooks(books);
     localStorage.setItem('bookshelf-metadata-v12', JSON.stringify(metadata));
     restoreSettings(remote, mode !== 'merge');
-    setStatus('Restore complete. Reloading BookShelf...');
+    setStatus('Restore complete. Reloading Lanternfalls...')
     setTimeout(function () { window.location.reload(); }, 700);
   }
 
@@ -178,21 +196,21 @@
 
     var style = document.createElement('style');
 
-style.textContent =
-  '#menuSheet{box-sizing:border-box;padding-bottom:130px!important}' +
-  '#menuSheet .menu-card{margin-bottom:110px!important}' +
-  '#googleDriveSync{margin-top:18px;padding-top:16px;border-top:1px solid rgba(168,130,60,.28)}' +
-  '#googleDriveSync h3{margin:0 0 8px;color:#A8823C;font:16px Georgia,serif}' +
-  '#googleDriveSync .google-drive-actions{display:grid;gap:8px}' +
-  '#googleDriveSync button{width:100%;padding:11px;border:1px solid #A8823C;border-radius:3px;background:#1B2129;color:#F6F1E4;text-align:left;cursor:pointer}' +
-  '#googleDriveStatus{margin:10px 0 0;color:#8A8378;font-size:12px;line-height:1.35}' +
-  '.google-drive-error{color:#e59a9a!important}';
+    style.textContent =
+      '#menuSheet{box-sizing:border-box;padding-bottom:130px!important}' +
+      '#menuSheet .menu-card{margin-bottom:110px!important}' +
+      '#googleDriveSync{margin-top:18px;padding-top:16px;border-top:1px solid rgba(168,130,60,.28)}' +
+      '#googleDriveSync h3{margin:0 0 8px;color:#A8823C;font:16px Georgia,serif}' +
+      '#googleDriveSync .google-drive-actions{display:grid;gap:8px}' +
+      '#googleDriveSync button{width:100%;padding:11px;border:1px solid #A8823C;border-radius:3px;background:#1B2129;color:#F6F1E4;text-align:left;cursor:pointer}' +
+      '#googleDriveStatus{margin:10px 0 0;color:#8A8378;font-size:12px;line-height:1.35}' +
+      '.google-drive-error{color:#e59a9a!important}';
 
-document.head.appendChild(style);
+    document.head.appendChild(style);
 
     var box = document.createElement('section');
     box.id = 'googleDriveSync';
-    box.innerHTML = '<h3>Google Drive Sync</h3><div class="google-drive-actions"><button type="button" data-drive="connect">Connect Google Drive</button><button type="button" data-drive="backup">Back up to Google Drive</button><button type="button" data-drive="merge">Restore and Merge from Google Drive</button><button type="button" data-drive="replace">Restore and Replace from Google Drive</button></div><p id="googleDriveStatus">Manual backup only. Your sync file is stored privately in Google Drive.</p>';
+    box.innerHTML = '<h3>Lanternfalls Google Drive Sync</h3><div class="google-drive-actions"><button type="button" data-drive="connect">Connect Google Drive</button><button type="button" data-drive="backup">Back up to Google Drive</button><button type="button" data-drive="merge">Restore and Merge from Google Drive</button><button type="button" data-drive="replace">Restore and Replace from Google Drive</button></div><p id="googleDriveStatus">Manual backup only. Your sync file is stored privately in Google Drive.</p>';
     menu.appendChild(box);
 
     box.onclick = async function (event) {

@@ -8,7 +8,7 @@
     sheet.className = 'widget-install-help';
     sheet.setAttribute('role', 'dialog');
     sheet.setAttribute('aria-modal', 'true');
-    sheet.innerHTML = '<div><span class="widget-help-label">ReadQuest Home Widget</span><h2>Add to your home screen</h2><p>' + (message || 'Your launcher needs you to add widgets manually.') + '</p><ol><li>Go to your Android home screen.</li><li>Touch and hold an empty area.</li><li>Tap <b>Widgets</b>.</li><li>Find <b>ReadQuest</b>, then drag the widget onto the home screen.</li></ol><button type="button">Done</button></div>';
+    sheet.innerHTML = '<div><span class="widget-help-label">Lanternfalls Home Widget</span><h2>Add to your home screen</h2><p>' + (message || 'Your launcher needs you to add widgets manually.') + '</p><ol><li>Go to your Android home screen.</li><li>Touch and hold an empty area.</li><li>Tap <b>Widgets</b>.</li><li>Find <b>Lanternfalls</b>, then drag the widget onto the home screen.</li></ol><button type="button">Done</button></div>';
     sheet.querySelector('button').onclick = function () { sheet.remove(); };
     document.body.appendChild(sheet);
   }
@@ -35,13 +35,13 @@
       }
       setButtonState(button, 'Check your home screen prompt', false);
       setTimeout(function () {
-        if (button.isConnected) setButtonState(button, 'Add ReadQuest Widget', false);
+        if (button.isConnected) setButtonState(button, 'Add Lanternfalls Widget', false);
       }, 5000);
     } catch (error) {
       console.error(error);
-      fallbackHelp('ReadQuest could not open the add-widget prompt. You can still add the widget from your home screen.');
+      fallbackHelp('Lanternfalls could not open the add-widget prompt. You can still add the widget from your home screen.');
     } finally {
-      if (button.isConnected && button.textContent === 'Opening widget prompt…') setButtonState(button, 'Add ReadQuest Widget', false);
+      if (button.isConnected && button.textContent === 'Opening widget prompt…') setButtonState(button, 'Add Lanternfalls Widget', false);
     }
   }
 
@@ -54,7 +54,7 @@
 
     var card = document.createElement('section');
     card.className = 'reading-profile-card profile-widget-card';
-    card.innerHTML = '<h2>Home Screen Widget</h2><p>Start a reading timer from your home screen. Completed widget sessions will appear here ready to claim.</p><button type="button" class="profile-widget-button">Add ReadQuest Widget</button><p class="profile-widget-note">Android will show a confirmation prompt before it adds the widget.</p>';
+    card.innerHTML = '<h2>Home Screen Widget</h2><p>Start a reading timer from your home screen. Completed widget sessions will appear here ready to claim.</p><button type="button" class="profile-widget-button">Add Lanternfalls Widget</button><p class="profile-widget-note">Android will show a confirmation prompt before it adds the widget.</p>';
     card.querySelector('.profile-widget-button').onclick = function () { requestWidgetPin(this); };
     content.insertBefore(card, content.firstChild);
   }

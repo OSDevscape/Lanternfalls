@@ -21,7 +21,7 @@
       '</header>' +
       '<main class="realm-content">' +
       '<section class="realm-intro">' +
-      '<span class="adventure-label">ReadQuest Realm</span>' +
+      '<span class="adventure-label">Lanternfalls Realm</span>' +
       '<h2>Shape your legend</h2>' +
       '<p>Visit your character, prepare enchantments, and discover what lies ahead.</p>' +
       '</section>' +

@@ -90,7 +90,7 @@
       notifications: [
         {
           id: REMINDER_ID,
-          title: 'ReadQuest',
+          title: 'Lanternfalls',
           body: 'Your next chapter is waiting. Log a little reading time today.',
           smallIcon: 'ic_stat_readquest',
           largeIcon: 'readquest_notification_logo',

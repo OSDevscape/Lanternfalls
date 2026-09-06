@@ -28,10 +28,6 @@
   }
 
   function saveProfile(profile) {
-    /*
-     * Deliberately omit age here. Saving the new profile automatically removes
-     * the old age value from future profile data.
-     */
     write(PROFILE_KEY, {
       name: String(profile.name || '').trim(),
       notificationsEnabled: !!profile.notificationsEnabled
@@ -246,11 +242,11 @@
       '<label class="reader-switch-row">' +
       '<span>' +
       '<strong>Enable notifications</strong>' +
-      '<small>Allow ReadQuest to send reminders and updates.</small>' +
+      '<small>Allow Lanternfalls to send reminders and updates.</small>' +
       '</span>' +
       '<input id="readerNotificationsEnabled" type="checkbox" role="switch">' +
       '</label>' +
-      '<p class="reader-notification-note">This saves your ReadQuest preference. Notification reminders will only appear after notification scheduling is added and device permission is granted.</p>' +
+      '<p class="reader-notification-note">This saves your Lanternfalls preference. Notification reminders will only appear after notification scheduling is added and device permission is granted.</p>' +
       '</div>' +
       '</section>' +
 

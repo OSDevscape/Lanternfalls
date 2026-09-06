@@ -409,7 +409,7 @@
 
     if (mode === 'replace') {
       base =
-        'Replace this device\'s current ReadQuest book library with ' +
+        'Replace this device\'s current Lanternfalls book library with ' +
         plan.added + ' book' +
         (plan.added === 1 ? '' : 's') +
         ' from the selected Goodreads CSV?';
@@ -436,8 +436,8 @@
     if (mode === 'replace') {
       base +=
         '\n\nThis replaces only the book list. It does not restore ' +
-        'ReadQuest RPG progress, settings, reading sessions, or Google Drive data.' +
-        '\n\nExport a ReadQuest JSON backup first if you may want to undo this.';
+        'Lanternfalls RPG progress, settings, reading sessions, or Google Drive data.' +
+        '\n\nExport a Lanternfalls JSON backup first if you may want to undo this.';
     }
 
     return base;

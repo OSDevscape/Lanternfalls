@@ -114,7 +114,7 @@ public class ReadingWidgetProvider extends AppWidgetProvider {
         if (book == null || book.id.isEmpty()) {
             views.setTextViewText(
                 R.id.widget_status,
-                "Mark a book as Reading in ReadQuest"
+                "Mark a book as Reading in Lanternfalls"
             );
 
             views.setTextViewText(
@@ -465,7 +465,7 @@ public class ReadingWidgetProvider extends AppWidgetProvider {
                 connection.setInstanceFollowRedirects(true);
                 connection.setRequestProperty(
                     "User-Agent",
-                    "ReadQuest Android Widget"
+                    "Lanternfalls Android Widget"
                 );
 
                 input = connection.getInputStream();

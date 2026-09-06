@@ -149,7 +149,7 @@ async function exportBooks(books) {
 
   if (isNative() && plugins.Filesystem) {
     try {
-      const fileName = 'bookshelf-export-' + Date.now() + '.json';
+      const fileName = 'Lanternfalls-export-' + Date.now() + '.json';
 
       await plugins.Filesystem.writeFile({
         path: fileName,
@@ -165,7 +165,7 @@ async function exportBooks(books) {
 
       if (plugins.Share) {
         await plugins.Share.share({
-          title: 'Book Shelf export',
+          title: 'Lanternfalls library export',
           url: uri.uri
         });
 
@@ -185,7 +185,7 @@ async function exportBooks(books) {
 
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'bookshelf-export.json';
+  link.download = 'Lanternfalls-export.json';
 
   document.body.appendChild(link);
   link.click();

@@ -44,8 +44,7 @@
                 android:id="@+id/widget_brand"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="READQUEST"
-                android:textColor="#F6F1E4"
+                android:text="LANTERNFALLS"        android:textColor="#F6F1E4"
                 android:textSize="11sp"
                 android:textStyle="bold" />
 

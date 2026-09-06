@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">ReadQuest</string>
-    <string name="title_activity_main">ReadQuest</string>
+    <string name="app_name">Lanternfalls</string>
+    <string name="title_activity_main">Lanternfalls</string>
     <string name="package_name">com.osdevscape.readquest</string>
 <string name="custom_url_scheme">com.osdevscape.readquest</string>
 </resources>
