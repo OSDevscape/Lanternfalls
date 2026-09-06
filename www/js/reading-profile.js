@@ -495,9 +495,14 @@
     book.appendChild(blank);
 
     books
-      .slice()
+      .filter(function (item) {
+        return String((item || {}).status || '')
+          .trim()
+          .toLowerCase()
+          .replace(/[ _]+/g, '-') === 'reading';
+      })
       .sort(function (a, b) {
-        return String(a.title).localeCompare(String(b.title));
+        return String(a.title || '').localeCompare(String(b.title || ''));
       })
       .forEach(function (item) {
         var option = document.createElement('option');
