@@ -114,7 +114,7 @@
         collection: 'Loading your collection...'
       };
 
-      showPlaceholder(labels[page] || 'ReadQuest', loading[page] || 'Loading...', page + '-page');
+      showPlaceholder(labels[page] || 'Lanternfalls', loading[page] || 'Loading...', page + '-page');
       announce(page);
     }
 

@@ -19,10 +19,12 @@ public class WidgetRefreshPlugin extends Plugin {
     "com.osdevscape.readquest.widget.PINNED";
 
     @PluginMethod
-    public void refresh(PluginCall call) {
-        ReadingWidgetProvider.refresh(getContext());
-        call.resolve();
-    }
+public void refresh(PluginCall call) {
+    ReadingWidgetProvider.refresh(getContext());
+    MonthlyTbrWidgetProvider.refresh(getContext());
+    ReadingCalendarWidgetProvider.refresh(getContext());
+    call.resolve();
+}
 
     @PluginMethod
     public void requestPinWidget(PluginCall call) {

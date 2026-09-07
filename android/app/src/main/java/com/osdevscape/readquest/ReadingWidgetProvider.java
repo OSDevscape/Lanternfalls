@@ -105,16 +105,10 @@ public class ReadingWidgetProvider extends AppWidgetProvider {
             accent(context)
         );
 
-        views.setInt(
-            R.id.widget_logo,
-            "setBackgroundColor",
-            accent(context)
-        );
-
         if (book == null || book.id.isEmpty()) {
             views.setTextViewText(
                 R.id.widget_status,
-                "Mark a book as Reading in ReadQuest"
+                "Mark a book as Reading in Lanternfalls"
             );
 
             views.setTextViewText(
@@ -219,7 +213,7 @@ public class ReadingWidgetProvider extends AppWidgetProvider {
         PendingIntent open = openAppIntent(context, widgetId);
 
         views.setOnClickPendingIntent(R.id.widget_cover, open);
-        views.setOnClickPendingIntent(R.id.widget_logo, open);
+        views.setOnClickPendingIntent(R.id.widget_brand_logo, open);
         views.setOnClickPendingIntent(R.id.widget_book_title, open);
 
         manager.updateAppWidget(widgetId, views);
@@ -465,7 +459,7 @@ public class ReadingWidgetProvider extends AppWidgetProvider {
                 connection.setInstanceFollowRedirects(true);
                 connection.setRequestProperty(
                     "User-Agent",
-                    "ReadQuest Android Widget"
+                    "Lanternfalls Android Widget"
                 );
 
                 input = connection.getInputStream();

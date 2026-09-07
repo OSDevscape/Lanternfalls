@@ -63,7 +63,7 @@
   function nextReminderDate() {
     var date = new Date();
 
-    date.setHours(19, 25, 0, 0);
+    date.setHours(22, 0, 0, 0);
 
     if (date.getTime() <= Date.now()) {
       date.setDate(date.getDate() + 1);
@@ -90,7 +90,7 @@
       notifications: [
         {
           id: REMINDER_ID,
-          title: 'ReadQuest',
+          title: 'Lanternfalls',
           body: 'Your next chapter is waiting. Log a little reading time today.',
           smallIcon: 'ic_stat_readquest',
           largeIcon: 'readquest_notification_logo',
@@ -118,7 +118,40 @@
       notifications: [{ id: REMINDER_ID }]
     });
 
+    if (typeof notifications.getDeliveredNotifications === 'function' &&
+      typeof notifications.removeDeliveredNotifications === 'function') {
+      var delivered = await notifications.getDeliveredNotifications();
+
+      var matches = (delivered.notifications || [])
+        .filter(function (notification) {
+          return notification.id === REMINDER_ID;
+        })
+        .map(function (notification) {
+          return { id: notification.id };
+        });
+
+      if (matches.length) {
+        await notifications.removeDeliveredNotifications({
+          notifications: matches
+        });
+      }
+    }
+
     return { ok: true };
+  }
+
+  async function resetDailyReadingReminder() {
+    var notifications = plugin();
+
+    if (!notifications || !isNative()) {
+      return {
+        ok: false,
+        reason: 'Notifications are available in the installed Android app only.'
+      };
+    }
+
+    await cancelReadQuestNotifications();
+    return scheduleDailyReadingReminder();
   }
 
   window.ReadQuestNotifications = {
@@ -126,6 +159,7 @@
     permissionState: permissionState,
     requestPermission: requestPermission,
     scheduleDailyReadingReminder: scheduleDailyReadingReminder,
+    resetDailyReadingReminder: resetDailyReadingReminder,
     cancelReadQuestNotifications: cancelReadQuestNotifications
   };
 })();

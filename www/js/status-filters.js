@@ -67,6 +67,12 @@
     }, 2800);
   }
 
+  function closeHidePanel() {
+    hidePanelOpen = false;
+    saveHidePanelOpen();
+    updateHidePanel();
+  }
+
   function updateHidePanel() {
     var panel = document.getElementById('statusHidePanel');
     var button = document.getElementById('statusHideToggle');
@@ -177,8 +183,8 @@
     bar.id = 'statusFilterBar';
     bar.innerHTML =
       '<button id="statusFilterToggle" type="button" aria-controls="statusFilters" aria-expanded="false">' +
-        '<span class="status-filter-icon" aria-hidden="true">☷</span>' +
-        '<span class="status-filter-label">Filter</span>' +
+      '<span class="status-filter-icon" aria-hidden="true">☷</span>' +
+      '<span class="status-filter-label">Filter</span>' +
       '</button>';
 
     count.insertAdjacentElement('afterend', bar);
@@ -203,8 +209,8 @@
     statuses.forEach(function (status) {
       hideOptions +=
         '<label class="status-hide-option">' +
-          '<input type="checkbox" data-hide-status="' + status.key + '">' +
-          '<span>Hide ' + status.label + '</span>' +
+        '<input type="checkbox" data-hide-status="' + status.key + '">' +
+        '<span>Hide ' + status.label + '</span>' +
         '</label>';
     });
 
@@ -212,11 +218,11 @@
       filterButtons +
       '<div class="status-filter-divider" aria-hidden="true"></div>' +
       '<button id="statusHideToggle" type="button" aria-controls="statusHidePanel" aria-expanded="false">' +
-        '<span class="status-hide-title">Hide from main library</span>' +
-        '<span class="status-hide-summary">None hidden</span>' +
+      '<span class="status-hide-title">Hide from main library</span>' +
+      '<span class="status-hide-summary">None hidden</span>' +
       '</button>' +
       '<div id="statusHidePanel" class="hidden">' +
-        hideOptions +
+      hideOptions +
       '</div>';
 
     bar.insertAdjacentElement('afterend', filters);
@@ -226,7 +232,12 @@
 
     toggle.onclick = function () {
       var hidden = filters.classList.toggle('hidden');
+
       toggle.setAttribute('aria-expanded', hidden ? 'false' : 'true');
+
+      if (hidden) {
+        closeHidePanel();
+      }
     };
 
     hideToggle.onclick = function () {
@@ -242,8 +253,11 @@
 
       active = button.dataset.filter;
       apply();
+
       filters.classList.add('hidden');
       toggle.setAttribute('aria-expanded', 'false');
+
+      closeHidePanel();
     };
 
     filters.onchange = function (event) {

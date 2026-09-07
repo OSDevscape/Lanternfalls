@@ -1,11 +1,28 @@
-# wrangler files
-.wrangler
-.dev.vars*
-!.dev.vars.example
-.env*
-!.env.example
+# JavaScript dependencies
+node_modules/
 
-# Java / JVM crash reports
-hs_err_pid*.log
-replay_pid*.log
-node_modules
+# Gradle caches and Android build output
+.gradle/
+**/.gradle/
+build/
+**/build/
+
+# Gradle-generated metadata and reports
+**/fileHashes.lock
+**/compile-file-map.properties
+**/problems-report.html
+
+# Android generated packages and compiled output
+*.apk
+*.aab
+*.aar
+*.ap_
+*.dex
+*.class
+
+# Local Android / IDE configuration
+android/local.properties
+android/.externalNativeBuild/
+android/.cxx/
+.idea/
+*.iml

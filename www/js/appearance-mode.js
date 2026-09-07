@@ -19,6 +19,16 @@
     root.dataset.theme = settings.mode === 'light' ? 'light' : 'dark';
     localStorage.setItem(KEY, JSON.stringify(settings));
 
+    window.dispatchEvent(
+      new CustomEvent('bookshelf-appearance-changed', {
+        detail: {
+          mode: settings.mode,
+          accent: settings.accent,
+          color: accent
+        }
+      })
+    );
+
     document.querySelectorAll('[data-appearance-mode]').forEach(function (button) {
       button.classList.toggle('selected', button.dataset.appearanceMode === root.dataset.theme);
     });
