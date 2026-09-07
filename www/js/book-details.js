@@ -115,14 +115,59 @@
 
       view.innerHTML = '<div class="bd-top"><button class="bd-close">‹</button><button class="bd-edit">Edit entry</button></div><main class="bd-body"><img class="bd-cover" src="' + coverLarge(b.cover) + '" alt=""><h1 class="bd-title"></h1><p class="bd-author"></p><div class="bd-panel"><div class="bd-row"><div class="bd-status-row"><span class="bd-status"></span>' + difficultyBadge + '</div><button type="button" class="bd-rating" data-tooltip="' + ratingTooltip + '" aria-label="About rating" aria-expanded="false">' + ('☆'.repeat(5 - rating) + '★'.repeat(rating)) + '</button></div><p>Added ' + new Date(b.dateAdded || Date.now()).toLocaleDateString() + '</p></div><div class="bd-chips"><span class="bd-chip">📅 ' + (b.publicationYear || 'Year unknown') + '</span><span class="bd-chip">🌐 ' + (b.language || 'Language unknown') + '</span><span class="bd-chip">📖 ' + (b.pageCount ? (b.pageCount + ' pages') : 'Pages unknown') + '</span></div><h2 class="bd-heading">📝 My Notes</h2><div class="bd-panel bd-note"></div><div class="bd-grid"><div class="bd-panel"><h2 class="bd-heading">🔗 Series</h2><div class="bd-value bd-series"></div></div><div class="bd-panel"><h2 class="bd-heading">📚 Collection</h2><div class="bd-value bd-collection"></div></div></div><h2 class="bd-heading">ℹ Bibliographic Info</h2><div class="bd-panel bd-info-list"><strong>Publisher:</strong> ' + publisher + '<br><strong>Genre:</strong> ' + (b.genre || 'Not specified') + '<br><strong>Format:</strong> ' + (b.format || 'Not specified') + '<br><strong>Price:</strong> ' + money(b.price) + '<br><strong>Difficulty:</strong> ' + difficultyInfo + '<br><strong>ISBN:</strong> ' + (b.isbn || 'Not specified') + '<br><strong>Tags:</strong> ' + tags + '</div><h2 class="bd-heading">📖 Publisher Description</h2><div class="bd-panel bd-description"></div><h2 class="bd-heading">📚 Other Books in This Series</h2><div class="bd-panel bd-other"><span class="bd-empty">No other books in this series.</span></div><h2 class="bd-heading">Reading History</h2><div class="bd-history"><div><strong>Added</strong><br>' + new Date(b.dateAdded || Date.now()).toLocaleDateString() + '</div><div><strong>Started</strong><br>' + started + '</div>' + (finished ? '<div><strong>Finished</strong><br>' + finished + '</div>' : '') + '</div></main>';
 
+      var tbrButton = document.createElement('button');
+
+      tbrButton.type = 'button';
+      tbrButton.className = 'bd-tbr-button';
+      tbrButton.setAttribute('data-book-id', b.id || '');
+      tbrButton.textContent = "Add to this month's TBR";
+
+      var chips = view.querySelector('.bd-chips');
+
+      if (chips) {
+        chips.insertAdjacentElement('beforebegin', tbrButton);
+      }
+
       view.querySelector('.bd-title').textContent = b.title;
       view.querySelector('.bd-author').textContent = b.author;
       view.querySelector('.bd-status').textContent = statusLabel(b.status);
       view.querySelector('.bd-note').textContent = b.notes || 'No notes yet.';
       view.querySelector('.bd-description').textContent = description;
       view.querySelector('.bd-series').textContent = series;
-      view.querySelector('.bd-collection').textContent = b.collection || b.collections || 'Not assigned';
+      view.querySelector('.bd-collection').textContent =
+        b.collection || b.collections || 'Not assigned';
+
       view.querySelector('.bd-close').onclick = close;
+
+      if (
+        tbrButton &&
+        window.LanternfallsMonthlyTbr &&
+        typeof window.LanternfallsMonthlyTbr.toggleBook === 'function' &&
+        typeof window.LanternfallsMonthlyTbr.isInCurrentMonth === 'function'
+      ) {
+        function updateTbrButton() {
+          var selected =
+            window.LanternfallsMonthlyTbr.isInCurrentMonth(b.id);
+
+          tbrButton.textContent = selected
+            ? "Remove from this month's TBR"
+            : "Add to this month's TBR";
+
+          tbrButton.classList.toggle('is-selected', selected);
+          tbrButton.setAttribute(
+            'aria-pressed',
+            selected ? 'true' : 'false'
+          );
+        }
+
+        updateTbrButton();
+
+        tbrButton.onclick = function () {
+          window.LanternfallsMonthlyTbr.toggleBook(b.id);
+          updateTbrButton();
+        };
+      }
+
       view.querySelector('.bd-edit').onclick = function () {
         close();
         if (typeof card.onclick === 'function') card.onclick();

@@ -1,11 +1,18 @@
-# JavaScript dependencies — repository root
+# JavaScript dependencies
 node_modules/
 
-# Android Gradle and build output
-android/.gradle/
-android/**/build/
+# Gradle caches and Android build output
+.gradle/
+**/.gradle/
+build/
+**/build/
 
-# Android build artifacts anywhere in the project
+# Gradle-generated metadata and reports
+**/fileHashes.lock
+**/compile-file-map.properties
+**/problems-report.html
+
+# Android generated packages and compiled output
 *.apk
 *.aab
 *.aar
@@ -13,14 +20,9 @@ android/**/build/
 *.dex
 *.class
 
-# Android local machine config
+# Local Android / IDE configuration
 android/local.properties
-
-# Native build output
 android/.externalNativeBuild/
 android/.cxx/
-
-# Android Studio / IntelliJ project noise
-*.iml
 .idea/
-android/.idea/
+*.iml
