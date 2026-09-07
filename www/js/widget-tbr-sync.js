@@ -79,7 +79,6 @@
         return booksById[String(id)] || null;
       })
       .filter(Boolean)
-      .slice(0, 4)
       .map(function (book) {
         return {
           title: String(book.title || book.Title || 'Untitled'),

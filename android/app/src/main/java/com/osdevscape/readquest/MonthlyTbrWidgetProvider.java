@@ -7,24 +7,21 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.view.View;
+import android.net.Uri;
 import android.widget.RemoteViews;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormatSymbols;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 
 public class MonthlyTbrWidgetProvider extends AppWidgetProvider {
-    private static final String TBR_FILE = "monthly-tbr.json";
-    private static final String BOOKS_FILE = "books.json";
-    private static final String APPEARANCE_FILE = "reading-widget-appearance.json";
+    private static final String TBR_FILE = "monthly-tbr-widget.json";
+    private static final String APPEARANCE_FILE =
+        "reading-widget-appearance.json";
 
     @Override
     public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
@@ -80,43 +77,37 @@ public class MonthlyTbrWidgetProvider extends AppWidgetProvider {
                 now.get(Calendar.YEAR)
         );
 
-        List<String> titles = tbrTitles(context);
-
-        int[] rowIds = {
-            R.id.monthly_tbr_row_1,
-            R.id.monthly_tbr_row_2,
-            R.id.monthly_tbr_row_3,
-            R.id.monthly_tbr_row_4
-        };
-
-        for (int index = 0; index < rowIds.length; index++) {
-            if (index < titles.size()) {
-                views.setViewVisibility(rowIds[index], View.VISIBLE);
-
-                views.setTextViewText(
-                    rowIds[index],
-                    (index + 1) + ". " + titles.get(index)
-                );
-            } else {
-                views.setViewVisibility(rowIds[index], View.GONE);
-            }
-        }
-
-        boolean empty = titles.isEmpty();
-
-        views.setViewVisibility(
+        views.setTextViewText(
             R.id.monthly_tbr_empty,
-            empty ? View.VISIBLE : View.GONE
+            "No books in this month's TBR yet"
         );
 
-        if (empty) {
-            views.setTextViewText(
-                R.id.monthly_tbr_empty,
-                "No books in this month's TBR yet"
-            );
-        }
+        Intent intent = new Intent(
+            context,
+            MonthlyTbrWidgetService.class
+        );
+
+        intent.putExtra(
+            AppWidgetManager.EXTRA_APPWIDGET_ID,
+            widgetId
+        );
+
+        intent.setData(
+            Uri.parse(intent.toUri(Intent.URI_INTENT_SCHEME))
+        );
+
+        views.setRemoteAdapter(R.id.monthly_tbr_list, intent);
+        views.setEmptyView(
+            R.id.monthly_tbr_list,
+            R.id.monthly_tbr_empty
+        );
 
         PendingIntent open = openAppIntent(context, widgetId);
+
+        views.setPendingIntentTemplate(
+            R.id.monthly_tbr_list,
+            open
+        );
 
         views.setOnClickPendingIntent(
             R.id.monthly_tbr_root,
@@ -129,106 +120,11 @@ public class MonthlyTbrWidgetProvider extends AppWidgetProvider {
         );
 
         manager.updateAppWidget(widgetId, views);
-    }
 
-    private static List<String> tbrTitles(Context context) {
-    List<String> titles = new ArrayList<>();
-
-    try {
-        File file = new File(context.getFilesDir(), TBR_FILE);
-
-        if (!file.exists()) {
-            return titles;
-        }
-
-        Calendar now = Calendar.getInstance();
-
-        String monthKey = String.format(
-            java.util.Locale.US,
-            "%04d-%02d",
-            now.get(Calendar.YEAR),
-            now.get(Calendar.MONTH) + 1
+        manager.notifyAppWidgetViewDataChanged(
+            widgetId,
+            R.id.monthly_tbr_list
         );
-
-        JSONObject data = new JSONObject(readFile(file));
-        JSONArray ids = data.optJSONArray(monthKey);
-
-        if (ids == null || ids.length() == 0) {
-            return titles;
-        }
-
-        JSONObject titlesById = bookTitles(context);
-
-        for (int index = 0; index < ids.length(); index++) {
-            String id = ids.optString(index, "").trim();
-
-            if (id.isEmpty()) {
-                continue;
-            }
-
-            String title = titlesById.optString(id, "").trim();
-
-            if (!title.isEmpty()) {
-                titles.add(title);
-            }
-
-            if (titles.size() >= 4) {
-                break;
-            }
-        }
-    } catch (Exception error) {
-        android.util.Log.e(
-            "MonthlyTbrWidget",
-            "Could not load Monthly TBR data",
-            error
-        );
-    }
-
-    return titles;
-}
-
-    private static JSONObject bookTitles(Context context) {
-        JSONObject result = new JSONObject();
-
-        try {
-            File file = new File(context.getFilesDir(), BOOKS_FILE);
-
-            if (!file.exists()) {
-                return result;
-            }
-
-            JSONArray books = new JSONObject(readFile(file))
-                .optJSONArray("books");
-
-            if (books == null) {
-                return result;
-            }
-
-            for (int index = 0; index < books.length(); index++) {
-                JSONObject book = books.optJSONObject(index);
-
-                if (book == null) {
-                    continue;
-                }
-
-                String id = book.optString(
-                    "id",
-                    book.optString("Id", "")
-                );
-
-                String title = book.optString(
-                    "title",
-                    book.optString("Title", "")
-                );
-
-                if (!id.isEmpty() && !title.isEmpty()) {
-                    result.put(id, title);
-                }
-            }
-        } catch (Exception ignored) {
-        }
-
-        return result;
     }
 
     private static int accent(Context context) {

@@ -2,6 +2,8 @@
   var LOG_KEY = 'bookshelf-reading-log-v1';
   var FILE = 'reading-calendar-log.json';
   var DIRECTORY = 'DATA';
+  var syncing = false;
+  var queued = false;
 
   function filesystem() {
     var capacitor = window.Capacitor;
@@ -31,12 +33,34 @@
     }
   }
 
+  async function refreshWidgets() {
+    var plugin = window.Capacitor &&
+      window.Capacitor.Plugins &&
+      window.Capacitor.Plugins.WidgetRefresh;
+
+    if (plugin && typeof plugin.refresh === 'function') {
+      try {
+        await plugin.refresh();
+      } catch (_) {
+        // ignore refresh failures
+      }
+    }
+  }
+
   async function sync() {
+    if (syncing) {
+      queued = true;
+      return;
+    }
+
     var fs = filesystem();
 
     if (!fs) {
       return;
     }
+
+    syncing = true;
+    queued = false;
 
     try {
       await fs.writeFile({
@@ -46,31 +70,61 @@
         encoding: 'utf8'
       });
 
-      if (
-        window.BookShelfWidgetRefresh &&
-        window.BookShelfWidgetRefresh.refresh
-      ) {
-        await window.BookShelfWidgetRefresh.refresh();
-      }
+      await refreshWidgets();
     } catch (error) {
       console.warn('Calendar widget sync failed.', error);
+    } finally {
+      syncing = false;
+
+      if (queued) {
+        setTimeout(sync, 0);
+      }
     }
   }
 
-  window.BookShelfWidgetCalendar = {
-    sync: sync
-  };
+  function scheduleSync() {
+    clearTimeout(scheduleSync.timer);
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', sync);
-  } else {
-    sync();
+    scheduleSync.timer = setTimeout(sync, 150);
   }
 
-  window.addEventListener('focus', sync);
+  function installStorageHook() {
+    if (window.__calendarWidgetStorageHook) {
+      return;
+    }
+
+    window.__calendarWidgetStorageHook = true;
+
+    var originalSetItem = Storage.prototype.setItem;
+
+    Storage.prototype.setItem = function (key, value) {
+      var result = originalSetItem.call(this, key, value);
+
+      if (key === LOG_KEY) {
+        scheduleSync();
+      }
+
+      return result;
+    };
+  }
+
+  window.BookShelfWidgetCalendar = {
+    sync: sync,
+    scheduleSync: scheduleSync
+  };
+
+  installStorageHook();
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', scheduleSync);
+  } else {
+    scheduleSync();
+  }
+
+  window.addEventListener('focus', scheduleSync);
 
   window.addEventListener(
     'bookshelf-reading-log-changed',
-    sync
+    scheduleSync
   );
 })();
