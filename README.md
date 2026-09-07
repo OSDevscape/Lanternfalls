@@ -1,4 +1,4 @@
-# ReadQuest RPG
+## Lanternfalls: The Hidden Archive 
 
 <p align="center">
   <strong>An offline-first reading tracker, personal library, and fantasy RPG powered by real reading time.</strong>
@@ -52,11 +52,11 @@
 
 ---
 
-## What is ReadQuest?
+## What is Lanternfalls: The Hidden Archive?
 
-ReadQuest is a reading app for people who want more than a timer and more than a spreadsheet shelf.
+Lanternfalls is a reading app for people who want more than a timer and more than a spreadsheet shelf.
 
-It combines a personal book library, real reading-session tracking, and a fantasy RPG progression system in one Android-first experience. Instead of relying on vague habit check-ins, ReadQuest uses the minutes you actually spend reading or listening to drive character growth, rewards, quests, loot, trophies, and Book Boss encounters.
+It combines a personal book library, real reading-session tracking, and a fantasy RPG progression system in one Android-first experience. Instead of relying on vague habit check-ins, Lanternfalls uses the minutes you actually spend reading or listening to drive character growth, rewards, quests, loot, trophies, and Book Boss encounters.
 
 Your reading is the adventure.
 
@@ -67,7 +67,7 @@ Most reading apps focus on one of two things:
 - Cataloging books
 - Tracking habits
 
-ReadQuest brings these ideas together and adds a purposeful game layer.
+Lanternfalls brings these ideas together and adds a purposeful game layer.
 
 Your library becomes a world. Reading sessions become meaningful progress. Consistency helps build your character. The RPG systems are designed to make reading feel more rewarding without turning it into another noisy productivity chore.
 
@@ -82,7 +82,7 @@ Your library becomes a world. Reading sessions become meaningful progress. Consi
 | **Realm** | Explore character progression, classes, inventory systems, achievements, and the Bookwyrm Bazaar. |
 | **Metadata** | Enrich books through ISBN lookup backed by Google Books and Open Library. |
 | **Android tools** | Scan ISBN barcodes with the Android camera and use an optional home-screen reading widget. |
-| **Import and backup** | Import Goodreads CSV exports, import or export ReadQuest JSON, and back up or restore with Google Drive. |
+| **Import and backup** | Import Goodreads CSV exports, import or export Lanternfalls JSON, and back up or restore with Google Drive. |
 
 ## Features
 
@@ -97,17 +97,17 @@ Your library becomes a world. Reading sessions become meaningful progress. Consi
 
 ### Goodreads Import
 
-ReadQuest can import a Goodreads library CSV export directly on your device.
+Lanternfalls can import a Goodreads library CSV export directly on your device.
 
-- Import Goodreads books as new ReadQuest library entries.
-- Restore and merge Goodreads data into an existing ReadQuest library.
-- Restore and replace the current ReadQuest book list from a Goodreads CSV after confirmation.
-- Map Goodreads shelves to ReadQuest reading statuses: `read` to Finished, `currently-reading` to Reading, and `to-read` to To Read.
-- Preserve Goodreads shelves as ReadQuest tags.
+- Import Goodreads books as new Lanternfalls library entries.
+- Restore and merge Goodreads data into an existing Lanternfalls library.
+- Restore and replace the current Lanternfalls book list from a Goodreads CSV after confirmation.
+- Map Goodreads shelves to Lanternfalls reading statuses: `read` to Finished, `currently-reading` to Reading, and `to-read` to To Read.
+- Preserve Goodreads shelves as Lanternfalls tags.
 - Import supported Goodreads fields including title, author, ISBN, personal rating, average rating, publisher, binding, page count, publication years, date read, date added, review text, and private notes when available.
 - Match books by Goodreads Book ID when available, then ISBN, then normalized title and author.
 
-> Goodreads import is intended for library migration and update. It does not replace a full ReadQuest backup because Goodreads does not contain ReadQuest-specific RPG progress, settings, reading-session history, or all custom library metadata.
+> Goodreads import is intended for library migration and update. It does not replace a full Lanternfalls backup because Goodreads does not contain Lanternfalls-specific RPG progress, settings, reading-session history, or all custom library metadata.
 
 ### Reading Tracking
 
@@ -148,11 +148,11 @@ ReadQuest can import a Goodreads library CSV export directly on your device.
 
 ### Backup, Restore, and Widget Support
 
-- Export the ReadQuest library as a local JSON backup.
-- Import and merge a ReadQuest JSON backup.
+- Export the Lanternfalls library as a local JSON backup.
+- Import and merge a Lanternfalls JSON backup.
 - Connect Google Drive for manual private backups.
 - Restore a Google Drive backup by merge or full replacement.
-- Back up ReadQuest books, supported metadata, and app settings through Google Drive.
+- Back up Lanternfalls books, supported metadata, and app settings through Google Drive.
 - Use the optional Android home-screen widget for quick reading-session controls.
 - Start, pause, resume, and stop reading sessions from the widget.
 - Refresh or pin the widget on supported Android launchers.
@@ -163,33 +163,33 @@ ReadQuest supports three data-transfer options. Each serves a different purpose.
 
 | Option | Best for | Includes | Important limitation |
 | --- | --- | --- | --- |
-| **Goodreads CSV Import** | Moving a Goodreads library into ReadQuest | Goodreads book, shelf, rating, publisher, page, date, review, and note data when present | Does not contain ReadQuest RPG data, settings, or complete app history |
-| **ReadQuest JSON Export** | Creating a portable local library backup | ReadQuest book-library data | Does not include every separate app setting or progression store |
-| **Google Drive Backup** | Backing up and restoring ReadQuest across devices | Books, supported metadata, and ReadQuest settings | Uses a manual backup and restore flow and requires Google Drive access |
+| **Goodreads CSV Import** | Moving a Goodreads library into Lanternfalls | Goodreads book, shelf, rating, publisher, page, date, review, and note data when present | Does not contain Lanternfalls data, settings, or complete app history |
+| **Lanternfalls JSON Export** | Creating a portable local library backup | Lanternfalls book-library data | Does not include every separate app setting or progression store |
+| **Google Drive Backup** | Backing up and restoring Lanternfalls across devices | Books, supported metadata, and Lanternfalls settings | Uses a manual backup and restore flow and requires Google Drive access |
 
 ### Goodreads CSV Workflow
 
 1. Export your Goodreads library as a CSV file.
-2. Open the ReadQuest Library menu.
+2. Open the Lanternfalls Library menu.
 3. Choose an import option:
    - **Import Goodreads CSV:** Adds books that do not already match your library.
    - **Restore and Merge from Goodreads:** Adds missing books and enriches matched books with available Goodreads data.
-   - **Restore and Replace from Goodreads:** Replaces the current ReadQuest book list with the selected Goodreads CSV.
+   - **Restore and Replace from Goodreads:** Replaces the current Lanternfalls book list with the selected Goodreads CSV.
 4. Select the exported Goodreads `.csv` file.
 5. Review the confirmation message before saving.
 
-Before using **Restore and Replace from Goodreads**, create a ReadQuest JSON export or Google Drive backup so you can restore your previous library if needed.
+Before using **Restore and Replace from Goodreads**, create a Lanternfalls JSON export or Google Drive backup so you can restore your previous library if needed.
 
 ### Google Drive Workflow
 
-1. Open the ReadQuest Library menu.
+1. Open the Lanternfalls Library menu.
 2. Connect Google Drive.
-3. Choose **Back Up to Google Drive** to create or update a private ReadQuest backup.
+3. Choose **Back Up to Google Drive** to create or update a private Lanternfalls backup.
 4. On another device, choose a restore option:
    - **Restore and Merge from Google Drive:** Combines the backup with the current library.
    - **Restore and Replace from Google Drive:** Replaces the current library and supported settings with the saved backup.
 
-Google Drive backup is recommended before major library changes because it preserves more ReadQuest-specific information than Goodreads CSV import. The current Drive snapshot contains the book list, stored metadata, and app settings.
+Google Drive backup is recommended before major library changes because it preserves more Lanternfalls-specific information than Goodreads CSV import. The current Drive snapshot contains the book list, stored metadata, and app settings.
 
 ## Technical Stack
 
@@ -208,7 +208,7 @@ Google Drive backup is recommended before major library changes because it prese
 
 ## Offline-First Approach
 
-ReadQuest is designed so that your core reading library and progress remain available on-device.
+Lanternfalls is designed so that your core reading library and progress remain available on-device.
 
 - Books are stored locally.
 - Reading sessions and RPG progression use local application state.
@@ -217,13 +217,13 @@ ReadQuest is designed so that your core reading library and progress remain avai
 - Google Drive backup is an optional manual sync path.
 - Metadata lookups and cover fetching require network access.
 
-When Capacitor Filesystem is available on Android, ReadQuest maintains a native `books.json` copy alongside browser local storage.
+When Capacitor Filesystem is available on Android, Lanternfalls maintains a native `books.json` copy alongside browser local storage.
 
 ## Data Safety
 
 Before testing an import, a large library change, or a replace operation:
 
-1. Export a local ReadQuest JSON backup.
+1. Export a local Lanternfalls JSON backup.
 2. Optionally create a Google Drive backup.
 3. Test unfamiliar CSV files with a small sample library first.
 4. Use Goodreads Merge before Goodreads Replace whenever possible.
@@ -231,7 +231,7 @@ Before testing an import, a large library change, or a replace operation:
 
 ## Roadmap
 
-ReadQuest is actively developed. Priorities may change as the app grows through testing, feedback, and new ideas.
+Lanternfalls is actively developed. Priorities may change as the app grows through testing, feedback, and new ideas.
 
 ### v0.2.0: Scan and Discover
 
@@ -280,21 +280,21 @@ ReadQuest is actively developed. Priorities may change as the app grows through 
 - Fix bugs, balance RPG systems, and deliver quality-of-life improvements.
 - Expand metadata sources, cover recovery, and library-data accuracy.
 
-> More adventures await beyond the horizon. Submit a feature request to help shape the future of ReadQuest RPG.
+> More adventures await beyond the horizon. Submit a feature request to help shape the future of Lanternfalls: The Hidden Archive.
 
 ## Contributing
 
-ReadQuest is actively evolving, and thoughtful feedback helps shape what comes next.
+Lanternfalls is actively evolving, and thoughtful feedback helps shape what comes next.
 
 ### Report a Bug
 
 Open a bug report with a clear description of what happened, what you expected instead, and the steps needed to reproduce it.
 
-When relevant, include your ReadQuest version, Android version, device model, screenshots, screen recordings, or logs. The more reproducible the report, the easier it is to diagnose and fix.
+When relevant, include your Lanternfalls version, Android version, device model, screenshots, screen recordings, or logs. The more reproducible the report, the easier it is to diagnose and fix.
 
 ### Suggest a Feature
 
-Open a feature request for ideas that would make ReadQuest more useful, more enjoyable, or more immersive. Include:
+Open a feature request for ideas that would make Lanternfalls more useful, more enjoyable, or more immersive. Include:
 
 - What you would like to see.
 - Why it would improve the experience.
@@ -308,7 +308,7 @@ Ideas related to reading tools, library organization, RPG progression, combat, l
 - Search open issues before creating a new issue.
 - Keep each issue focused on one bug, improvement, or feature request.
 - Do not share private reading data, exported backups, account details, or access tokens.
-- For import or backup issues, state whether you used Goodreads CSV, ReadQuest JSON, or Google Drive, and whether you selected Import, Merge, or Replace.
+- For import or backup issues, state whether you used Goodreads CSV, Lanternfalls JSON, or Google Drive, and whether you selected Import, Merge, or Replace.
 - Be kind, specific, and constructive.
 
 ## License
