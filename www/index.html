@@ -38,15 +38,33 @@
     <section id="menuSheet" class="sheet hidden" role="dialog" aria-modal="true"><div class="sheet-header"><button id="menuCancel" class="text-btn">Close</button><h2>Library</h2><span></span></div><div class="index-card menu-card"><button id="exportBtn" class="menu-action" type="button" data-tooltip="Saves your book library as a JSON backup file.">Export library as JSON</button><button id="importBtn" class="menu-action" type="button" data-tooltip="Imports and merges books from a JSON backup. Matching book IDs are updated.">Import library from JSON</button><input type="file" id="importFile" accept="application/json,.json" class="hidden"><p class="menu-hint">Export saves every book as one JSON file. Import merges matching IDs and adds new books.</p></div></section>
     <div id="toast" class="toast hidden"></div>
   </div>
+  <!-- Core persistence and shared helpers -->
   <script src="js/storage.js"></script>
   <script src="js/book-storage-migration.js"></script>
-  <script src="js/widget-session-sync.js"></script>
-  <script src="js/widget-tbr-sync.js"></script>
-  <script src="js/widget-calendar-sync.js"></script>
   <script src="js/cover-cache.js"></script>
   <script src="js/isbn-lookup.js"></script>
+
+  <!-- Core application -->
   <script src="js/app.js"></script>
   <script src="js/goodreads-import.js"></script>
+  <script src="js/google-drive-sync.js"></script>
+  <script src="js/library-transfer-menu.js"></script>
+
+  <!-- Navigation and library UI -->
+  <script src="js/bottom-navigation.js"></script>
+  <script src="js/readquest-navigation.js"></script>
+  <script src="js/library-counts.js"></script>
+  <script src="js/status-pages.js"></script>
+  <script src="js/status-pages-view-mode.js"></script>
+  <script src="js/status-filters.js"></script>
+  <script src="js/view-modes.js"></script>
+  <script src="js/search-toggle.js"></script>
+  <script src="js/book-details.js"></script>
+  <script src="js/book-difficulty-display.js"></script>
+  <script src="js/book-metadata.js"></script>
+  <script src="js/series-related-books.js"></script>
+
+  <!-- Dashboard -->
   <script src="js/dashboard.js"></script>
   <script src="js/dashboard-refresh.js"></script>
   <script src="js/dashboard-series.js"></script>
@@ -54,53 +72,57 @@
   <script src="js/dashboard-daily-statistics.js"></script>
   <script src="js/dashboard-real-stats.js"></script>
   <script src="js/dashboard-calendar.js"></script>
-  <script src="js/google-drive-sync.js"></script>
-  <script src="js/library-transfer-menu.js"></script>
-  <script src="js/bottom-navigation.js"></script>
-  <script src="js/readquest-navigation.js"></script>
-  <script src="js/realm.js"></script>
-  <script src="js/character.js"></script>
-  <script src="js/adventure-bosses.js"></script>
-  <script src="js/adventure-achievements.js"></script>
-  <script src="js/adventure.js"></script>
-  <script src="js/adventure-combat-stat-cards.js"></script>
 
-  <script src="js/adventure-weekly-quests.js"></script>
-  <script src="js/adventure-class-rules.js"></script>
-  <script src="js/adventure-rewards.js"></script>
-  <script src="js/adventure-economy.js"></script>
-  <script src="js/adventure-market.js"></script>
-<script src="js/adventure-bazaar-inventory-button.js"></script>
-  <script src="js/adventure-session-rewards.js"></script>
-  <script src="js/adventure-progression.js"></script>
-  <script src="js/adventure-skill-panel.js"></script> 
-  <script src="js/adventure-class-details.js"></script>
-  <script src="js/adventure-combat.js"></script>
-<!-- <script src="js/adventure-boss-quest-merge.js"></script> -->  
-  <script src="js/adventure-loot.js"></script>
-  <script src="js/adventure-artifact-effects.js"></script>
-  <script src="js/adventure-loot-collapsible.js"></script>
+  <!-- Collections -->
   <script src="js/collection.js"></script>
   <script src="js/collection-overlay.js"></script>
-  <script src="js/adventure-reset-and-book-history.js"></script>
-  <script src="js/notifications.js"></script>  
+
+  <!-- Monthly TBR: owner first, then its Android widget exporter -->
+  <script src="js/monthly-tbr.js"></script>
+  <script src="js/widget-tbr-sync.js"></script>
+
+  <!-- Reading-log import/export for Android widgets -->
+  <script src="js/widget-session-sync.js"></script>
+  <script src="js/widget-calendar-sync.js"></script>
+
+  <!-- Reading profile, notifications, and widget controls -->
+  <script src="js/notifications.js"></script>
   <script src="js/reading-profile.js"></script>
   <script src="js/profile-widget-access.js"></script>
-  <script src="js/library-counts.js"></script>
-  <script src="js/status-pages.js"></script>
-  <script src="js/status-pages-view-mode.js"></script>
-  <script src="js/status-filters.js"></script>
-  <script src="js/book-details.js"></script>
-  <script src="js/monthly-tbr.js"></script>
-  <script src="js/book-difficulty-display.js"></script>
-  <script src="js/series-related-books.js"></script>
-  <script src="js/book-metadata.js"></script>
-  <script src="js/view-modes.js"></script>
-  <script src="js/search-toggle.js"></script>
+
+  <!-- Appearance: apply settings before syncing them to Android widgets -->
   <script src="js/appearance-mode.js"></script>
   <script src="js/widget-appearance-sync.js"></script>
   <script src="js/widget-appearance-live-sync.js"></script>
   <script src="js/accent-selection-fill.js"></script>
+
+  <!-- Adventure foundation -->
+  <script src="js/realm.js"></script>
+  <script src="js/character.js"></script>
+  <script src="js/adventure.js"></script>
+  <script src="js/adventure-class-rules.js"></script>
+  <script src="js/adventure-class-details.js"></script>
+  <script src="js/adventure-combat-stat-cards.js"></script>
+  <script src="js/adventure-combat.js"></script>
+
+  <!-- Adventure systems -->
+  <script src="js/adventure-bosses.js"></script>
+  <!-- <script src="js/adventure-boss-quest-merge.js"></script> -->
+  <script src="js/adventure-achievements.js"></script>
+  <script src="js/adventure-weekly-quests.js"></script>
+  <script src="js/adventure-rewards.js"></script>
+  <script src="js/adventure-economy.js"></script>
+  <script src="js/adventure-market.js"></script>
+  <script src="js/adventure-bazaar-inventory-button.js"></script>
+  <script src="js/adventure-session-rewards.js"></script>
+  <script src="js/adventure-progression.js"></script>
+  <script src="js/adventure-skill-panel.js"></script>
+  <script src="js/adventure-loot.js"></script>
+  <script src="js/adventure-artifact-effects.js"></script>
+  <script src="js/adventure-loot-collapsible.js"></script>
+  <script src="js/adventure-reset-and-book-history.js"></script>
+
+  <!-- General UI polish -->
   <script src="js/tooltips.js"></script>
 </body>
 </html>

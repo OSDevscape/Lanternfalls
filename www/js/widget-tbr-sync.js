@@ -18,33 +18,82 @@
     return plugins.Filesystem || null;
   }
 
-  function currentPayload() {
-    var monthly = window.LanternfallsMonthlyTbr;
-
-    if (!monthly || !monthly.currentBooks) {
-      return {
-        month: '',
-        books: []
-      };
-    }
-
+  function currentMonthKey() {
     var now = new Date();
 
-    var month =
+    return (
       now.getFullYear() +
       '-' +
-      String(now.getMonth() + 1).padStart(2, '0');
+      String(now.getMonth() + 1).padStart(2, '0')
+    );
+  }
+
+  function readBooks() {
+    try {
+      var data = JSON.parse(
+        localStorage.getItem('bookshelf-data') ||
+        '{"books":[]}'
+      );
+
+      return Array.isArray(data.books) ? data.books : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function readTbrState() {
+    try {
+      var state = JSON.parse(
+        localStorage.getItem('lanternfalls-monthly-tbr-v1') ||
+        '{}'
+      );
+
+      return state && typeof state === 'object'
+        ? state
+        : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function payload() {
+    var month = currentMonthKey();
+    var ids = readTbrState()[month];
+
+    if (!Array.isArray(ids)) {
+      ids = [];
+    }
+
+    var booksById = {};
+
+    readBooks().forEach(function (book) {
+      var id = String(book.id || book.Id || '');
+
+      if (id) {
+        booksById[id] = book;
+      }
+    });
+
+    var books = ids
+      .map(function (id) {
+        return booksById[String(id)] || null;
+      })
+      .filter(Boolean)
+      .slice(0, 4)
+      .map(function (book) {
+        return {
+          title: String(book.title || book.Title || 'Untitled'),
+          author: String(
+            book.author ||
+            book.Author ||
+            'Unknown author'
+          )
+        };
+      });
 
     return {
       month: month,
-      books: monthly.currentBooks()
-        .slice(0, 4)
-        .map(function (book) {
-          return {
-            title: String(book.title || 'Untitled'),
-            author: String(book.author || 'Unknown author')
-          };
-        })
+      books: books
     };
   }
 
@@ -68,7 +117,7 @@
       await fs.writeFile({
         path: FILE,
         directory: DIRECTORY,
-        data: JSON.stringify(currentPayload()),
+        data: JSON.stringify(payload()),
         encoding: 'utf8'
       });
 
@@ -82,18 +131,25 @@
     sync: sync
   };
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () {
-      setTimeout(sync, 300);
-    });
-  } else {
-    setTimeout(sync, 300);
+  function scheduleSync() {
+    setTimeout(sync, 400);
   }
 
-  window.addEventListener('focus', sync);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', scheduleSync);
+  } else {
+    scheduleSync();
+  }
+
+  window.addEventListener('focus', scheduleSync);
 
   window.addEventListener(
     'lanternfalls-monthly-tbr-changed',
-    sync
+    scheduleSync
+  );
+
+  window.addEventListener(
+    'bookshelf-books-changed',
+    scheduleSync
   );
 })();
