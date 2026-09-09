@@ -147,7 +147,7 @@
 
     var json = makeCollapsible(
       'libraryJsonTransfer',
-      'ReadQuest JSON',
+      'Lanternfalls JSON',
       'Export or import a portable library backup'
     );
 

@@ -24,7 +24,7 @@
     var button = document.createElement('button');
     button.id = 'adventureBazaarInventoryBtn';
     button.type = 'button';
-    button.textContent = 'â–£';
+    button.textContent = '◉';
     button.setAttribute('aria-label', 'Open Inventory');
     button.setAttribute('title', 'Inventory');
 
