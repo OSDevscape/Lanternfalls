@@ -26,3 +26,10 @@ android/.externalNativeBuild/
 android/.cxx/
 .idea/
 *.iml
+
+node_modules/
+android/resource-error.txt
+android/**/build/
+android/**/intermediates/
+**/compile-file-map.properties
+**/*.aar

@@ -61,6 +61,29 @@
       '</div>'
     );
   }
+  function weaponSummaryHtml(log) {
+    var weapon = log && log.weapon;
+
+    if (!weapon || !weapon.name) {
+      return '';
+    }
+
+    var tier = Math.max(0, Math.floor(Number(weapon.tier) || 0));
+    var power = Math.max(0, Number(weapon.powerBonus) || 0);
+    var parts = [
+      escape(weapon.name) + ' · Tier ' + tier
+    ];
+
+    if (power > 0) {
+      parts.push('+' + power + ' Power');
+    }
+
+    return (
+      '<span class="session-reward-battle-weapon">' +
+      '⚔ ' + parts.join(' · ') +
+      '</span>'
+    );
+  }
 
   function battleHtml(item) {
     var log = item && item.battleLog;
@@ -79,7 +102,10 @@
       '<b>' + encounters.length + ' encounter' +
       (encounters.length === 1 ? '' : 's') +
       '</b>' +
-      '<small>' + (Number(log.minutes) || 0) + ' minutes</small>' +
+      '<small>' +
+      (Number(log.minutes) || 0) +
+      ' minutes' +
+      '</small>' +
       '</summary>' +
 
       '<div class="session-reward-encounters">' +
@@ -197,6 +223,24 @@
 
     return parts.join(' · ');
   }
+
+  function weaponBonusHtml(item) {
+    var log = item && item.battleLog;
+    var weapon = log && log.weapon;
+
+    if (!weapon || !weapon.name || weapon.id === 'readers-orb') {
+        return '';
+    }
+
+    var tier = Math.max(0, Math.floor(Number(weapon.tier) || 0));
+
+    return (
+        '<p class="session-reward-weapon-bonus">' +
+        '<b>' + escape(weapon.name) + '</b>' +
+        '<span>Tier ' + tier + '</span>' +
+        '</p>'
+    );
+}
 
   function bonusHtml(item) {
     var lines = [];
@@ -384,8 +428,20 @@
 
     var bonusBox = overlay.querySelector('.session-reward-bonuses');
 
-    if (bonuses.length) {
-      bonusBox.innerHTML = bonuses.map(bonusHtml).join('');
+    var weaponBonuses = items
+      .map(weaponBonusHtml)
+      .filter(function (html) {
+        return !!html;
+      });
+
+    var otherBonuses = bonuses.map(bonusHtml).filter(function (html) {
+      return !!html;
+    });
+
+    if (weaponBonuses.length || otherBonuses.length) {
+      bonusBox.innerHTML =
+        weaponBonuses.join('') +
+        otherBonuses.join('');
     } else {
       bonusBox.innerHTML =
         '<p><span>No class, equipped item, or Bazaar bonus triggered this time.</span></p>';
@@ -876,6 +932,37 @@
   margin-top: 3px;
   color: #b8b0a3;
   text-transform: capitalize;
+}
+
+.session-reward-battle-weapon {
+  grid-column: 1 / -1;
+  display: block;
+  margin-top: 4px;
+  color: #d4a64f;
+  font-size: 10px;
+  letter-spacing: .03em;
+}
+
+.session-reward-weapon-bonus {
+  margin: 7px 0;
+  color: #b8b0a3;
+  font-size: 12px;
+}
+
+.session-reward-weapon-bonus b,
+.session-reward-weapon-bonus span {
+  display: block;
+}
+
+.session-reward-weapon-bonus b {
+  color: #f5d58f;
+  font-size: 12px;
+}
+
+.session-reward-weapon-bonus span {
+  margin-top: 2px;
+  color: #b8b0a3;
+  font-size: 12px;
 }
 `;
 

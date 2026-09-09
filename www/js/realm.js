@@ -38,11 +38,12 @@
       '<em>›</em>' +
       '</button>' +
 
-      '<button type="button" class="realm-destination" disabled>' +
+      '<button type="button" class="realm-destination realm-destination-active" data-realm-equipment>' +
       '<span>⚔</span>' +
-      '<div><b>Equipment</b><small>Weapons, armor, and trinkets for future expeditions.</small></div>' +
-      '<em>Coming soon</em>' +
+      '<div><b>Forge</b><small>Crush named relics into Essence, then reforge your owned relic weapons.</small></div>' +
+      '<em>›</em>' +
       '</button>' +
+      
 
       '<button type="button" class="realm-destination realm-destination-active" ' +
       'data-realm-open="collection">' +
@@ -85,10 +86,25 @@
 
     var bazaarButton = target.querySelector('[data-realm-bazaar]');
 
-    if (bazaarButton) {
+        if (bazaarButton) {
       bazaarButton.onclick = function () {
         if (window.BookwyrmBazaar && window.BookwyrmBazaar.open) {
           window.BookwyrmBazaar.open();
+        }
+      };
+    }
+
+    var equipmentButton = target.querySelector(
+      '[data-realm-equipment]'
+    );
+
+    if (equipmentButton) {
+      equipmentButton.onclick = function () {
+        if (
+          window.LanternfallsEquipmentPanel &&
+          typeof window.LanternfallsEquipmentPanel.open === 'function'
+        ) {
+          window.LanternfallsEquipmentPanel.open();
         }
       };
     }

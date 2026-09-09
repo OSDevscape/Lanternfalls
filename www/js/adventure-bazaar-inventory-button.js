@@ -24,18 +24,18 @@
     var button = document.createElement('button');
     button.id = 'adventureBazaarInventoryBtn';
     button.type = 'button';
-    button.textContent = '▣';
-    button.setAttribute('aria-label', 'Open Bazaar Inventory');
-    button.setAttribute('title', 'Bazaar Inventory');
+    button.textContent = 'â–£';
+    button.setAttribute('aria-label', 'Open Inventory');
+    button.setAttribute('title', 'Inventory');
 
-    button.onclick = function () {
+    button.addEventListener('click', () => {
       if (
         window.BookwyrmBazaar &&
         typeof window.BookwyrmBazaar.inventory === 'function'
       ) {
         window.BookwyrmBazaar.inventory();
       }
-    };
+    });
 
     actions.appendChild(button);
 

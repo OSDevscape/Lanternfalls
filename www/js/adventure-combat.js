@@ -43,6 +43,27 @@
     return parts.join(' · ');
   }
 
+  function equippedWeaponPreview() {
+    var api = window.LanternfallsEquipment;
+
+    if (!api || typeof api.getEquippedWeapon !== 'function') {
+      return null;
+    }
+
+    var weapon = api.getEquippedWeapon();
+
+    if (!weapon || !weapon.name || weapon.id === 'readers-orb') {
+      return null;
+    }
+
+    return {
+      name: String(weapon.name),
+      tier: Math.max(0, Math.floor(Number(weapon.tier) || 0)),
+      powerBonus: Math.max(0, Number(weapon.powerBonus) || 0),
+      role: String(weapon.role || '')
+    };
+  }
+
   function artifactPreview() {
     if (
       !window.BookShelfArtifacts ||
@@ -68,8 +89,42 @@
     };
   }
 
-  function modifierRowsHtml(reward, artifact) {
+  function modifierRowsHtml(reward, artifact, weapon) {
     var rows = [];
+
+    function modifierRow(kind, label, title, detail, extraClass) {
+      return (
+        '<p class="adventure-combat-modifier ' +
+        kind +
+        (extraClass ? ' ' + extraClass : '') +
+        '">' +
+        '<b class="adventure-combat-modifier-label" style="color:var(--accent,#8B3A3A)">' +
+        escape(label) +
+        '</b>' +
+        '<strong>' + escape(title) + '</strong>' +
+        '<span>' + escape(detail) + '</span>' +
+        '</p>'
+      );
+    }
+
+    if (weapon) {
+      var weaponDetail = 'Tier ' + weapon.tier;
+
+      if (weapon.powerBonus > 0) {
+        weaponDetail += ' · +' + weapon.powerBonus + ' Power';
+      } else if (weapon.role) {
+        weaponDetail += ' · ' + weapon.role;
+      }
+
+      rows.push(
+        modifierRow(
+          'is-weapon',
+          'Equipped Weapon Bonus',
+          weapon.name,
+          weaponDetail
+        )
+      );
+    }
 
     if (reward && reward.perkState === 'triggered') {
       var classAmount = rewardText(
@@ -80,12 +135,12 @@
 
       if (classAmount) {
         rows.push(
-          '<p class="adventure-combat-modifier is-class">' +
-          '<b>' +
-          escape(reward.classBonusReason || 'Class bonus') +
-          '</b>' +
-          '<span>' + escape(classAmount) + '</span>' +
-          '</p>'
+          modifierRow(
+            'is-class',
+            'Class Bonus',
+            reward.classBonusReason || 'Class bonus',
+            classAmount
+          )
         );
       }
     }
@@ -99,12 +154,12 @@
 
       if (bazaarAmount) {
         rows.push(
-          '<p class="adventure-combat-modifier is-bazaar">' +
-          '<b>' +
-          escape(reward.bazaarItemName || 'Bazaar enchantment') +
-          '</b>' +
-          '<span>' + escape(bazaarAmount) + '</span>' +
-          '</p>'
+          modifierRow(
+            'is-bazaar',
+            'Bazaar Bonus',
+            reward.bazaarItemName || 'Bazaar enchantment',
+            bazaarAmount
+          )
         );
       }
     }
@@ -123,15 +178,14 @@
       }
 
       rows.push(
-        '<p class="adventure-combat-modifier is-artifact rarity-' +
-        escape(artifact.rarity.toLowerCase()) +
-        '">' +
-        '<b>' + escape(artifact.name) + '</b>' +
-        '<span>' +
-        escape(artifact.label) +
-        (artifactAmount ? ' · ' + escape(artifactAmount) : '') +
-        '</span>' +
-        '</p>'
+        modifierRow(
+          'is-artifact',
+          'Artifact Bonus',
+          artifact.name,
+          artifact.label +
+          (artifactAmount ? ' · ' + artifactAmount : ''),
+          'rarity-' + String(artifact.rarity || 'common').toLowerCase()
+        )
       );
     }
 
@@ -223,6 +277,7 @@
     var critChance = Number.isFinite(rawCritChance) ? Math.min(25, rawCritChance) : 5;
     var critDisplay = critChance.toFixed(1).replace(/\.0$/, '');
     var boss = bossFor(active);
+    var weapon = equippedWeaponPreview();
     var combat = '';
 
     if (latest) {
@@ -268,8 +323,7 @@
         ? Math.floor(baseDamage * 1.5)
         : baseDamage;
 
-      var modifiers = modifierRowsHtml(reward, artifact);
-
+      var modifiers = modifierRowsHtml(reward, artifact, weapon);
       combat =
         '<div class="adventure-combat-result">' +
         '<span>' +
@@ -324,10 +378,10 @@
       ).toFixed(1).replace(/\\.0$/, '') +
       '% crit' +
       '</span>' +
+
       '</div>' +
       combat +
       '<button type="button" class="adventure-combat-log" aria-label="Log time against this boss">Log Time Against Boss</button>';
-
     mount.appendChild(card);
 
     card.querySelector('.adventure-combat-log').onclick = function () {
@@ -404,18 +458,81 @@
       'border-top:1px solid rgba(168,130,60,.18)}' +
 
       '.adventure-combat-modifier{' +
-      'margin:8px 0;color:var(--muted,#8A8378);font-size:11px;line-height:1.4}' +
+      'margin:9px 0;padding-top:9px;border-top:1px solid rgba(168,130,60,.18);' +
+      'font-size:11px;line-height:1.4}' +
 
       '.adventure-combat-modifier b,' +
+      '.adventure-combat-modifier strong,' +
       '.adventure-combat-modifier span{' +
       'display:block}' +
 
       '.adventure-combat-modifier b{' +
-      'color:var(--paper-light,#F6F1E4);font:600 12px Georgia,serif}' +
+      'color:var(--accent,#8B3A3A);font-size:10px;font-weight:bold;' +
+      'letter-spacing:.08em;text-transform:uppercase}' +
+
+      '.adventure-combat-modifier strong{' +
+      'margin-top:3px;color:var(--paper-light,#F6F1E4);' +
+      'font:15px Georgia,serif;line-height:1.25}' +
 
       '.adventure-combat-modifier span{' +
-      'margin-top:2px;color:var(--muted,#8A8378)}' +
+      'margin-top:2px;color:var(--muted,#8A8378);font-size:11px}' +
 
+      '.adventure-combat-modifier.is-weapon b{' +
+      'color:var(--accent,#8B3A3A)}' +
+
+      '.adventure-combat-modifier.is-bazaar b{' +
+      'color:var(--accent,#8B3A3A)}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-common strong{' +
+      'color:#d7d0c4}' +
+      '.adventure-combat-modifier.is-artifact.rarity-common span{' +
+      'color:#b8b0a3}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-uncommon strong{' +
+      'color:#79bd8d}' +
+      '.adventure-combat-modifier.is-artifact.rarity-uncommon span{' +
+      'color:#b7d9bf}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-rare strong{' +
+      'color:#74a8e7}' +
+      '.adventure-combat-modifier.is-artifact.rarity-rare span{' +
+      'color:#b7d1ef}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-epic strong{' +
+      'color:#c28ad9}' +
+      '.adventure-combat-modifier.is-artifact.rarity-epic span{' +
+      'color:#dfc1ec}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-legendary strong{' +
+      'color:#d4a64f}' +
+      '.adventure-combat-modifier.is-artifact.rarity-legendary span{' +
+      'color:#f0d99d}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-mythic strong{' +
+      'color:#e55353}' +
+      '.adventure-combat-modifier.is-artifact.rarity-mythic span{' +
+      'color:#ffb3b3}' +
+
+      '.adventure-combat-log{' +
+      'width:100%;margin-top:13px;padding:11px;' +
+      'border:1px solid var(--gold,#A8823C);border-radius:3px;' +
+      'background:var(--accent,#8B3A3A);color:var(--paper-light,#F6F1E4)}';
+
+    '.adventure-combat-modifier.is-weapon b,' +
+      '.adventure-combat-modifier.is-weapon strong,' +
+      '.adventure-combat-modifier.is-weapon span{' +
+      'display:block}' +
+
+      '.adventure-combat-modifier.is-weapon b{' +
+      'color:var(--gold,#A8823C);font-size:10px;' +
+      'letter-spacing:.08em;text-transform:uppercase}' +
+
+      '.adventure-combat-modifier.is-weapon strong{' +
+      'margin-top:3px;color:var(--paper-light,#F6F1E4);' +
+      'font:15px Georgia,serif;line-height:1.25}' +
+
+      '.adventure-combat-modifier.is-weapon span{' +
+      'margin-top:2px;color:var(--muted,#8A8378);font-size:11px}' +
       '.adventure-combat-modifier.is-bazaar b{' +
       'color:var(--gold,#A8823C)}' +
 
@@ -454,17 +571,60 @@
 
       '.adventure-combat-modifier.is-artifact.rarity-mythic span{' +
       'color:#ffb3b3}' +
+      '.adventure-combat-log{' +
+      'width:100%;margin-top:13px;padding:11px;' +
+      'border:1px solid var(--gold,#A8823C);border-radius:3px;' +
+      'background:var(--accent,#8B3A3A);color:var(--paper-light,#F6F1E4)}'
+
+    '.adventure-combat-modifier.is-artifact.rarity-common strong{' +
+      'color:#d7d0c4}' +
+      '.adventure-combat-modifier.is-artifact.rarity-common span{' +
+      'color:#b8b0a3}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-uncommon strong{' +
+      'color:#79bd8d}' +
+      '.adventure-combat-modifier.is-artifact.rarity-uncommon span{' +
+      'color:#b7d9bf}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-rare strong{' +
+      'color:#74a8e7}' +
+      '.adventure-combat-modifier.is-artifact.rarity-rare span{' +
+      'color:#b7d1ef}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-epic strong{' +
+      'color:#c28ad9}' +
+      '.adventure-combat-modifier.is-artifact.rarity-epic span{' +
+      'color:#dfc1ec}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-legendary strong{' +
+      'color:#d4a64f}' +
+      '.adventure-combat-modifier.is-artifact.rarity-legendary span{' +
+      'color:#f0d99d}' +
+
+      '.adventure-combat-modifier.is-artifact.rarity-mythic strong{' +
+      'color:#e55353}' +
+      '.adventure-combat-modifier.is-artifact.rarity-mythic span{' +
+      'color:#ffb3b3}' +
+      '.adventure-combat-modifier.is-artifact.rarity-mythic span{' +
+      'color:#ffb3b3}' +
+
+      '.adventure-combat-modifier.is-artifact b{' +
+      'color:var(--accent,#8B3A3A)!important}' +
 
       '.adventure-combat-log{' +
       'width:100%;margin-top:13px;padding:11px;' +
       'border:1px solid var(--gold,#A8823C);border-radius:3px;' +
-      'background:var(--accent,#8B3A3A);color:var(--paper-light,#F6F1E4)}';
+      'background:var(--accent,#8B3A3A);color:var(--paper-light,#F6F1E4)}' +
+      '.adventure-combat-modifier .adventure-combat-modifier-label{' +
+      'color:var(--accent,#8B3A3A)!important}';
+
     document.head.appendChild(style);
 
     new MutationObserver(function () { setTimeout(render, 0); }).observe(page, { childList: true });
     window.addEventListener('bookshelf-reading-log-changed', render);
     window.addEventListener('bookshelf-adventure-class-changed', render);
     render();
+    window.addEventListener('bookshelf-adventure-equipment-changed', render);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install);

@@ -1966,6 +1966,55 @@
     return String(read('bookshelf-adventure-v1', '{}').className || '');
   }
 
+  function equippedWeaponForBattle() {
+    var api = window.LanternfallsEquipment;
+
+    if (!api || typeof api.getEquippedWeapon !== 'function') {
+      return {
+        id: 'readers-orb',
+        name: 'Reader’s Orb',
+        tier: 0,
+        genre: 'Universal',
+        role: 'Steady Focus',
+        powerBonus: 0,
+        staggerChance: 0,
+        slowPercent: 0,
+        weakenPercent: 0,
+        markCritBonus: 0,
+        returnStrikePercent: 0,
+        stunChance: 0,
+        confuseChance: 0,
+        pacifyChance: 0,
+        exposePercent: 0,
+        disruptPercent: 0
+      };
+    }
+
+    var weapon = api.getEquippedWeapon() || {};
+
+    return {
+      id: String(weapon.id || 'readers-orb'),
+      name: String(weapon.name || 'Reader’s Orb'),
+      tier: Math.max(0, Math.floor(Number(weapon.tier) || 0)),
+      genre: String(weapon.genre || 'Universal'),
+      role: String(weapon.role || 'Steady Focus'),
+      powerBonus: Math.max(0, Number(weapon.powerBonus) || 0),
+      staggerChance: Math.max(0, Number(weapon.staggerChance) || 0),
+      slowPercent: Math.max(0, Number(weapon.slowPercent) || 0),
+      weakenPercent: Math.max(0, Number(weapon.weakenPercent) || 0),
+      markCritBonus: Math.max(0, Number(weapon.markCritBonus) || 0),
+      returnStrikePercent: Math.max(
+        0,
+        Number(weapon.returnStrikePercent) || 0
+      ),
+      stunChance: Math.max(0, Number(weapon.stunChance) || 0),
+      confuseChance: Math.max(0, Number(weapon.confuseChance) || 0),
+      pacifyChance: Math.max(0, Number(weapon.pacifyChance) || 0),
+      exposePercent: Math.max(0, Number(weapon.exposePercent) || 0),
+      disruptPercent: Math.max(0, Number(weapon.disruptPercent) || 0)
+    };
+  }
+
   function battleStrength() {
     return Math.max(
       10,
@@ -1984,9 +2033,14 @@
     return Math.min(25, 5 + luck / 20);
   }
 
-  function attackDamage(strength, seed, critical) {
+  function attackDamage(strength, seed, critical, weapon) {
     var variation = hash(seed + '|damage') % 6;
-    var damage = 4 + Math.floor(strength / 5) + variation;
+    var baseDamage = 4 + Math.floor(strength / 5) + variation;
+    var powerBonus = Math.max(
+      0,
+      Number((weapon || {}).powerBonus) || 0
+    );
+    var damage = baseDamage + powerBonus;
 
     return critical ? Math.floor(damage * 1.5) : damage;
   }
@@ -2136,6 +2190,7 @@
     var relicTheme = relicThemeForGenre(book.genre);
     var durations = encounterDurations(minutes, sessionId);
     var className = classForBattleLog();
+    var weapon = equippedWeaponForBattle();
     var strength = battleStrength();
     var luck = battleLuck();
 
@@ -2230,7 +2285,12 @@
         var critical = (hash(attackSeed + '|critical') % 10000) <
           Math.round(critChance * 100);
 
-        var damage = attackDamage(strength, attackSeed, critical);
+        var damage = attackDamage(
+          strength,
+          attackSeed,
+          critical,
+          weapon
+        );
         var templates = critical
           ? (CRITICAL_TEMPLATES[className] || DEFAULT_CRITICAL_TEMPLATES)
           : (CLASS_ATTACK_TEMPLATES[className] || DEFAULT_ATTACK_TEMPLATES);
@@ -2246,6 +2306,10 @@
           actor: 'player',
           round: round + 1,
           className: className || 'Reader',
+          weaponId: weapon.id,
+          weaponName: weapon.name,
+          weaponTier: weapon.tier,
+          weaponPowerBonus: weapon.powerBonus,
           damage: damage,
           critical: critical,
           message: playerMessage
@@ -2293,6 +2357,7 @@
         enemyTitle: enemyTitle,
         enemyName: enemyName,
         className: className || 'Reader',
+        weapon: weapon,
         relic: relic,
         relicTheme: relicTheme.id,
         relicThemeLabel: relicTheme.label,
@@ -2320,6 +2385,7 @@
       baseCritChance: baseCritChance,
       artifactCritBonus: artifactCritBonus,
       criticalChanceUsed: critChance,
+      weapon: weapon,
       artifactItemName: artifactItemName,
       artifactItemRarity: artifactItemRarity,
 

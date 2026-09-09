@@ -164,3 +164,252 @@
   font-size: 11px;
   line-height: 1.4;
 }
+
+/*
+ * Realm light-mode card surface
+ * Matches the Forge's preferred parchment-blue/cream card treatment.
+ */
+body.light-mode #navPlaceholder.realm-page .realm-destination,
+body.light-mode #navPlaceholder.character-page .character-card,
+body.light-mode #navPlaceholder.forge-page .forge-card,
+body.light-mode #navPlaceholder.forge-page .forge-hero,
+body.light-mode #bookwyrmBazaar .bookwyrm-home-active,
+body.light-mode #bookwyrmBazaar .bookwyrm-category-card,
+body.light-mode #bookwyrmBazaar .bookwyrm-tier-card,
+body.light-mode #bookwyrmBazaar .bookwyrm-item-card,
+body.light-mode #bookwyrmBazaar .bookwyrm-inventory-card,
+body.light-mode #bookwyrmBazaar .bookwyrm-relics-summary,
+body.light-mode #readQuestCollectionPanel .collection-card,
+body.light-mode #readQuestCollectionPanel .collection-section,
+body.light-mode #readQuestCollectionPanel .collection-entry,
+[data-theme="light"] #navPlaceholder.realm-page .realm-destination,
+[data-theme="light"] #navPlaceholder.character-page .character-card,
+[data-theme="light"] #navPlaceholder.forge-page .forge-card,
+[data-theme="light"] #navPlaceholder.forge-page .forge-hero,
+[data-theme="light"] #bookwyrmBazaar .bookwyrm-home-active,
+[data-theme="light"] #bookwyrmBazaar .bookwyrm-category-card,
+[data-theme="light"] #bookwyrmBazaar .bookwyrm-tier-card,
+[data-theme="light"] #bookwyrmBazaar .bookwyrm-item-card,
+[data-theme="light"] #bookwyrmBazaar .bookwyrm-inventory-card,
+[data-theme="light"] #bookwyrmBazaar .bookwyrm-relics-summary,
+[data-theme="light"] #readQuestCollectionPanel .collection-card,
+[data-theme="light"] #readQuestCollectionPanel .collection-section,
+[data-theme="light"] #readQuestCollectionPanel .collection-entry,
+.light-theme #navPlaceholder.realm-page .realm-destination,
+.light-theme #navPlaceholder.character-page .character-card,
+.light-theme #navPlaceholder.forge-page .forge-card,
+.light-theme #navPlaceholder.forge-page .forge-hero,
+.light-theme #bookwyrmBazaar .bookwyrm-home-active,
+.light-theme #bookwyrmBazaar .bookwyrm-category-card,
+.light-theme #bookwyrmBazaar .bookwyrm-tier-card,
+.light-theme #bookwyrmBazaar .bookwyrm-item-card,
+.light-theme #bookwyrmBazaar .bookwyrm-inventory-card,
+.light-theme #bookwyrmBazaar .bookwyrm-relics-summary,
+.light-theme #readQuestCollectionPanel .collection-card,
+.light-theme #readQuestCollectionPanel .collection-section,
+.light-theme #readQuestCollectionPanel .collection-entry {
+    background: #F7F0E2;
+}
+body.light-mode #navPlaceholder.realm-page .realm-destination-active,
+[data-theme="light"] #navPlaceholder.realm-page .realm-destination-active,
+.light-theme #navPlaceholder.realm-page .realm-destination-active {
+    background:
+        linear-gradient(135deg, rgba(168, 130, 60, .12), rgba(168, 130, 60, 0)),
+        #F7F0E2;
+}
+
+/*
+ * Keep the Forge hero distinct: gold glow layered over the shared
+ * Realm light-mode card surface.
+ */
+body.light-mode #navPlaceholder.forge-page .forge-hero,
+[data-theme="light"] #navPlaceholder.forge-page .forge-hero,
+.light-theme #navPlaceholder.forge-page .forge-hero {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(168, 130, 60, .20),
+            rgba(168, 130, 60, .06) 52%,
+            rgba(168, 130, 60, 0)
+        ),
+        #F7F0E2;
+}
+
+/*
+ * Bazaar weapon cards
+ * Realm → Bookwyrm Bazaar → Enter the Market → Equipment → Weapons
+ */
+#bookwyrmBazaar .bookwyrm-weapon-shop {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+}
+
+#bookwyrmBazaar details.bookwyrm-weapon-card {
+    display: block !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    border: 1px solid rgba(168, 130, 60, .58) !important;
+    border-radius: 8px !important;
+    background: var(--bg-elevated, #1B2129) !important;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, .14) !important;
+}
+
+#bookwyrmBazaar details.bookwyrm-weapon-card[open] {
+    border-color: var(--gold, #A8823C) !important;
+}
+
+#bookwyrmBazaar .bookwyrm-weapon-summary {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    min-height: 82px !important;
+    padding: 14px 16px !important;
+    cursor: pointer !important;
+    list-style: none !important;
+}
+
+#bookwyrmBazaar .bookwyrm-weapon-summary::-webkit-details-marker {
+    display: none !important;
+}
+
+#bookwyrmBazaar .bookwyrm-weapon-summary::marker {
+    content: "" !important;
+}
+
+#bookwyrmBazaar .bookwyrm-weapon-summary:focus-visible {
+    outline: 2px solid var(--gold, #A8823C);
+    outline-offset: -3px;
+}
+
+#bookwyrmBazaar .bookwyrm-weapon-icon {
+    display: grid !important;
+    place-items: center !important;
+    flex: 0 0 auto !important;
+    width: 50px !important;
+    height: 50px !important;
+    border: 1px solid rgba(168, 130, 60, .54) !important;
+    border-radius: 5px !important;
+    background: rgba(168, 130, 60, .10) !important;
+    color: var(--gold, #A8823C) !important;
+    font-size: 25px !important;
+}
+
+#bookwyrmBazaar .bookwyrm-weapon-summary-copy {
+    min-width: 0 !important;
+    flex: 1 !important;
+}
+
+#bookwyrmBazaar .bookwyrm-weapon-summary-copy h3 {
+    margin: 4px 0 0 !important;
+    color: var(--paper-light, #F6F1E4) !important;
+    font: 20px Georgia, serif !important;
+    line-height: 1.15 !important;
+}
+
+#bookwyrmBazaar .bookwyrm-weapon-summary-copy small {
+    display: block !important;
+    margin-top: 4px !important;
+    color: var(--muted, #8A8378) !important;
+    font-size: 10px !important;
+    line-height: 1.35 !important;
+}
+
+#bookwyrmBazaar .bookwyrm-weapon-chevron {
+    flex: 0 0 auto !important;
+    color: var(--gold, #A8823C) !important;
+    font-size: 28px !important;
+    line-height: 1 !important;
+    transition: transform .18s ease !important;
+}
+
+#bookwyrmBazaar details.bookwyrm-weapon-card[open] .bookwyrm-weapon-chevron {
+    transform: rotate(90deg) !important;
+}
+
+#bookwyrmBazaar .bookwyrm-weapon-details {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px 10px !important;
+    padding: 0 16px 16px 80px !important;
+    border-top: 1px solid rgba(168, 130, 60, .20) !important;
+}
+
+#bookwyrmBazaar .bookwyrm-weapon-details p {
+    width: 100% !important;
+    margin: 11px 0 0 !important;
+    color: var(--paper-light, #F6F1E4) !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+}
+
+#bookwyrmBazaar .bookwyrm-weapon-details small {
+    color: var(--muted, #8A8378) !important;
+    font-size: 10px !important;
+    line-height: 1.35 !important;
+}
+
+#bookwyrmBazaar .bookwyrm-weapon-details .bookwyrm-weapon-affinity,
+#bookwyrmBazaar .bookwyrm-weapon-details .bookwyrm-weapon-requirement {
+    color: var(--gold, #A8823C) !important;
+}
+
+#bookwyrmBazaar .bookwyrm-weapon-details .bookwyrm-weapon-status {
+    width: 100% !important;
+    margin-top: 2px !important;
+}
+
+#bookwyrmBazaar .bookwyrm-weapon-action {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    width: 100% !important;
+    margin-top: 8px !important;
+    padding-top: 12px !important;
+    border-top: 1px solid rgba(168, 130, 60, .20) !important;
+}
+
+#bookwyrmBazaar .bookwyrm-weapon-action > b {
+    color: var(--gold, #A8823C) !important;
+    font: 16px Georgia, serif !important;
+    white-space: nowrap !important;
+}
+
+#bookwyrmBazaar .bookwyrm-weapon-buy {
+    min-width: 142px !important;
+    padding: 9px 10px !important;
+    border: 1px solid var(--gold, #A8823C) !important;
+    border-radius: 3px !important;
+    background: var(--accent, #8B3A3A) !important;
+    color: var(--paper-light, #F6F1E4) !important;
+    font: inherit !important;
+    font-size: 10px !important;
+    font-weight: bold !important;
+    line-height: 1.2 !important;
+    cursor: pointer !important;
+}
+
+#bookwyrmBazaar .bookwyrm-weapon-buy:disabled {
+    opacity: .48 !important;
+    cursor: not-allowed !important;
+}
+
+#bookwyrmBazaar .bookwyrm-weapon-buy.owned {
+    background: transparent !important;
+    color: var(--gold, #A8823C) !important;
+}
+
+@media (max-width: 420px) {
+    #bookwyrmBazaar .bookwyrm-weapon-details {
+        padding-left: 16px !important;
+    }
+
+    #bookwyrmBazaar .bookwyrm-weapon-action {
+        flex-wrap: wrap !important;
+    }
+
+    #bookwyrmBazaar .bookwyrm-weapon-buy {
+        width: 100% !important;
+    }
+}
